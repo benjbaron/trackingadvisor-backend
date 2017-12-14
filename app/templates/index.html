@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Semantica</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ" crossorigin="anonymous"></script>
+
+
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.41.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.41.0/mapbox-gl.css' rel='stylesheet' />
+
+    <style>
+        body, html, .container-fluid, .sidebar, .body { height: 100%; min-height: 100%; margin:0; }
+        .navbar { height: 40px; position: absolute; top: 0; left:0; width:100%; background:green; z-index:2; }
+        .body { box-sizing: border-box; padding-top:40px;; z-index:1; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+        .nopadding { padding: 0; }
+        #marker { background-size: cover; background-color: rgba(255, 0, 0, 0.85); width: 20px; height: 20px; border-radius: 50%; border-width: 3px; border-color: rgba(255, 255, 255, 0.75); cursor: pointer; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 25px; height: 25px; animation: spin 2s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .center-block { margin-left:auto; margin-right:auto; display:block; }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-light bg-light">
+      <span class="navbar-text">
+        Semantica
+      </span>
+    </nav>
+    <div class="container-fluid h-100 body">
+      <div class="row h-100">
+        <div class="col-sm-9 nopadding">
+          <div id="map"></div>
+        </div>
+        <div class="col-sm-3" id="sidebar">
+          <button type="button" class="btn btn-primary btn-lg center-block mt-2" id="enable-marker">Place marker</button>
+          <div class="loader center-block mt-2" style="display: none;"></div>
+          <div id="content mt-2"></div>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuamJhcm9uIiwiYSI6InItaHotTkkifQ.Im25SdEu7d8FNUSXKq8orA';
+    var map = new mapboxgl.Map({
+        container: 'map', // container id
+        style: 'mapbox://styles/mapbox/streets-v9', // stylesheet location
+        center: [-0.13, 51.52], // starting position [lng, lat]
+        zoom: 15,  // starting zoom
+        sprite: "/Users/ben/Data/UCL/semantica/static/img/sprite"
+    });
+
+    // Create empty marker
+    var marker = null;
+    var enableMarker = false;
+    var querying = false;
+    var layers = [];
+    var sources = [];
+
+    $("#enable-marker").click(function() {
+      console.log("clicked "+enableMarker);
+      if(enableMarker) {
+        enableMarker = false;
+        $("#enable-marker").attr("aria-pressed", "false");
+        $("#enable-marker").removeClass("active")
+      } else {
+        enableMarker = true;
+        $("#enable-marker").attr("aria-pressed", "true");
+        $("#enable-marker").addClass("active")
+      }      
+    });
+
+    function addPointToGeoJSON(json, lat, lon, properties) {
+      json.features.push({
+        "type": "Feature",
+        "geometry": {
+            "type": "Point",
+            "coordinates": [lon, lat]
+        },
+        "properties": properties
+      });
+    }
+
+    function addPointsLayer(serviceName, data) {
+      if(data.length === 0) {
+          return;
+      }
+
+      var geoJSON = {
+        "type": "FeatureCollection",
+        "features": [ ]
+      };
+
+      for (var i in data) {
+          var lat = data[i].location.lat;
+          var lon = data[i].location.lon;
+          var name = data[i].name;
+          var category = data[i].category;
+          var color = data[i].color;
+          var properties = {
+              'title': name,
+              'service': serviceName,
+              'category': category,
+              "color": color
+          };
+
+          addPointToGeoJSON(geoJSON, lat, lon, properties);
+      }
+
+      map.addLayer({
+        "id": serviceName,
+        "type": "circle",
+        "source": {
+          "type": "geojson",
+          "data": geoJSON
+        },
+        "paint": {
+          "circle-color": data[0].color,
+          "circle-radius": 5
+        }
+      });
+
+      console.log(geoJSON);
+
+      map.addLayer({
+        "id": serviceName+"-labels",
+        "type": "symbol",
+        "source": serviceName,
+        "layout": {
+          "text-field": "{title}",
+          "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+          "text-offset": [0, 0.6],
+          "text-anchor": "top",
+          "text-size": 12
+        }
+      });
+
+      layers.push(serviceName);
+      sources.push(serviceName);
+      layers.push(serviceName+"-labels");
+
+
+      map.on('click', serviceName, function (e) {
+        new mapboxgl.Popup()
+        .setLngLat(e.features[0].geometry.coordinates)
+        .setHTML("<b>"+e.features[0].properties.name+"</b><br/>"+e.features[0].properties.category)
+        .addTo(map);
+      });
+    }
+
+    function addPolygonLayer(serviceName, data) {
+        if(data.length === 0) {
+          return;
+        }
+        var polygons = {
+          "type": "FeatureCollection",
+          "features": [ ]
+        };
+
+        var points = {
+          "type": "FeatureCollection",
+          "features": [ ]
+        };
+
+        for (var i in data) {
+            var geom = data[i].geom;
+            var id = data[i].id;
+            var point = data[i].center;
+            var name = data[i].name;
+            var color = data[i].color;
+            var category = data[i].tags;
+
+            var layerId = serviceName+"-"+id;
+            console.log("adding "+name+" for "+serviceName);
+
+            polygons.features.push({
+                geometry: geom,
+                properties: {
+                  'title': name,
+                  'id': id,
+                  'service': serviceName,
+                  'category': category,
+                  'color': color
+                }
+            });
+
+            points.features.push({
+                geometry: point,
+                properties: {
+                  'title': name,
+                  'id': id,
+                  'service': serviceName,
+                  'category': category,
+                  'color': color
+                }
+            });
+        }
+
+        map.addLayer({
+            "id": serviceName,
+            "type": "fill",
+            "source": {
+                "type": "geojson",
+                "data": polygons
+            },
+            "paint": {
+                "fill-color": { "type": "identity", "property": "color" },
+                'fill-opacity': 0.5
+            }
+        });
+
+        map.addLayer({
+            "id": serviceName + "-labels",
+            "type": "symbol",
+            "source": {
+                "type": "geojson",
+                "data": points
+            },
+            "layout": {
+                "text-field": "{title}",
+                "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                "text-offset": [0, 0.6],
+                "text-anchor": "top",
+                "text-size": 16
+            }
+        });
+
+        layers.push(serviceName);
+        layers.push(serviceName+"-labels");
+        sources.push(serviceName);
+        sources.push(serviceName+"-labels");
+    }
+
+    map.on('click', function(e) {
+      l = map.getStyle().layers;
+      for(var i in l) {
+        if(l[i]['source-layer'] === 'poi_label') {
+          map.setLayoutProperty(l[i]['id'], 'visibility', 'none');
+        }
+      }
+      
+      if(querying || !enableMarker) { return; }
+
+      // create a DOM element for the marker
+      var el = document.createElement('div');
+      el.id = 'marker';
+      $('#content').html("clicked on map: "+e.lngLat.lng+", "+e.lngLat.lat);
+
+      if (marker !== null) {
+        marker.remove();
+      }
+
+      marker = new mapboxgl.Marker(el)
+        .setLngLat(e.lngLat)
+        .addTo(map);
+
+      $('.loader').show();
+      querying = true;
+
+      $.getJSON('api', {lon: e.lngLat.lng, lat: e.lngLat.lat} )
+       .done(function(data) {
+        for (var i in layers) {
+          map.removeLayer(layers[i]);
+        }
+        for (var i in sources) {
+            map.removeSource(sources[i]);
+        }
+        layers = [];
+        sources = [];
+        for (var service in data) {
+            if (data[service].type === "polygons") {
+                addPolygonLayer(service, data[service].result);
+            }
+        }
+
+        for (var service in data) {
+            if (data[service].type === "points") {
+                addPointsLayer(service, data[service].result);
+            }
+        }
+
+        $('.loader').hide();
+        querying = false;
+        
+      });
+    });
+    
+    </script>
+  </body>
+</html>
