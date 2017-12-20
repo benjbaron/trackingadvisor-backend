@@ -267,7 +267,7 @@
       $('.loader').show();
       querying = true;
 
-      $.getJSON('api', {lon: e.lngLat.lng, lat: e.lngLat.lat} )
+      $.getJSON('getplaces', {lon: e.lngLat.lng, lat: e.lngLat.lat} )
        .done(function(data) {
         for (var i in layers) {
           map.removeLayer(layers[i]);
