@@ -1,8 +1,49 @@
+import sys
+import os
+import re
 import json
 import time
 import math
-import sys
-import re
+import geocoder
+import geojson
+import numpy
+import random
+import datetime
+from sklearn.neighbors import DistanceMetric
+import psycopg2
+import psycopg2.extras
+
+NB_MAX_CONN = 25
+DB_HOSTNAME = "colossus07"
+if "DB_HOSTNAME" in os.environ:
+    DB_HOSTNAME = os.environ.get("DB_HOSTNAME")
+
+
+def connect_to_db(database_name, cursor_type=None):
+    nb_req = 0
+    while nb_req < NB_MAX_CONN:
+        try:
+            connection = psycopg2.connect(host=DB_HOSTNAME, database=database_name, user="postgres", password="postgres")
+            if cursor_type:
+                cursor = connection.cursor(cursor_factory=cursor_type)
+            else:
+                cursor = connection.cursor()
+        except psycopg2.Error as e:
+            nb_req += 1
+            time.sleep(random.uniform(0.01, nb_req / 10.0))
+        else:
+            return connection, cursor
+
+    print("Error connecting the database")
+    sys.exit(0)
+
+
+def timestamp_from_string(s):
+    return time.mktime(datetime.datetime.strptime(s, "%Y-%m-%d %H:%M:%S %z").timetuple())
+
+
+def datetime_from_timestamp(ts):
+    return datetime.datetime.fromtimestamp(ts)
 
 
 def decode_personal_information(info):
@@ -17,6 +58,21 @@ def print_progress(s):
     sys.stdout.flush()
 
 
+def compute_medoid(raw_points):
+    points = numpy.radians([[p[0], p[1]] for p in raw_points])
+    d = DistanceMetric.get_metric('haversine')
+    dists = d.pairwise(points)
+    index = numpy.argmin(dists.sum(axis=0))
+    return index
+
+
+def compute_diameter(raw_points):
+    points = numpy.radians([[p[0], p[1]] for p in raw_points])
+    d = DistanceMetric.get_metric('haversine')
+    dists = d.pairwise(points).flatten()
+    return dists[numpy.argmax(dists)] * 6372795
+
+
 def monitor_map_progress(map_result, d, total, title="Progress: "):
     while True:
         if map_result.ready():
@@ -27,6 +83,36 @@ def monitor_map_progress(map_result, d, total, title="Progress: "):
             # s += " [%s]" % (", ".join([str(k) for k in d.keys() if d[k] == 'running']))
             print_progress(s)
             time.sleep(0.5)
+
+
+def get_address(location):
+    g = None
+    count = 0
+    while (not g or not g.city) and count < 10:
+        g = geocoder.google([location['lat'], location['lon']], method='reverse')
+        time.sleep(0.01)
+        count += 1
+
+    street = None
+    if g.housenumber and g.street:
+        street = "{} {}".format(g.housenumber, g.street)
+    elif g.street:
+        street = "{}".format(g.street)
+    return street, g.city
+
+
+def get_boundaries_from_location(location):
+    g = 0
+    count = 0
+    while (not g or not g.json or not'raw' in g.json) and count < 10:
+        g = geocoder.google(location)
+        time.sleep(0.01)
+        count += 1
+
+    if count == g.json:
+        return {}, {}
+
+    return g.json['raw']['geometry']['bounds'], {'lat': g.json['lat'], 'lon': g.json['lng']}
 
 
 # Semi-axes of WGS-84 geoidal reference
@@ -171,6 +257,12 @@ def get_boundary_cells(boundary, cell_size):
             boundaries.append(get_cell(cell['northeast'], x_size, y_size))
 
     return boundaries
+
+
+def wkt_to_geojson(wkt):
+    g1 = shapely.wkt.loads(wkt)
+    g2 = geojson.Feature(geometry=g1, properties={})
+    return g2.geometry
 
 
 def boundary_to_geojson_polygon(boundary):

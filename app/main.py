@@ -7,6 +7,7 @@ from werkzeug import secure_filename
 
 import osm
 import foursquare
+import dbpedia
 import db
 
 
@@ -40,6 +41,15 @@ def get_place():
     res = dict()
     res["foursquare"] = {'type': 'points', 'result': foursquare.get_places(location, 50, 5)}
     res['osm-polygons'] = {'type': 'polygons', 'result': osm.get_polygons(location, 50)}
+    res['dbpedia'] = {'type': 'points', 'result': dbpedia.get_places(location, 500, 5)}
+
+    return json.dumps(res)
+
+
+@app.route('/getfoursquareplace', methods=['GET'])
+def get_foursquare_tips():
+    venue_id = request.args.get('venue_id')
+    res = foursquare.get_place(venue_id)
 
     return json.dumps(res)
 
@@ -80,6 +90,20 @@ def user_update():
     user_id = request.args.get('userid')
     day = request.args.get('day')
     uu = db.get_user_update_from_db(user_id, day)
+    return json.dumps(uu)
+
+
+@app.route('/personalinformationcategories', methods=['GET'])
+def personal_information_categories():
+    pic = db.get_personal_information_categories()
+    return json.dumps(pic)
+
+
+@app.route('/userchallenge', methods=['GET'])
+def user_challenge():
+    user_id = request.args.get('userid')
+    day = request.args.get('day')
+    uu = db.get_user_review_challenge_from_db(user_id, day)
     return json.dumps(uu)
 
 

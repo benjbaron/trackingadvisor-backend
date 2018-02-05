@@ -5,15 +5,9 @@ import psycopg2
 import psycopg2.extras
 from collections import OrderedDict
 
-DB_HOSTNAME = "localhost"
+DB_HOSTNAME = "colossus07"
 if "DB_HOSTNAME" in os.environ:
     DB_HOSTNAME = os.environ.get("DB_HOSTNAME")
-
-
-def wkt_to_geojson(wkt):
-    g1 = shapely.wkt.loads(wkt)
-    g2 = geojson.Feature(geometry=g1, properties={})
-    return g2.geometry
 
 
 def connect_to_database():    
@@ -65,7 +59,7 @@ def get_polygons(location, distance=50):
     WITH point_buffer AS (
 	     SELECT ST_Buffer(ST_TRANSFORM(ST_SETSRID(ST_MAKEPOINT(%s, %s), 4326),3857), %s) as buffer
     )
-    SELECT poly.name,  poly."addr:housename" as housename, poly.osm_id as id, poly.tags, poly.building, poly.way_area as area, 
+    SELECT poly.name, poly."addr:housename" as housename, poly.osm_id as id, poly.tags, poly.building, poly.way_area as area, 
            st_area(st_intersection(pt.buffer, poly.way)) / st_area(pt.buffer) as intersect_area
     FROM planet_osm_polygon poly, point_buffer pt
     WHERE (name is not null OR "addr:housename" IS NOT NULL) AND

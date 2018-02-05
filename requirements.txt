@@ -5,3 +5,7 @@ geojson
 shapely
 requests
 werkzeug
+geocoder
+numpy
+sklearn
+scipy
