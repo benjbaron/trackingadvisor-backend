@@ -3,6 +3,7 @@ import time
 import datetime
 import psycopg2
 import psycopg2.extras
+from psycopg2 import sql
 from collections import OrderedDict
 
 import foursquare
@@ -36,7 +37,8 @@ def day_from_string(s):
 
 
 def save_user_trace_to_db(trace_file):
-    print("processing trace {}".format(trace_file))
+    days = set()
+    uids = set()
     with open(trace_file, 'r') as f:
         connection, cursor = utils.connect_to_db("users")
 
@@ -60,10 +62,13 @@ def save_user_trace_to_db(trace_file):
             battery_status = fields.get('batterycharge', '')
             point = "POINT({} {})".format(longitude, latitude)
 
+            days.add(day)
+            uids.add(user_id)
+
             query_string = """
             INSERT INTO traces 
-            (user_id, longitude, latitude, timestamp, timestamp_utc, day, accuracy, target_accuracy, speed, nb_steps, activity,
-             activity_confidence, ssid, battery_level, battery_status, geom)
+            (user_id, longitude, latitude, timestamp, timestamp_utc, day, accuracy, target_accuracy, speed, nb_steps, 
+            activity, activity_confidence, ssid, battery_level, battery_status, geom)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, ST_GeomFromText(%s, 4326))
             ON CONFLICT DO NOTHING;"""
             data = (user_id, latitude, longitude, timestamp_local, timestamp_utc, day, accuracy, target_accuracy,
@@ -71,6 +76,8 @@ def save_user_trace_to_db(trace_file):
             cursor.execute(query_string, data)
 
         connection.commit()
+
+    return list(uids), list(days)
 
 
 def save_user_visit_to_db(visit):
@@ -80,10 +87,11 @@ def save_user_visit_to_db(visit):
     INSERT INTO visits
     (user_id, latitude, longitude, arrival, departure, place_id, day, confidence)
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-    ON CONFLICT (arrival, departure) DO UPDATE SET place_id=EXCLUDED.place_id 
+    ON CONFLICT (arrival, user_id) DO UPDATE SET departure = GREATEST(visits.departure, EXCLUDED.departure) 
     RETURNING visit_id;"""
-    data = (visit['user_id'], visit['latitude'], visit['longitude'], visit['arrival'],
-            visit['departure'], visit['place_id'], visit['day'], visit['confidence'])
+    data = (visit.get('user_id', None), visit.get('latitude', None), visit.get('longitude', None),
+            visit.get('arrival', None), visit.get('departure', None), visit.get('place_id', None),
+            visit.get('day', None), visit.get('confidence', 1.0))
 
     cursor.execute(query_string, data)
     visit_id = cursor.fetchone()[0]
@@ -103,9 +111,10 @@ def save_user_place_to_db(place):
     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, ST_GeomFromText(%s, 4326), %s, %s, %s, %s, %s)
     ON CONFLICT (name, user_id) DO UPDATE SET name=EXCLUDED.name
     RETURNING place_id;"""
-    data = (place['osm_point_id'], place['osm_polygon_id'], place['venue_id'], place['address'], place['city'],
-            place['latitude'], place['longitude'], place['name'], place['user_entered'], point,
-            place['ssid'], place['user_id'], place['color'], place['type'], place['category'])
+    data = (place.get('osm_point_id', ''), place.get('osm_polygon_id', ''), place.get('venue_id', ''),
+            place.get('address', ''), place.get('city', ''), place.get('latitude', None), place.get('longitude', None),
+            place.get('name', ''), place.get('user_entered', None), point, place.get('ssid', ''),
+            place.get('user_id', None), place.get('color', ''), place.get('type', None), place.get('category', ''))
 
     cursor.execute(query_string, data)
     place_id = cursor.fetchone()[0]
@@ -271,6 +280,20 @@ def load_user_places(user_id, day):
     return result
 
 
+def load_user_place(user_id, place_id):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    SELECT p.place_id as pid, p.latitude as lat, p.longitude as lon, p.name as name, p.city as c, p.address as a, 
+           p.venue_id as vid, p.type as t, p.color as col
+    FROM places p
+    WHERE place_id = %s AND user_id = %s;"""
+    data = (place_id, user_id)
+
+    cursor.execute(query_string, data)
+    return dict(cursor.fetchone())
+
+
 def load_user_visits(user_id, day):
     connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
 
@@ -283,6 +306,19 @@ def load_user_visits(user_id, day):
 
     cursor.execute(query_string, data)
     return [dict(record) for record in cursor]
+
+
+def load_user_visit(user_id, visit_id):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    SELECT visit_id as vid, place_id as pid, arrival as a, departure as d, confidence as c
+    FROM visits 
+    WHERE visit_id = %s AND user_id = %s;"""
+    data = (visit_id, user_id)
+
+    cursor.execute(query_string, data)
+    return dict(cursor.fetchone())
 
 
 def load_user_moves(user_id, day):
@@ -368,7 +404,7 @@ def load_user_review_challenge(user_id, day):
     return review_challenges[0] if review_challenges else None
 
 
-def get_user_place(user_id, location, place_type="place", distance=50, limit=1):
+def get_user_place(user_id, location, distance=50, limit=1):
     connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
@@ -378,14 +414,118 @@ def get_user_place(user_id, location, place_type="place", distance=50, limit=1):
     SELECT place_id, address, venue_id, user_entered, ssid, latitude, longitude, city, name, type, category,
            ST_Distance(p.coords, ST_TRANSFORM(geom, 3857)) AS distance
     FROM places, place p
-    WHERE user_id = %s AND type = %s AND ST_DWithin(ST_TRANSFORM(geom, 3857), p.coords, %s)      
+    WHERE user_id = %s AND ST_DWithin(ST_TRANSFORM(geom, 3857), p.coords, %s)      
     ORDER BY distance ASC
     LIMIT %s;"""
-    data = (location['lon'], location['lat'], user_id, place_type, distance, limit)
+    data = (location['lon'], location['lat'], user_id, distance, limit)
 
     cursor.execute(query_string, data)
     places = [dict(record) for record in cursor]
     return places[0] if places else None
+
+
+def get_raw_trace(user_id, start, end):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    SELECT longitude as lon, latitude as lat, timestamp as ts 
+    FROM traces 
+    WHERE user_id = %s AND timestamp BETWEEN %s AND %s;"""
+    data = (user_id, start, end)
+
+    cursor.execute(query_string, data)
+    places = [dict(record) for record in cursor]
+    return places
+
+
+def delete_all_records(user_id):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+
+    for table in ['moves', 'visits', 'places', 'traces', 'review_challenges', 'reviews_visits',
+                  'reviews_personal_information', 'personal_information']:
+        cursor.execute(sql.SQL("DELETE FROM {} WHERE user_id = %s").format(sql.Identifier(table)), (user_id,))
+
+    connection.commit()
+    print("Done deleting database entries for user %s" % user_id)
+
+
+def delete_user_place(user_id, place_id, visit_id):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+
+    # check if the place is associated to other visits
+    # /!\ IMPORTANT
+    cursor.execute(sql.SQL("SELECT visit_id FROM visits WHERE user_id = %s AND place_id = %s "),
+                   (user_id, place_id))
+    records = cursor.fetchall()
+    if len(records) != 1 and records[0] != visit_id:
+        return
+
+    # delete the place
+    cursor.execute(sql.SQL("DELETE FROM places WHERE user_id = %s AND place_id = %s"),
+                   (user_id, place_id))
+
+    # delete all the personal information associated to this place
+    cursor.execute(sql.SQL("DELETE FROM personal_information WHERE user_id = %s AND place_id = %s"),
+                   (user_id, place_id))
+
+    # delete all the reviews associated to this place
+    cursor.execute(sql.SQL("DELETE FROM reviews_personal_information WHERE user_id = %s AND place_id = %s"),
+                   (user_id, place_id))
+    connection.commit()
+
+
+def update_user_visit(visit):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    UPDATE visits SET 
+      latitude = COALESCE(%s, latitude), 
+      longitude = COALESCE(%s, longitude), 
+      arrival = COALESCE(%s, arrival), 
+      departure = COALESCE(%s, departure),
+      place_id = COALESCE(%s, place_id),
+      confidence = COALESCE(%s, confidence),
+    WHERE user_id = %s AND visit_id = %s;"""
+    data = (visit.get('latitude', None), visit.get('longitude', None), visit.get('arrival', None),
+            visit.get('departure', None), visit.get('place_id', None), visit.get('confidence', 1.0),
+            visit.get('user_id', ''), visit.get('visit_id', ''))
+
+    cursor.execute(query_string, data)
+    connection.commit()
+
+
+def update_user_place(place):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    UPDATE places SET 
+      latitude = COALESCE(%s, latitude), 
+      longitude = COALESCE(%s, longitude), 
+      name = COALESCE(%s, name), 
+      address = COALESCE(%s, address), 
+      city = COALESCE(%s, city)
+    WHERE user_id = %s AND place_id = %s;"""
+    data = (place.get('latitude', None), place.get('longitude', None), place.get('name', None), place.get('address', None),
+            place.get('city', None), place.get('user_id', ''), place.get('place_id', ''))
+
+    cursor.execute(query_string, data)
+    connection.commit()
+
+
+def update_user_review_visit(review):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    UPDATE reviews_visits SET
+      question = COALESCE(%s, question),
+      type = COALESCE(%s, type),
+      answer = COALESCE(%s, answer)
+    WHERE user_id = %s AND visit_id = %s;"""
+    data = (review.get('question', None), review.get('type', None), review.get('answer', None),
+            review.get('user_id', ''), review.get('visit_id', ''))
+
+    cursor.execute(query_string, data)
+    connection.commit()
 
 
 if __name__ == '__main__':

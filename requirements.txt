@@ -9,3 +9,4 @@ geocoder
 numpy
 sklearn
 scipy
+nltk

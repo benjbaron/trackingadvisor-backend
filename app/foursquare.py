@@ -98,7 +98,6 @@ def send_request(base, params={}):
         else:
             full_url += client
         full_url += "&v=20150906&m=foursquare&locale=en"
-
         try:
             data = requests.get(full_url).json()  # json.load(urllib2.urlopen(full_url))
         except:
@@ -138,6 +137,26 @@ def test_api_keys(base, params={}):
 
         print("Done for key #{}".format(count))
         count += 1
+
+
+def sort_place_score(places):
+    res = []
+    max_nb_checkins = 0
+    min_distance = 100
+    for place in places:
+        if place['checkins'] > max_nb_checkins:
+            max_nb_checkins = place['checkins']
+        if place['distance'] < min_distance:
+            min_distance = place['distance']
+
+    for place in places:
+        checkin_ratio = 0 if max_nb_checkins == 0 else place['checkins'] / max_nb_checkins
+        distance_ratio = 1 if place['distance'] == 0 else place['distance']
+        score = 0.5 * checkin_ratio + 1.5 / math.sqrt(distance_ratio)
+        place['score'] = score
+        res.append((score, place))
+
+    return [e[1] for e in sorted(res, key=lambda x: x[0], reverse=True)]
 
 
 def get_place(venue_id):
@@ -199,15 +218,17 @@ def get_autocomplete(location, query, distance=250, limit=8):
                 continue
 
             category = venue['categories'][0]['name'] if len(venue['categories']) > 0 else ""
-
             results.append({
                 "name": venue['name'],
-                "placeid": venue['id'],
+                "venueid": venue['id'],
+                "placeid": "",
                 "category": category,
-                "latitude": venue['location']['lng'],
-                "longitude": venue['location']['lat'],
-                "address": venue['location'].get('address', ""),
                 "city": venue['location'].get('city', ""),
+                "address": venue['location'].get('address', ""),
+                "checkins": 0,
+                "score": venue['location']['distance'],
+                "latitude": venue['location']['lat'],
+                "longitude": venue['location']['lng'],
                 "distance": venue['location']['distance'],
                 "origin": "foursquare-api"
             })
@@ -224,11 +245,9 @@ def get_autocomplete_from_db(location, query, distance=250, limit=8):
           SELECT ST_TRANSFORM(ST_SETSRID(ST_MAKEPOINT(%s, %s),4326),3857) as coords
         )
         SELECT v3.name, v3.city, v3.venue_id, v3.address, v3.nb_checkins, v3.latitude, v3.longitude,
-               ST_Distance(ST_TRANSFORM(v3.geom, 3857), p.coords) as distance, v2.categories, 
-               (0.25*v3.nb_checkins / max_checkins + 1.5 / SQRT(ST_Distance(ST_TRANSFORM(v3.geom, 3857), p.coords))) as weight
+               ST_Distance(ST_TRANSFORM(v3.geom, 3857), p.coords) as distance, v2.categories 
         FROM (
-            SELECT v1.venue_id, array_agg(DISTINCT c.name ORDER BY c.name) as categories,
-                   MAX(v1.nb_checkins) as max_checkins
+            SELECT v1.venue_id, array_agg(DISTINCT c.name ORDER BY c.name) as categories
             FROM (
                 SELECT v.venue_id, v.nb_checkins, unnest(categories) as category_id
                 FROM venues v, place p
@@ -237,7 +256,7 @@ def get_autocomplete_from_db(location, query, distance=250, limit=8):
             ) v1 JOIN categories c ON c.category_id = v1.category_id
             GROUP BY venue_id
         ) v2 JOIN venues v3  ON v2.venue_id = v3.venue_id, place p
-        ORDER BY weight DESC, distance ASC
+        ORDER BY nb_checkins DESC, distance ASC
         LIMIT %s;"""
         data = (location['lon'], location['lat'], distance, limit)
     else:
@@ -263,22 +282,25 @@ def get_autocomplete_from_db(location, query, distance=250, limit=8):
         data = (location['lon'], location['lat'], query, distance, limit)
 
     cursor.execute(query_string, data)
+
     results = []
     for record in cursor:
         category = record['categories'][0] if len(record['categories']) > 0 else ""
         results.append({
             "name": record['name'],
-            "placeid": record['venue_id'],
+            "venueid": record['venue_id'],
+            "placeid": "",
             "category": category,
             "city": record['city'],
             "address": record['address'],
             "latitude": record['latitude'],
             "longitude": record['longitude'],
+            "checkins": record['nb_checkins'],
             "distance": record['distance'],
             "origin": "foursquare-cache"
         })
 
-    return results
+    return sort_place_score(results)
 
 
 def get_place_with_name(location, query, distance=200):
@@ -405,28 +427,26 @@ def get_places_from_db(location, distance=50, limit=5):
     connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
-    SELECT v.venue_id, v.name, v.nb_checkins, v.latitude, v.longitude, v.rating, v.price_tier, v.nb_likes, v.nb_tips,
-    v.city, v.address, v.phrases, t.chains, t.categories, t.distance
+    WITH place AS (
+      SELECT ST_TRANSFORM(ST_SETSRID(ST_MAKEPOINT(%s, %s),4326),3857) as coords
+    )
+    SELECT v3.name, v3.city, v3.venue_id, v3.address, v3.nb_checkins, v3.latitude, v3.longitude, v2.categories, 
+           v3.rating,v3.nb_likes, v3.price_tier, v3.nb_tips,
+           ST_Distance(ST_TRANSFORM(v3.geom, 3857), p.coords) as distance
     FROM (
-        SELECT v1.venue_id, v1.distance, array_agg(DISTINCT c.name ORDER BY c.name) as categories, 
-               array_agg(DISTINCT ch.name ORDER BY ch.name) as chains
+        SELECT v1.venue_id, array_agg(DISTINCT c.name ORDER BY c.name) as categories,
+               MAX(v1.nb_checkins) as max_checkins
         FROM (
-            SELECT venue_id,
-            ST_Distance(ST_TRANSFORM(ST_SETSRID(ST_MAKEPOINT(%s,%s),4326),3857), ST_TRANSFORM(geom, 3857)) AS distance,
-            unnest(v1.categories) as category_id,
-            unnest(v1.chains) as chain_id
-            FROM venues v1
-            WHERE ST_DWithin(ST_TRANSFORM(geom, 3857), 
-                             ST_TRANSFORM(ST_SETSRID(ST_MAKEPOINT(%s, %s), 4326), 3857), 
-                             %s)
+            SELECT v.venue_id, v.nb_checkins, unnest(categories) as category_id
+            FROM venues v, place p
+            WHERE ST_DWITHIN(ST_TRANSFORM(v.geom, 3857), p.coords, %s)
         ) v1 JOIN categories c ON c.category_id = v1.category_id
-             LEFT OUTER JOIN chains ch ON ch.chain_id = v1.chain_id
-        GROUP BY v1.venue_id, v1.distance
-    ) t JOIN venues v  ON v.venue_id = t.venue_id
-    ORDER BY v.nb_checkins DESC
-    LIMIT %s;"""
+        GROUP BY venue_id
+        LIMIT %s
+    ) v2 JOIN venues v3  ON v2.venue_id = v3.venue_id, place p
+    ORDER BY nb_checkins DESC, distance ASC;"""
 
-    data = (location['lon'], location['lat'], location['lon'], location['lat'], distance, limit)
+    data = (location['lon'], location['lat'], distance, limit)
 
     cursor.execute(query_string, data)
     records = cursor.fetchall()
@@ -452,7 +472,7 @@ def get_places_from_db(location, distance=50, limit=5):
         }
         places.append(loc)
 
-    return places
+    return sort_place_score(places)
 
 
 def is_location_in_db(location, distance=50):
@@ -472,8 +492,7 @@ def is_location_in_db(location, distance=50):
 
 
 def save_search_area_to_db(location, boundary, distance):
-    connection = psycopg2.connect(host=DB_HOSTNAME, database="foursquare", user="postgres", password="postgres")
-    cursor = connection.cursor()
+    connection, cursor = utils.connect_to_db("foursquare")
 
     location_point = "POINT({} {})".format(location['lon'], location['lat'])
     area_polygon = utils.boundary_to_wkt_polygon(boundary)
@@ -855,11 +874,10 @@ def autocomplete_location(location, query, distance=800, limit=10):
         'city': city,
         'places': []
     }
+
     if not is_location_in_db(location):
-        print("location {} not in database".format(location))
         res['places'] = get_autocomplete(location, query, distance, limit)
     else:
-        print("location {} in database".format(location))
         res['places'] = get_autocomplete_from_db(location, query, distance, limit)
 
     return res
@@ -1075,6 +1093,15 @@ if __name__ == '__main__':
             get_all_places_within_location(args=args)
         else:
             print('Error - Please give an additional argument (venues-done|venues-file|venues-cell|save-search-area)')
+    elif argument == 'find':
+        if len(sys.argv) == 4:
+            lon = sys.argv[2]
+            lat = sys.argv[3]
+            location = {"lon": lon, "lat": lat}
+            fsq_places = get_places_from_db(location, 100, 5)
+            print(fsq_places)
+        else:
+            print('Error - Please give lon lat arguments')
     else:
         print('Error - unknown argument provided ({})'.format(argument))
         sys.exit(0)

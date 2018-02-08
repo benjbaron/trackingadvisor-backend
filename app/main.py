@@ -87,9 +87,10 @@ def register_new_user():
 
 @app.route('/userupdate', methods=['GET'])
 def user_update():
+    print("hello")
     user_id = request.args.get('userid')
     day = request.args.get('day')
-    uu = db.get_user_update_from_db(user_id, day)
+    uu = db.get_day_user_update_from_db(user_id, day)
     return json.dumps(uu)
 
 
@@ -115,6 +116,47 @@ def autocomplete_place():
     query = request.args.get('query')
     location = {"lon": lon, "lat": lat}
     return json.dumps(foursquare.autocomplete_location(location, query))
+
+
+@app.route('/rawtrace', methods=['GET'])
+def raw_trace():
+    user_id = request.args.get('userid')
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    return json.dumps(db.get_raw_trace(user_id, start, end))
+
+
+@app.route('/addvisit', methods=['POST'])
+def add_visit():
+    visit_update = {
+        "user_id": request.json['userid'],
+        "venue_id": request.json['venueid'],
+        "day": request.json['day'],
+        "arrival": request.json['start'],
+        "departure": request.json['end'],
+        "lon": request.json['lon'],
+        "lat": request.json['lat'],
+        "name": request.json['name'],
+        "address": request.json['address'],
+        "city": request.json['city'],
+        "visit_id": request.json['visitid'],
+        "old_place_id": request.json['oldplaceid'],
+        "new_place_id": request.json['newplaceid']
+    }
+
+    print(visit_update)
+
+    t = request.json['type']
+    if t == 0:  # add place
+        return json.dumps(db.add_visit(visit_update))
+    elif t == 1:  # edit place
+        return json.dumps(db.update_visit(visit_update))
+
+
+@app.route('/consentform', methods=['GET'])
+def consent_form():
+    return json.dumps(db.get_consent_form())
 
 
 @app.route('/uploader', methods=['POST'])

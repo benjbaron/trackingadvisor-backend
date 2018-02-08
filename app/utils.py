@@ -19,6 +19,22 @@ if "DB_HOSTNAME" in os.environ:
     DB_HOSTNAME = os.environ.get("DB_HOSTNAME")
 
 
+UCL_COLORS = [
+    ("Dark Green", "#555025"),
+    ("Dark Red", "#651D32"),
+    ("Dark Purple", "#4B384C"),
+    ("Dark Blue", "#003D4C"),
+    ("Dark Brown", "#4E3629"),
+    ("Mid Green", "#8F993E"),
+    ("Mid Red", "#93272C"),
+    ("Mid Purple", "#500778"),
+    ("Mid Blue", "#002855"),
+    ("Blue", "#24509A")
+]
+
+UCL_COLOR_HOME = ("Orange", "#EA7600")
+
+
 def connect_to_db(database_name, cursor_type=None):
     nb_req = 0
     while nb_req < NB_MAX_CONN:
@@ -36,6 +52,14 @@ def connect_to_db(database_name, cursor_type=None):
 
     print("Error connecting the database")
     sys.exit(0)
+
+
+def pick_place_color(place_name):
+    if place_name.lower() == 'home':
+        return UCL_COLOR_HOME[1]
+
+    idx = len(place_name) % len(UCL_COLORS)
+    return UCL_COLORS[idx][1]
 
 
 def timestamp_from_string(s):

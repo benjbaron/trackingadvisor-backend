@@ -126,6 +126,21 @@ def get_personal_information(db_name):
     print("Done writing in file {}".format(fname))
 
 
+def get_consent_form():
+    fname = 'consent_form.csv'
+    f_out = open(fname, 'w')
+
+    wks = gc.open_by_key(sheet_key).get_worksheet(7)
+    header = wks.row_values(1)
+    f_out.write("%s\n" % ";".join(e for e in header if e))
+
+    for row in wks.get_all_values()[1:]:
+        f_out.write("%s\n" % ";".join(row[i] for i in range(len(row)) if header[i]))
+
+    f_out.close()
+    print("Done writing in file {}".format(fname))
+
+
 if __name__ == '__main__':
     base = sys.argv[0]
     if len(sys.argv) == 1:
@@ -135,7 +150,9 @@ if __name__ == '__main__':
     arg = sys.argv[1]
     if arg in ['dbpedia', 'foursquare', 'categories']:
         get_personal_information(arg)
+    elif arg == 'consent-form':
+        get_consent_form()
     else:
-        print("Error - incorrect argument (dbpedia, foursquare)")
+        print("Error - incorrect argument (dbpedia, foursquare, categories, consent-form)")
         sys.exit(0)
 
