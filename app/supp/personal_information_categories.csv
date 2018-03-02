@@ -1,5 +1,5 @@
 acronym;name;description;explanation;icon
-INT;Topic of Interests;Describes your possible interests;We derived an information about a topic of interest from the type of the place you visited.;heart
+INT;Topic of Interests;Describes your possibles interests;We derived an information about a topic of interest from the type of the place you visited.;heart
 ACT;Activity;Describes your possible activities;We derived an information about your possible activity because this is the typical activities that people do at this place.;paper-plane
 SOC;Social;Describes your possible social activities;We dervied this information because this is a place where people usually have social activities.;comments
 SKL;Skills;Describes your possible skills;We derived an information about a possible skill because it is a typical skill that people develop or use at this place.;gamepad
@@ -7,10 +7,11 @@ REL;Religious Beliefs;Describes your possible religious beliefs;We derived an in
 POL;Political Influences;Describes your possible political influences;We derived an information about your possible political influences because this place is strongly associated with politics.;bullhorn
 ADD;Addictions;Describes your possible addictions;We derived an information about possible addictions because this place is strongly associated with addicive behaviors.;bug
 HEA;Health Condition;Describes your possible health condition;We derived an information about possible health condition because the type of this place is in the health domain.;stethoscope
-OWN;Ownership;Describes your possible ownership;We derived an information about what you may own from the place you visited.;paw
-EHT;Ethnicity;Describes your possible ethnicity;We derived an information about your possible ethnicity because this place is strongly associated with a particular ethnicity.;language
+OWN;Ownership;Describes your possible ownership;We derived an information about what you may own from the place you visited.;hand-loader
+ETH;Ethnicity;Describes your possible ethnicity;We derived an information about your possible ethnicity because this place is strongly associated with a particular ethnicity.;language
 GEN;Sexuality and Gender;Describes your possible sexuality and/or gender;We derived an information about your possible gender or sexual orientation because this place is strongly associated with a particular gender or sexual orientation.;venus-mars
 AGE;Age;Describes your possible age;We derived an information about your possible age because this place is strongly associated with people a particular age range.;birthday-cake
 STA;Socio-economic Status;Describes your possible socio-economic status;We derived an information about your possible socio-economic status because this place is strongly associated with people a particular socio-economic status.;chart
 FAM;Family Life;Describes your possible family life;We derived an information about your family life from the type of the place you visited.;users
 WOR;Work;Describes your possible work;We derived an information about your work because you spent most of your day at this place.;building
+TRA;Transportation;Describes the possible type of transportation you took;We derived an information about the type of transportation you took because it corresponds to the type of transportation that people usually take at this place.;train

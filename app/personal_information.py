@@ -7,23 +7,24 @@ import nltk
 from nltk.corpus import wordnet as wn
 import string
 
-nltk.download('punkt')
-
 import dbpedia
 import foursquare
 import user_traces_db
 
+nltk.download('punkt', quiet=True)
+
 
 PREPOSITIONS = {'of', 'in', 'at', 'on'}
 ARTICLES = {'a', 'an', 'of', 'the', 'is', 'and', 'at', 'in', 'on', 'yes'}
-ROOTS_PATH = 'supp/dbpedia_type_roots.txt'
+PATH = "supp/"
+ROOTS_PATH = PATH + 'dbpedia_type_roots.txt'
 
 
 def title_except(s, exceptions=ARTICLES):
     if s == 'YES':
         return s
 
-    word_list = re.split(' ', s)       # re.split behaves as expected
+    word_list = re.split(" ", s)       # re.split behaves as expected
     final = [word_list[0].capitalize()]
     for word in word_list[1:]:
         final.append(word if word in exceptions else word.capitalize())
@@ -91,8 +92,11 @@ def get_dbpedia_type_roots(filepath=ROOTS_PATH):
 
 
 def remove_similar_personal_information(personal_information, type, roots):
-    type_roots = set(e[0] for e in roots[type])
     d = OrderedDict((pi['name'], pi) for pi in personal_information)
+    if type not in roots:
+        return d.values()
+
+    type_roots = set(e[0] for e in roots[type])
     for i in range(len(personal_information)-1):
         pi_1 = personal_information[i]['name']
         pi_1_tokens = set(get_tokens(pi_1))
@@ -227,7 +231,7 @@ def get_personal_information_categories(db_name):
         return
 
     categories = {}
-    fname = "supp/personal_information_{}.csv".format(db_name)
+    fname = PATH + "personal_information_{}.csv".format(db_name)
     with open(fname, 'r') as f:
         header = f.readline().rstrip().split(';')
         for line in f:
@@ -238,7 +242,7 @@ def get_personal_information_categories(db_name):
 
 
 def get_personal_information_categories_detail_from_file():
-    fname = 'supp/personal_information_categories.csv'
+    fname = PATH + 'personal_information_categories.csv'
     categories = {}
     with open(fname, 'r') as f:
         header = f.readline().rstrip().split(';')

@@ -112,7 +112,7 @@ def get_personal_information(db_name):
     elif db_name == 'categories':
         sheet_idx = 6
 
-    fname = 'personal_information_{}.csv'.format(db_name)
+    fname = '../supp/personal_information_{}.csv'.format(db_name)
     f_out = open(fname, 'w')
 
     wks = gc.open_by_key(sheet_key).get_worksheet(sheet_idx)
@@ -126,8 +126,43 @@ def get_personal_information(db_name):
     print("Done writing in file {}".format(fname))
 
 
+def dump_all_personal_information():
+    sheet_idx = 3
+    wks = gc.open_by_key(sheet_key).get_worksheet(sheet_idx)
+
+    fname = '../supp/personal_information_all.csv'
+    f_out = open(fname, 'w')
+
+    header = wks.row_values(1)
+    f_out.write("%s\n" % ";".join(e for e in header if e))
+
+    for row in wks.get_all_values()[1:]:
+        f_out.write("%s\n" % ";".join(row[i] for i in range(len(row)) if header[i]))
+
+    f_out.close()
+    print("Done writing in file {}".format(fname))
+
+
+def get_personal_information_list():
+    sheet_idx = 5
+    wks = gc.open_by_key(sheet_key).get_worksheet(sheet_idx)
+    res = {}
+    header = wks.row_values(1)
+    for h in header:
+        if h in ['', 'ID']:
+            continue
+        res[h] = set()
+    for row in wks.get_all_values()[2:]:
+        for i in range(len(header)):
+            h = header[i]
+            if h in res and row[i] != '':
+                res[h].update(row[i].split(','))
+
+    print(res)
+
+
 def get_consent_form():
-    fname = 'consent_form.csv'
+    fname = '../supp/consent_form.csv'
     f_out = open(fname, 'w')
 
     wks = gc.open_by_key(sheet_key).get_worksheet(7)
@@ -152,7 +187,11 @@ if __name__ == '__main__':
         get_personal_information(arg)
     elif arg == 'consent-form':
         get_consent_form()
+    elif arg == 'list':
+        get_personal_information_list()
+    elif arg == 'all':
+        dump_all_personal_information()
     else:
-        print("Error - incorrect argument (dbpedia, foursquare, categories, consent-form)")
+        print("Error - incorrect argument (dbpedia, foursquare, categories, consent-form, list, all)")
         sys.exit(0)
 

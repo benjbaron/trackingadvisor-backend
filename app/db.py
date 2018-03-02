@@ -6,22 +6,119 @@ import foursquare
 import utils
 
 
-def get_day_user_update_from_db(user_id, day):
-    user_update = {
-        "uid": user_id,
-        "day": day,
-        "rv": [],    # reviews for visits
-        "rpi": [],   # reviews for personal information
-        "p": [],     # places
-        "v": [],     # visits
-        "m": [],     # moves
-        "pi": [],    # personal information
-        "q": []      # questions
+def autocomplete_location(user_id, location, query):
+    # get the current address
+    street, city = utils.get_address(location)
+    res = {
+        'street': street,
+        'city': city,
+        'places': []
     }
 
-    user_update['p'] = user_traces_db.load_user_places(user_id, day)
-    user_update['v'] = user_traces_db.load_user_visits(user_id, day)
-    user_update['m'] = user_traces_db.load_user_moves(user_id, day)
+    # get the user locations
+    user_places = user_traces_db.autocomplete_location(user_id, location, query, distance=100, limit=5)
+    res['places'] += user_places
+
+    venue_ids = set(p['venueid'] for p in user_places if p['venueid'] != "")
+
+    # get the foursquare places
+    foursquare_places = foursquare.autocomplete_location(location, query, distance=250, limit=10)
+    res['places'] += [p for p in foursquare_places if p['venueid'] not in venue_ids]
+
+    # return all the "relevant" places
+    return res
+
+
+def autocomplete_personal_information(user_id, category):
+    fname = 'supp/personal_information_all.csv'
+    pis = {}
+    with open(fname, 'r') as f:
+        header = f.readline().rstrip().split(';')  # header
+        for line in f:
+            fields = dict(zip(header, line.rstrip().split(';')))
+            picid = fields['picid']
+            pi = fields['personal_information']
+            icon = fields['icon']
+
+            if picid not in pis:
+                pis[picid] = []
+            pis[picid].append({
+                "picid": picid,
+                "pi": pi,
+                "icon": icon
+            })
+
+    return pis
+
+
+def add_personal_information(pi):
+    print("adding personal information: %s" % pi)
+    # save the personal information to the database
+    pi_id = user_traces_db.save_user_personal_information_to_db(pi)
+    pi['pi_id'] = pi_id
+
+    # create the set of reviews for the personal information
+    for review in personal_information.create_reviews_for_personal_information(pi):
+        _ = user_traces_db.save_user_reviews_to_db(review)
+
+    user_update = get_user_personal_information_update_from_db(pi['user_id'], pi_id)
+    print(user_update)
+    return user_update
+
+
+def update_personal_information(pi):
+    print("update personal information: %s" % pi)
+    user_traces_db.update_user_personal_information(pi)
+
+    return {}
+
+
+def register_user(type, date, uuid, push_notification_id):
+    user = {
+        "push_notification_id": push_notification_id,
+        "date_added": date
+    }
+    if type == 'ios':
+        user['ios_id'] = uuid
+    elif type == 'android':
+        user['android_id'] = uuid
+
+    user_id = user_traces_db.save_user_info_to_db(user)
+    return user_id
+
+
+def update_user_info(user_id, type, date, uuid, push_notification_id):
+    user = {
+        "push_notification_id": push_notification_id,
+        "date_added": date,
+        "user_id": user_id
+    }
+    if type == 'ios':
+        user['ios_id'] = uuid
+    elif type == 'android':
+        user['android_id'] = uuid
+
+    user_traces_db.update_user_info(user)
+
+
+def get_day_user_update_from_db(user_id, days):
+    user_update = {
+        "uid": user_id,
+        "days": days,
+        "rv": [],  # reviews for visits
+        "rpi": [],  # reviews for personal information
+        "p": [],  # places
+        "v": [],  # visits
+        "m": [],  # moves
+        "pi": [],  # personal information
+        "q": []  # questions
+    }
+
+    for day in days:
+        p = user_traces_db.load_user_places(user_id, day)
+        user_update['p'] += user_traces_db.load_user_places(user_id, day)
+        user_update['v'] += user_traces_db.load_user_visits(user_id, day)
+        user_update['m'] += user_traces_db.load_user_moves(user_id, day)
 
     place_ids = [e['pid'] for e in user_update['p']]
     visit_ids = [e['vid'] for e in user_update['v']]
@@ -67,14 +164,14 @@ def get_day_user_update_from_db(user_id, day):
 def get_visit_user_update_from_db(user_id, visit_id, day):
     user_update = {
         "uid": user_id,
-        "day": day,
-        "rv": [],  # reviews for visits
+        "days": [day],
+        "rv": [],   # reviews for visits
         "rpi": [],  # reviews for personal information
-        "p": [],  # places
-        "v": [],  # visits
-        "m": [],  # moves
-        "pi": [],  # personal information
-        "q": []  # questions
+        "p": [],    # places
+        "v": [],    # visits
+        "m": [],    # moves
+        "pi": [],   # personal information
+        "q": []     # questions
     }
 
     visit = user_traces_db.load_user_visit(user_id, visit_id)
@@ -120,8 +217,45 @@ def get_visit_user_update_from_db(user_id, visit_id, day):
     return user_update
 
 
+def get_user_personal_information_update_from_db(user_id, pi_id):
+    user_update = {
+        "uid": user_id,
+        "rpi": [],
+        "pi": [],
+        "q": []
+    }
+
+    pi = user_traces_db.load_user_personal_information_from_id(user_id, pi_id)
+    user_update['pi'] = [pi]
+
+    questions = set()
+    r = user_traces_db.load_user_review_pi(user_id, pi_id)
+    for e in r:
+        questions.add(e['q'])
+    user_update['rpi'] += r
+
+    user_update['q'] = list(questions)
+
+    for r in user_update['rpi']:
+        idx = user_update['q'].index(r['q'])
+        r['q'] = idx
+
+    return user_update
+
+
 def get_user_review_challenge_from_db(user_id, day):
     return user_traces_db.load_user_review_challenge(user_id, day)
+
+
+def update_user_review_challenge_from_db(user_id, review_challenges):
+    for rcid, date_completed in review_challenges.items():
+        challenge = {
+            "user_id": user_id,
+            "review_challenge_id": rcid,
+            "date_completed": date_completed
+        }
+        user_traces_db.update_user_challenge(challenge)
+        print("updated rc %s with %s" % (rcid, challenge))
 
 
 def get_personal_information_categories():
@@ -157,6 +291,28 @@ def get_consent_form():
     return form
 
 
+def get_terms():
+    fname = 'supp/terms.csv'
+    terms = []
+    with open(fname, 'r') as f:
+        header = f.readline().rstrip().split(";")
+        for line in f:
+            fields = dict(zip(header, line.rstrip().split(";")))
+            terms.append(fields)
+    return terms
+
+
+def update_reviews(reviews, user_id):
+    for review_id, answer in reviews.items():
+        review = {
+            "user_id": user_id,
+            "review_id": review_id,
+            "answer": answer
+        }
+
+        user_traces_db.update_user_review(review)
+
+
 def add_visit(visit_update):
     user_id = visit_update['user_id']
     place_id = visit_update['new_place_id']
@@ -189,17 +345,12 @@ def add_visit(visit_update):
         place['color'] = utils.pick_place_color('home')
         place_id = user_traces_db.save_user_place_to_db(place)
 
-        # update the visit
+        # save the visit to the database
         visit['place_id'] = place_id
-        visit_id = user_traces_db.save_user_visit_to_db(visit)
+        visit_id = add_visit_in_db(visit)
 
         # optional: get personal information about this place
-
-        user_update = {
-            "day": day,
-            "p": [user_traces_db.load_user_place(user_id, place_id)],
-            "v": [user_traces_db.load_user_visit(user_id, visit_id)]
-        }
+        user_update = get_visit_user_update_from_db(user_id, visit_id, day)
         print("add place 0")
         print(user_update)
         return user_update
@@ -219,12 +370,9 @@ def add_visit(visit_update):
     elif place_id != '':  # already-existing user place
         # add the visit to the database
         visit['place_id'] = place_id
-        visit_id = user_traces_db.save_user_visit_to_db(visit)
+        visit_id = add_visit_in_db(visit)
 
-        user_update = {
-            "day": day,
-            "v": [user_traces_db.load_user_visit(user_id, visit_id)]
-        }
+        user_update = get_visit_user_update_from_db(user_id, visit_id, day)
         print("add place 2")
         print(user_update)
         return user_update
@@ -244,7 +392,7 @@ def update_visit(visit_update):
     # getting the venue id of the old place
     user_place = user_traces_db.load_user_place(user_id, old_place_id)
     print(user_place)
-    old_venue_id = user_place['vid']
+    old_venue_id = user_place.get('vid', '')
     visit = {
         "user_id": user_id,
         "visit_id": visit_id,
@@ -260,20 +408,16 @@ def update_visit(visit_update):
         "longitude": visit_update['lon']
     }
 
-    if user_place['name'] == name:
+    if user_place and user_place['name'] == name:
         # only update the visit
-        user_traces_db.update_user_visit(visit)
+        visit_id = update_visit_in_db(visit)
 
         # update the user place with the new longitude and latitude
         place['place_id'] = old_place_id
         user_traces_db.update_user_place(place)
 
         # TODO: add personal information inference (only if home...)
-        user_update = {
-            "day": day,
-            "p": [user_traces_db.load_user_place(user_id, old_place_id)],
-            "v": [user_traces_db.load_user_visit(user_id, visit_id)]
-        }
+        user_update = get_visit_user_update_from_db(user_id, visit_id, day)
         print("user update 0")
         print(user_update)
         return user_update
@@ -288,13 +432,9 @@ def update_visit(visit_update):
             # do we need to get new personal information about the place?
 
             # update the visit
-            user_traces_db.update_user_visit(visit)
+            visit_id = update_visit_in_db(visit)
 
-            user_update = {
-                "day": day,
-                "p": [user_traces_db.load_user_place(user_id, old_place_id)],
-                "v": [user_traces_db.load_user_visit(user_id, visit_id)]
-            }
+            user_update = get_visit_user_update_from_db(user_id, visit_id, day)
             print("user update 1")
             print(user_update)
             return user_update
@@ -317,14 +457,30 @@ def update_visit(visit_update):
             # the user selected another place in the users/places database
             # update the visit
             visit['place_id'] = new_place_id
-            user_traces_db.update_user_visit(visit)
+            visit_id = update_visit_in_db(visit)
 
-            user_visit = user_traces_db.load_user_visit(user_id, visit_id)
-            user_update = {
-                "day": day,
-                "v": [user_visit]
-            }
+            user_update = get_visit_user_update_from_db(user_id, visit_id, day)
             print("user update 3")
+            print(user_update)
+            return user_update
+        elif old_venue_id != "" and new_venue_id == "" and new_place_id == "":
+            # the user changed a foursquare place to a custom place
+            # create a new place
+            place['name'] = name
+            place['city'] = city
+            place['address'] = address
+            place['color'] = utils.pick_place_color('home')
+            place['type'] = 'home'
+            place_id = user_traces_db.save_user_place_to_db(place)
+
+            # update the visit
+            visit['place_id'] = place_id
+            visit_id = add_visit_in_db(visit)
+
+            # optional: get personal information about this place
+
+            user_update = get_visit_user_update_from_db(user_id, visit_id, day)
+            print("user update 4")
             print(user_update)
             return user_update
 
@@ -400,6 +556,11 @@ def add_visit_in_db(visit):
     user_traces_db.save_user_reviews_to_db(review)
 
     return visit_id
+
+
+def delete_visit(visit_update):
+    user_traces_db.delete_user_visit(visit_update['user_id'], visit_update['visit_id'])
+    return {}
 
 
 if __name__ == '__main__':

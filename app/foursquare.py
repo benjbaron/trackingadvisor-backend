@@ -152,7 +152,7 @@ def sort_place_score(places):
     for place in places:
         checkin_ratio = 0 if max_nb_checkins == 0 else place['checkins'] / max_nb_checkins
         distance_ratio = 1 if place['distance'] == 0 else place['distance']
-        score = 0.5 * checkin_ratio + 1.5 / math.sqrt(distance_ratio)
+        score = 0.25 * checkin_ratio + 1.5 / math.sqrt(distance_ratio)
         place['score'] = score
         res.append((score, place))
 
@@ -866,21 +866,11 @@ def get_personal_information_of_venue(venue_id):
     return dict((cat, list(keys)) for cat, keys in personal_information.items())
 
 
-def autocomplete_location(location, query, distance=800, limit=10):
-    # get address
-    street, city = utils.get_address(location)
-    res = {
-        'street': street,
-        'city': city,
-        'places': []
-    }
-
+def autocomplete_location(location, query, distance=250, limit=10):
     if not is_location_in_db(location):
-        res['places'] = get_autocomplete(location, query, distance, limit)
+        return get_autocomplete(location, query, distance, limit)
     else:
-        res['places'] = get_autocomplete_from_db(location, query, distance, limit)
-
-    return res
+        return get_autocomplete_from_db(location, query, distance, limit)
 
 
 def get_all_places_within_location(location='', args='location'):
