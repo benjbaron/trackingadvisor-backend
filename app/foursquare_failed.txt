@@ -1,1 +1,0 @@
-https://api.foursquare.com/v2/venues/search?intent=browse&sw=56.22155240937501,-4.234510052440431&ne=56.25558910507813,-4.2062765655183805&limit=50

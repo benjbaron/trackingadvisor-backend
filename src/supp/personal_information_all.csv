@@ -1,0 +1,473 @@
+picid;category;personal_information;icon
+ACT;Activity;Eating out;paper-plane
+ACT;Activity;Having a drink;paper-plane
+ACT;Activity;Housing;paper-plane
+ACT;Activity;Tourism;paper-plane
+ACT;Activity;Entertainment;paper-plane
+ACT;Activity;Sports;paper-plane
+ACT;Activity;Self-care;paper-plane
+ACT;Activity;Shopping;paper-plane
+ACT;Activity;Grocery Shopping;paper-plane
+ADD;Addictions;Smoking;bug
+ADD;Addictions;Alcohol;bug
+ADD;Addictions;Drugs;bug
+ADD;Addictions;Steroids;bug
+ADD;Addictions;Gambling;bug
+ADD;Addictions;Sports Betting;bug
+ADD;Addictions;Horse & Dog Racing;bug
+ADD;Addictions;Lottery & Sweepstakes;bug
+AGE;Age;Teenager;birthday-cake
+AGE;Age;20s;birthday-cake
+AGE;Age;30s;birthday-cake
+AGE;Age;40s;birthday-cake
+AGE;Age;50s;birthday-cake
+AGE;Age;60s;birthday-cake
+AGE;Age;Retired;birthday-cake
+ETH;Ethnicity;Arabs & Middle Easterners;language
+ETH;Ethnicity;Eastern Europeans;language
+ETH;Ethnicity;Jewish Culture;language
+ETH;Ethnicity;Latinos & Latin-Americans;language
+ETH;Ethnicity;Western Europeans;language
+ETH;Ethnicity;African-Americans;language
+ETH;Ethnicity;African;language
+ETH;Ethnicity;East Asians & Diaspora;language
+ETH;Ethnicity;South Asians & Diaspora;language
+ETH;Ethnicity;Southeast Asians & Pacific Islanders;language
+ETH;Ethnicity;Native Americans;language
+ETH;Ethnicity;North Americans;language
+FAM;Family Life;Pregnancy & Maternity;users
+FAM;Family Life;Children;users
+FAM;Family Life;Adoption;users
+FAM;Family Life;Marriage;users
+FAM;Family Life;Divorce;users
+FAM;Family Life;Romance;users
+FAM;Family Life;Seniors & Retirement;users
+GEN;Sexuality and Gender;Male;venus-mars
+GEN;Sexuality and Gender;Female;venus-mars
+GEN;Sexuality and Gender;Transgender;venus-mars
+GEN;Sexuality and Gender;Bisexual;venus-mars
+GEN;Sexuality and Gender;Lesbian;venus-mars
+GEN;Sexuality and Gender;Gay;venus-mars
+HEA;Health Condition;Vegetarian;stethoscope
+HEA;Health Condition;Vegan;stethoscope
+HEA;Health Condition;Gluten-free;stethoscope
+HEA;Health Condition;Lactose Intolerant;stethoscope
+HEA;Health Condition;AIDS & HIV;stethoscope
+HEA;Health Condition;Addictions;stethoscope
+HEA;Health Condition;Alternative Medecines;stethoscope
+HEA;Health Condition;Allergies;stethoscope
+HEA;Health Condition;Arthritis;stethoscope
+HEA;Health Condition;Cancer;stethoscope
+HEA;Health Condition;Cold & Flu;stethoscope
+HEA;Health Condition;Diabetes;stethoscope
+HEA;Health Condition;Ear Nose & Throat;stethoscope
+HEA;Health Condition;Eating Disorders;stethoscope
+HEA;Health Condition;Thyroid Conditions;stethoscope
+HEA;Health Condition;GERD & Digestive Disorders;stethoscope
+HEA;Health Condition;Genetic Disorders;stethoscope
+HEA;Health Condition;Heart & Hypertension;stethoscope
+HEA;Health Condition;Infectious Diseases;stethoscope
+HEA;Health Condition;Injury;stethoscope
+HEA;Health Condition;Neurological Disorders;stethoscope
+HEA;Health Condition;Obesity;stethoscope
+HEA;Health Condition;Headaches & Migraines;stethoscope
+HEA;Health Condition;Respiratory Conditions;stethoscope
+HEA;Health Condition;Skin Conditions;stethoscope
+HEA;Health Condition;Sleep Disorders;stethoscope
+HEA;Health Condition;Medical Tests & Exams;stethoscope
+HEA;Health Condition;Surgery;stethoscope
+HEA;Health Condition;Cosmetic Surgery;stethoscope
+HEA;Health Condition;Physical Therapy;stethoscope
+HEA;Health Condition;Pregnancy & Maternity;stethoscope
+HEA;Health Condition;Men's Health;stethoscope
+HEA;Health Condition;Mental Health;stethoscope
+HEA;Health Condition;Kosher Foods;stethoscope
+HEA;Health Condition;Low Carbohydrate Diets;stethoscope
+HEA;Health Condition;Low Fat & Low Cholesterol Diets;stethoscope
+HEA;Health Condition;Oral & Dental Care;stethoscope
+HEA;Health Condition;Pediatrics;stethoscope
+HEA;Health Condition;Drugs & Medications;stethoscope
+HEA;Health Condition;Vision Care;stethoscope
+HEA;Health Condition;Women's Health;stethoscope
+INT;Topic of Interests;Celebrities & Entertainment News;popcorn
+INT;Topic of Interests;Comics & Animation;popcorn
+INT;Topic of Interests;Film & TV Industry;popcorn
+INT;Topic of Interests;Recording Industry;popcorn
+INT;Topic of Interests;Bars, Clubs & Nightlife;popcorn
+INT;Topic of Interests;Concerts & Music Festivals;popcorn
+INT;Topic of Interests;Event Ticket Sales;popcorn
+INT;Topic of Interests;Expos & Conventions;popcorn
+INT;Topic of Interests;Film Festivals;popcorn
+INT;Topic of Interests;Food & Beverage Events;popcorn
+INT;Topic of Interests;Live Sporting Events;popcorn
+INT;Topic of Interests;Movie Listings & Theater Showtimes;popcorn
+INT;Topic of Interests;Flash-Based Entertainment;popcorn
+INT;Topic of Interests;Live Comedy;popcorn
+INT;Topic of Interests;Political Humor;popcorn
+INT;Topic of Interests;Spoofs & Satire;popcorn
+INT;Topic of Interests;CD & Audio Shopping;play
+INT;Topic of Interests;Classical Music;play
+INT;Topic of Interests;Country Music;play
+INT;Topic of Interests;Dance & Electronic Music;play
+INT;Topic of Interests;Experimental & Industrial Music;play
+INT;Topic of Interests;Folk & Traditional Music;play
+INT;Topic of Interests;Jazz & Blues;play
+INT;Topic of Interests;Music Art & Memorabilia;play
+INT;Topic of Interests;Music Education & Instruction;play
+INT;Topic of Interests;DJ Resources & Equipment;play
+INT;Topic of Interests;Music Recording Technology;play
+INT;Topic of Interests;Musical Instruments;play
+INT;Topic of Interests;Music Reference;play
+INT;Topic of Interests;Pop Music;play
+INT;Topic of Interests;Podcasting;play
+INT;Topic of Interests;Talk Radio;play
+INT;Topic of Interests;Christian & Gospel Music;play
+INT;Topic of Interests;Classic Rock & Oldies;play
+INT;Topic of Interests;Hard Rock & Progressive;play
+INT;Topic of Interests;Indie & Alternative Music;play
+INT;Topic of Interests;Metal Music;play
+INT;Topic of Interests;Punk Music;play
+INT;Topic of Interests;Soundtracks;play
+INT;Topic of Interests;Rap & Hip-Hop;play
+INT;Topic of Interests;Reggaeton;play
+INT;Topic of Interests;World Music;play
+INT;Topic of Interests;Latin American Music;play
+INT;Topic of Interests;Offbeat;play
+INT;Topic of Interests;Broadway & Musical Theater;popcorn
+INT;Topic of Interests;Acting & Theater;popcorn
+INT;Topic of Interests;Circus;popcorn
+INT;Topic of Interests;Dance;popcorn
+INT;Topic of Interests;Magic;popcorn
+INT;Topic of Interests;Opera;popcorn
+INT;Topic of Interests;Architecture;image
+INT;Topic of Interests;Art & Craft Supplies;image
+INT;Topic of Interests;Art Museums & Galleries;image
+INT;Topic of Interests;Arts Education;image
+INT;Topic of Interests;Graphic Design;image
+INT;Topic of Interests;Industrial & Product Design;image
+INT;Topic of Interests;Interior Design;image
+INT;Topic of Interests;Painting;image
+INT;Topic of Interests;Photographic & Digital Arts;image
+INT;Topic of Interests;Sculpture;image
+INT;Topic of Interests;Bicycles;car
+INT;Topic of Interests;Vehicle Shows;car
+INT;Topic of Interests;Autos & Vehicles;car
+INT;Topic of Interests;Beauty Pageants;heartbeat
+INT;Topic of Interests;Body Art;heartbeat
+INT;Topic of Interests;Cosmetology & Beauty Professionals;heartbeat
+INT;Topic of Interests;Hygiene & Toiletries;heartbeat
+INT;Topic of Interests;Make-Up & Cosmetics;heartbeat
+INT;Topic of Interests;Perfumes & Fragrances;heartbeat
+INT;Topic of Interests;Skin & Nail Care;heartbeat
+INT;Topic of Interests;Unwanted Body & Facial Hair Removal;heartbeat
+INT;Topic of Interests;Fashion Designers & Collections;heartbeat
+INT;Topic of Interests;Fashion Modeling;heartbeat
+INT;Topic of Interests;Bodybuilding;heartbeat
+INT;Topic of Interests;Fitness Instruction & Personal Training;heartbeat
+INT;Topic of Interests;Fitness Equipment & Accessories;heartbeat
+INT;Topic of Interests;Gyms & Health Clubs;heartbeat
+INT;Topic of Interests;Yoga & Pilates;heartbeat
+INT;Topic of Interests;Hair Loss;heartbeat
+INT;Topic of Interests;Massage Therapy;heartbeat
+INT;Topic of Interests;Weight Loss;heartbeat
+INT;Topic of Interests;Book Retailers;heartbeat
+INT;Topic of Interests;Children's Literature;book-closed
+INT;Topic of Interests;E-Books;book-closed
+INT;Topic of Interests;Fan Fiction;book-closed
+INT;Topic of Interests;Literary Classics;book-closed
+INT;Topic of Interests;Magazines;book-closed
+INT;Topic of Interests;Poetry;book-closed
+INT;Topic of Interests;Writers Resources;book-closed
+INT;Topic of Interests;Thriller, Crime & Mystery Films;popcorn
+INT;Topic of Interests;Science Fiction & Fantasy Films;popcorn
+INT;Topic of Interests;Romance Films;popcorn
+INT;Topic of Interests;Musical Films;popcorn
+INT;Topic of Interests;Movie Memorabilia;popcorn
+INT;Topic of Interests;Horror Films;popcorn
+INT;Topic of Interests;Family Films;popcorn
+INT;Topic of Interests;Drama Films;popcorn
+INT;Topic of Interests;Documentary Films;popcorn
+INT;Topic of Interests;DVD & Video Shopping;popcorn
+INT;Topic of Interests;Cult & Indie Films;popcorn
+INT;Topic of Interests;Comedy Films;popcorn
+INT;Topic of Interests;Classic Films ;popcorn
+INT;Topic of Interests;Bollywood & South Asian Film;popcorn
+INT;Topic of Interests;Animated Films;popcorn
+INT;Topic of Interests;Action & Adventure Films;popcorn
+INT;Topic of Interests;Movies;popcorn
+INT;Topic of Interests;Zoos-Aquariums-Preserves;globe
+INT;Topic of Interests;Theme Parks;globe
+INT;Topic of Interests;Regional Parks & Gardens;globe
+INT;Topic of Interests;Mountain & Ski Resorts;globe
+INT;Topic of Interests;Lakes & Rivers;globe
+INT;Topic of Interests;Historical Sites & Buildings;globe
+INT;Topic of Interests;Beaches & Islands;globe
+INT;Topic of Interests;Vineyards & Wine Tourism;globe
+INT;Topic of Interests;Sightseeing Tours;globe
+INT;Topic of Interests;Ecotourism;globe
+INT;Topic of Interests;Agritourism;globe
+INT;Topic of Interests;Adventure Travel;globe
+INT;Topic of Interests;Luggage & Travel Accessories;globe
+INT;Topic of Interests;Travel;globe
+INT;Topic of Interests;Tourist Destinations;globe
+INT;Topic of Interests;Specialty Travel;globe
+INT;Topic of Interests;World Sports Competitions;futbol
+INT;Topic of Interests;Olympics;futbol
+INT;Topic of Interests;Winter Sports;futbol
+INT;Topic of Interests;Skiing & Snowboarding;futbol
+INT;Topic of Interests;Ice Skating;futbol
+INT;Topic of Interests;Water Sports;futbol
+INT;Topic of Interests;Swimming;futbol
+INT;Topic of Interests;Surfing;futbol
+INT;Topic of Interests;Team Sports;futbol
+INT;Topic of Interests;Volleyball;futbol
+INT;Topic of Interests;Soccer;futbol
+INT;Topic of Interests;Rugby;futbol
+INT;Topic of Interests;Hockey;futbol
+INT;Topic of Interests;Handball;futbol
+INT;Topic of Interests;Cricket;futbol
+INT;Topic of Interests;Cheerleading;futbol
+INT;Topic of Interests;Basketball;futbol
+INT;Topic of Interests;Baseball;futbol
+INT;Topic of Interests;Australian Football;futbol
+INT;Topic of Interests;American Football;futbol
+INT;Topic of Interests;Sporting Goods;futbol
+INT;Topic of Interests;Motor Sports;futbol
+INT;Topic of Interests;Motorcycle Racing;futbol
+INT;Topic of Interests;Auto Racing;futbol
+INT;Topic of Interests;Individual Sports;futbol
+INT;Topic of Interests;Track & Field;futbol
+INT;Topic of Interests;Skate Sports;futbol
+INT;Topic of Interests;Running & Walking;futbol
+INT;Topic of Interests;Racquet Sports;futbol
+INT;Topic of Interests;Tennis;futbol
+INT;Topic of Interests;Badminton;futbol
+INT;Topic of Interests;Squash;futbol
+INT;Topic of Interests;Gymnastics;futbol
+INT;Topic of Interests;Golf;futbol
+INT;Topic of Interests;Cycling;futbol
+INT;Topic of Interests;Bowling;futbol
+INT;Topic of Interests;Fantasy Sports;futbol
+INT;Topic of Interests;Extreme Sports;futbol
+INT;Topic of Interests;Stunts & Dangerous Feats;futbol
+INT;Topic of Interests;Drag & Street Racing;futbol
+INT;Topic of Interests;Combat Sports;futbol
+INT;Topic of Interests;Wrestling;futbol
+INT;Topic of Interests;Martial Arts;futbol
+INT;Topic of Interests;Boxing;futbol
+INT;Topic of Interests;College Sports;futbol
+INT;Topic of Interests;Shopping;shopping-bag
+INT;Topic of Interests;Wholesalers & Liquidators;shopping-bag
+INT;Topic of Interests;Toys;shopping-bag
+INT;Topic of Interests;Tobacco Products;shopping-bag
+INT;Topic of Interests;Swap Meets & Outdoor Markets;shopping-bag
+INT;Topic of Interests;Photo & Video Services;shopping-bag
+INT;Topic of Interests;Department Stores;shopping-bag
+INT;Topic of Interests;Luxury Goods;shopping-bag
+INT;Topic of Interests;Green & Eco-Friendly Shopping;shopping-bag
+INT;Topic of Interests;Gifts & Special Event Items;shopping-bag
+INT;Topic of Interests;Entertainment Media;shopping-bag
+INT;Topic of Interests;Discount & Outlet Stores;shopping-bag
+INT;Topic of Interests;Auctions;shopping-bag
+INT;Topic of Interests;Apparel;shopping-bag
+INT;Topic of Interests;Antiques & Collectibles;shopping-bag
+INT;Topic of Interests;Scientific Institutions;flask
+INT;Topic of Interests;Physics;flask
+INT;Topic of Interests;Mathematics;flask
+INT;Topic of Interests;Engineering & Technology;flask
+INT;Topic of Interests;Ecology & Environment;flask
+INT;Topic of Interests;Earth Sciences;flask
+INT;Topic of Interests;Computer Science;flask
+INT;Topic of Interests;Chemistry;flask
+INT;Topic of Interests;Biological Sciences;flask
+INT;Topic of Interests;Astronomy;flask
+INT;Topic of Interests;Science;flask
+INT;Topic of Interests;Real Estate;university
+INT;Topic of Interests;Museums;university
+INT;Topic of Interests;Libraries;university
+INT;Topic of Interests;Humanities;university
+INT;Topic of Interests;Philosophy;university
+INT;Topic of Interests;History;university
+INT;Topic of Interests;Geography;university
+INT;Topic of Interests;Women's Interests;street-view
+INT;Topic of Interests;Science Fiction & Fantasy;street-view
+INT;Topic of Interests;Social Sciences;street-view
+INT;Topic of Interests;Psychology;street-view
+INT;Topic of Interests;International Relations;street-view
+INT;Topic of Interests;Economics;street-view
+INT;Topic of Interests;Demographics;street-view
+INT;Topic of Interests;Communications & Media Studies;street-view
+INT;Topic of Interests;Public Speaking;street-view
+INT;Topic of Interests;Archaeology;street-view
+INT;Topic of Interests;Anthropology;street-view
+INT;Topic of Interests;Social Issues & Advocacy;street-view
+INT;Topic of Interests;Work & Labor Issues;street-view
+INT;Topic of Interests;Unions & Labor Movement;street-view
+INT;Topic of Interests;Same-Sex Marriage;street-view
+INT;Topic of Interests;Reproductive Rights;street-view
+INT;Topic of Interests;Privacy Issues;street-view
+INT;Topic of Interests;Poverty & Hunger;street-view
+INT;Topic of Interests;Immigration Policy & Border Issues;street-view
+INT;Topic of Interests;Human Rights & Liberties;street-view
+INT;Topic of Interests;Housing & Development;street-view
+INT;Topic of Interests;Green Living & Environmental Issues;street-view
+INT;Topic of Interests;Ethics;street-view
+INT;Topic of Interests;Drug Laws & Policy;street-view
+INT;Topic of Interests;Discrimination & Identity Relations;street-view
+INT;Topic of Interests;Charity & Philanthropy;street-view
+INT;Topic of Interests;Religion & Belief;street-view
+INT;Topic of Interests;Men's Interests;street-view
+INT;Topic of Interests;Hobbies & Leisure;heart
+INT;Topic of Interests;Water Activities;heart
+INT;Topic of Interests;Surf & Swim;heart
+INT;Topic of Interests;Diving & Underwater Activities;heart
+INT;Topic of Interests;Boating;heart
+INT;Topic of Interests;Wedding;heart
+INT;Topic of Interests;Recreational Aviation;heart
+INT;Topic of Interests;Radio Control & Modeling;heart
+INT;Topic of Interests;Model Trains & Railroads;heart
+INT;Topic of Interests;Paintball;heart
+INT;Topic of Interests;Outdoors;heart
+INT;Topic of Interests;Hunting & Shooting;heart
+INT;Topic of Interests;Hiking & Camping;heart
+INT;Topic of Interests;Fishing;heart
+INT;Topic of Interests;Equestrian;heart
+INT;Topic of Interests;Crafts;heart
+INT;Topic of Interests;Fiber & Textile Arts;heart
+INT;Topic of Interests;Ceramics & Pottery;heart
+INT;Topic of Interests;Table Tennis;heart
+INT;Topic of Interests;Billiards & Pools;heart
+INT;Topic of Interests;Family-Oriented Games & Activities;heart
+INT;Topic of Interests;Computer & Video Games;heart
+INT;Topic of Interests;Card Games;heart
+INT;Topic of Interests;Board Games;heart
+INT;Topic of Interests;Arcade & Coin-Op Games;heart
+INT;Topic of Interests;Food & Drink;beer
+INT;Topic of Interests;Restaurants;beer
+INT;Topic of Interests;Pizzerias;beer
+INT;Topic of Interests;Fine Dining;beer
+INT;Topic of Interests;Fast Food;beer
+INT;Topic of Interests;Burgers;beer
+INT;Topic of Interests;Food & Grocery Retailers;beer
+INT;Topic of Interests;Farmers' Markets;beer
+INT;Topic of Interests;Delicatessens;beer
+INT;Topic of Interests;Convenience Stores;beer
+INT;Topic of Interests;Butchers;beer
+INT;Topic of Interests;Bakeries;beer
+INT;Topic of Interests;Vegetarian Cuisine;beer
+INT;Topic of Interests;Southeast Asian Cuisine;beer
+INT;Topic of Interests;Vietnamese Cuisine;beer
+INT;Topic of Interests;Thai Cuisine;beer
+INT;Topic of Interests;South Asian Cuisine;beer
+INT;Topic of Interests;Indian Cuisine;beer
+INT;Topic of Interests;North American Cuisine;beer
+INT;Topic of Interests;Middle Eastern Cuisine;beer
+INT;Topic of Interests;Mediterranean Cuisine;beer
+INT;Topic of Interests;Spanish Cuisine;beer
+INT;Topic of Interests;Italian Cuisine;beer
+INT;Topic of Interests;Greek Cuisine;beer
+INT;Topic of Interests;Portuguese Cuisine;beer
+INT;Topic of Interests;Latin American Cuisine;beer
+INT;Topic of Interests;South American Cuisine;beer
+INT;Topic of Interests;Mexican Cuisine;beer
+INT;Topic of Interests;Caribbean Cuisine;beer
+INT;Topic of Interests;German Cuisine;beer
+INT;Topic of Interests;French Cuisine;beer
+INT;Topic of Interests;Eastern European Cuisine;beer
+INT;Topic of Interests;East Asian Cuisine;beer
+INT;Topic of Interests;Western European Cuisine;beer
+INT;Topic of Interests;Korean Cuisine;beer
+INT;Topic of Interests;Japanese Cuisine;beer
+INT;Topic of Interests;Chinese Cuisine;beer
+INT;Topic of Interests;Coffee;beer
+INT;Topic of Interests;Tea;beer
+INT;Topic of Interests;Wine;beer
+INT;Topic of Interests;Liquor;beer
+INT;Topic of Interests;Beer;beer
+INT;Topic of Interests;Cocktails;beer
+OWN;Ownership;House;hand-loader
+OWN;Ownership;Apartment;hand-loader
+OWN;Ownership;Bicycles;hand-loader
+OWN;Ownership;Boats & Watercraft;hand-loader
+OWN;Ownership;Campers & RVs;hand-loader
+OWN;Ownership;Classic Vehicles;hand-loader
+OWN;Ownership;Cargo Trucks & Trailers;hand-loader
+OWN;Ownership;Custom & Performance Vehicles;hand-loader
+OWN;Ownership;Electric & Plug-In Vehicles;hand-loader
+OWN;Ownership;Hybrid Vehicles;hand-loader
+OWN;Ownership;Microcars & City Cars;hand-loader
+OWN;Ownership;Motorcycles;hand-loader
+OWN;Ownership;Off-Road Vehicles;hand-loader
+OWN;Ownership;Personal Aircraft;hand-loader
+OWN;Ownership;Private Vehicles;hand-loader
+OWN;Ownership;Scooters & Mopeds;hand-loader
+OWN;Ownership;SUVs;hand-loader
+OWN;Ownership;Trucks;hand-loader
+OWN;Ownership;Vans & Minivans;hand-loader
+OWN;Ownership;Birds;hand-loader
+OWN;Ownership;Cats;hand-loader
+OWN;Ownership;Dogs;hand-loader
+OWN;Ownership;Exotic Pets;hand-loader
+OWN;Ownership;Fish & Aquaria;hand-loader
+OWN;Ownership;Horses;hand-loader
+OWN;Ownership;Rabbits & Rodents;hand-loader
+OWN;Ownership;Reptiles & Amphibians;hand-loader
+OWN;Ownership;Pets;hand-loader
+POL;Political Influences;Campaigns & Elections;bullhorn
+POL;Political Influences;Left-Wing Politics;bullhorn
+POL;Political Influences;Political Polls & Surveys;bullhorn
+POL;Political Influences;Right-Wing Politics;bullhorn
+POL;Political Influences;Unions & Labor Movement;bullhorn
+REL;Religious Beliefs;Religious Observance;book
+REL;Religious Beliefs;Buddhism;book
+REL;Religious Beliefs;Jehovah's Witness;book
+REL;Religious Beliefs;Christianity;book
+REL;Religious Beliefs;Islam;book
+REL;Religious Beliefs;Cemevi;book
+REL;Religious Beliefs;Hinduism;book
+REL;Religious Beliefs;Judaism;book
+REL;Religious Beliefs;Conficianism;book
+REL;Religious Beliefs;Scientology;book
+REL;Religious Beliefs;Skeptics & Non-Believers;book
+REL;Religious Beliefs;Pagan & Esoteric Traditions;book
+REL;Religious Beliefs;Astrology & Divination;book
+SKL;Skills;Bike Riding;gamepad
+SKL;Skills;Car Maintenance;gamepad
+SKL;Skills;Cooking;gamepad
+SKL;Skills;Driving;gamepad
+SKL;Skills;Garden Maintenance;gamepad
+SKL;Skills;Horseback Riding;gamepad
+SKL;Skills;Information Technology & Computer Science;gamepad
+SKL;Skills;Law Training;gamepad
+SKL;Skills;Medical Training;gamepad
+SKL;Skills;Money Management;gamepad
+SKL;Skills;Parenting;gamepad
+SKL;Skills;Playing Badminton;gamepad
+SKL;Skills;Playing Basketball;gamepad
+SKL;Skills;Playing Golf;gamepad
+SKL;Skills;Playing Soccer;gamepad
+SKL;Skills;Playing Tennis;gamepad
+SKL;Skills;Skydiving;gamepad
+SKL;Skills;Speaking multiple languages;gamepad
+SKL;Skills;Surfing;gamepad
+SKL;Skills;Swimming;gamepad
+SOC;Social;Friends;comments
+SOC;Social;Family;comments
+SOC;Social;Colleagues;comments
+SOC;Social;Date;comments
+STA;Socio-economic Status;Low;chart
+STA;Socio-economic Status;Medium;chart
+STA;Socio-economic Status;High;chart
+TRA;Transportation;Commute;train
+TRA;Transportation;Long distance;train
+WOR;Work;Sales & Marketing Jobs;building
+WOR;Work;Retail Jobs;building
+WOR;Work;Legal Jobs;building
+WOR;Work;IT & Technical Jobs;building
+WOR;Work;Health & Medical Jobs;building
+WOR;Work;Government & Public Sector Jobs;building
+WOR;Work;Executive & Management Jobs;building
+WOR;Work;Education Jobs;building
+WOR;Work;Clerical & Administrative Jobs;building
+WOR;Work;Accounting & Finance Jobs;building
+WOR;Work;Student;building

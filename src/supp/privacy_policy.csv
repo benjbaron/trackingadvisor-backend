@@ -1,0 +1,39 @@
+type;text
+P;By installing TrackingAdvisor on your mobile device you are taking part in a scientific experiment. This is anonymous and you can easily withdraw at any time by going to the 'Settings' menu in the application. When you first install TrackingAdvisor you will see an explanation of how your data will be used, and we reproduce this text below.
+P;
+P;Once you have installed TrackingAdvisor on your phone, your phone automatically collects your location in the background and sends it periodically to our server in an anonymised form. We will use you location to research the privacy expecations and preferences associated to location data. To collect this data, we need to have your consent.
+P;
+P;By tapping "I agree" [in the application], you confirm that:
+P; - you know what data you'll be sending to us, why we are collecting this data, and what we will use the data for,
+P; - you agree to send this data to us,
+P; - you understand that you can stop sending us data at any time.
+P;
+P;Please scroll down and read the rest of the information carefully. You can find it again at any time in the 'Settings' menu of the application.
+S;What is this research for?
+P;The purpose of this study is to explore the privacy expectations of individuals when it comes to tracking their location and inferring personal information about them. The application will help us understand your privacy expectations with respect to the personal information we can infer by continuously tracking your location. The places are extracted from the location traces collected periodically by the application from your mobile device.
+S;What will I do?
+P;You will be notified once a day throughout the duration of your participation to review the places we automatically extracted from the location we recorded the previous day as well as the personal information we inferred from these places.
+S;How long will it take?
+P;This task takes a few minutes to complete, depending on your past activity. Alternatively, you can review the correctness of the places and the personal information whenever you open the application on the 'Timeline'.
+S;What data will I be sharing?
+P;The application will collect data items in the background, about your activity, including your step count, your location, the Wi-Fi connectivity information of your mobile device, and your mobile device’s battery state and charged level. All the data is stored locally on the device, and transmitted periodically over an encrypted channel to a UCL server. The data collected does not include the participant’s name or postal address. The data is associated to a participant ID generated upon installing the application, which is based on the unique iOS device code (UUID).
+S;What will you do with this data?
+P;We will use it for our academic research, and to create the summary data that all application users can see. We will apply statistical methods to the combined responses from everyone taking part. If you are interested in the data collected, go to the 'Settings' menu under the 'Collected data' section - this will allow you to see the data that we collect from your mobile phone. We will also use the data for our scientific research, and we will publish the results in scientific journals. The papers will be available to read online - go to the web page of the application (https://iss-lab.geog.ucl.ac.uk/trackingadvisor) to see details of recent studies. In all cases, we will never report any individual's responses - only information at the group level.
+S;Is it anonymous?
+P;Yes. We won't know who you are. We don't ask for your name or for any other identifying information, and we don't need your phone number to send notifications to your phone.
+S;Is it confidential?
+P;Yes. We won't disclose your data to any third party unless (1) we're required by law to do so, or (2) we do so under a strict contractual agreement with other academic researchers, exclusively for the purpose of academic research at a recognised institution.
+S;Is it secure?
+P;The data is encrypted when it is submitted over the internet to our servers. The data we collect from your phone is then stored securely on an encrypted partition on our servers at dedicated computing facilities.
+S;Do I have to take part in the research to use the application?
+P;When you install the application, you agree to take part in the research.
+S;Is it possible to opt-out?
+P;Taking part is completely voluntary. You can change your preference in the ‘Settings' menu at any time and without giving a reason. You can withdraw completely from the experiment at any time in the 'Settings' menu and this will delete all your data from our server. Or you can just delete this application from your mobile device at any time (although once you've done this, you will not be able to delete your data from the server). We won't be able to remove your data from analyses that have already been completed.
+S;How much data does it use?
+P;Not very much. The average user will use less than 500 kB per day during their time using the app. This doesn't include the data used to download or update the app.
+S;I have another question...
+P;If there's anything else you would like to know, please contact us:
+P; - through the contact form within the application in the 'Settings' menu,
+P; - by email at b.baron@ucl.ac.uk,
+P; - write us at the Department of Geography, University College London, Gower Street, London WC1E 6BT,
+P; - visit our website at https://iss-lab.geog.ucl.ac.uk/trackingadvisor

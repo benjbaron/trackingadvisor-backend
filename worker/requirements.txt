@@ -1,0 +1,12 @@
+raven
+pymongo
+psycopg2-binary
+geojson
+shapely
+requests
+geocoder
+numpy
+sklearn
+scipy
+nltk
+pika

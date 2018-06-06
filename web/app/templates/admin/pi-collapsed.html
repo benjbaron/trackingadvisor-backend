@@ -1,0 +1,52 @@
+<div class="row mt-2 mb-3">
+    <div class="col-6">
+        <h4>Topics associated to the place category</h4>
+        <p>
+            {% for topic in topics %}
+                <button type="button" class="btn btn-primary tag">{{ topic['top_words'][0]['words']}} ({{ topic['top_words'][0]['score'] | round(1, 'floor')}})</button>
+            {% endfor %}
+        </p>
+    </div>
+    <div class="col-6">
+        <h4>Personal information</h4>
+        <p>You can edit the personal information list shown below by adding or removing personal information.</p>
+        <div id="scrollable-dropdown-menu">
+            <input type="text" class="form-control" id="tokenfield" value="{{ pis | join(';')}}" />
+        </div>
+    </div>
+</div>
+<script>
+    var category_id = "{{ category_id }}";
+    $(document).ready(function() {
+        $('#tokenfield').tokenfield({
+          delimiter: ';',
+          typeahead: [{highlight: true, minLength: 3}, { name: "personalinformation", source: engine.ttAdapter(), limit: 10}]
+        }).on('tokenfield:createdtoken', function (e) {
+            var label = e.attrs.value;
+            if (label in map) {
+                var piid = map[label].pi_id;
+                $.get("/admin/updatepi", {catid: category_id, piid: piid, type: "create"}, function (data) {
+                    console.log("Sent createdtoken");
+                });
+            }
+
+        }).on('tokenfield:editedtoken', function (e) {
+            var label = e.attrs.value;
+            if (label in map) {
+                var piid = map[e.attrs.value].pi_id;
+                $.get("/admin/updatepi", {catid: category_id, piid: piid, type: "edit"}, function (data) {
+                    console.log("Sent editedtoken");
+                });
+            }
+
+        }).on('tokenfield:removedtoken', function (e) {
+            var label = e.attrs.value;
+            if (label in map) {
+                var piid = map[e.attrs.value].pi_id;
+                $.get("/admin/updatepi", {catid: category_id, piid: piid, type: "remove"}, function (data) {
+                    console.log("Sent removedtoken");
+                });
+            }
+        });
+    });
+</script>

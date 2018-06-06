@@ -1,0 +1,107 @@
+<style>
+    .hiddenRow {
+        padding: 0 !important;
+    }
+    .token {
+        height: initial!important;
+    }
+</style>
+
+{% include 'admin/navbar-top.html' %}
+
+<div id="content" class="container-fluid">
+  <div class="row">
+
+    {% include 'admin/navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Place categories</h1>
+        <p>You have {{categories|length}} place categories.</p>
+      </div>
+
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Category</th>
+              <th>Parents</th>
+              <th>Personal information</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for cat in categories %}
+              <tr data-toggle="collapse" data-target="#accordeon{{loop.index}}" class="accordion-toggle">
+                  <td><img src="{{ url_for('static', filename='img/icons/' ~ cat['icon'] ~ '.svg') }}" width="20" height="20"/></td>
+                  <td>{{ cat['name'] }}</td>
+                  <td>
+                  {% if 'parents_name' in cat and cat['parents_name'] %}
+                      {{ cat['parents_name'] | join(', ') }}
+                  {% else %}
+                      <i>No parent category.</i>
+                  {% endif %}
+                  </td>
+                  <td><p>
+                  {% if 'pis' in cat and cat['pis'] and cat['pis'][0]['category'] %}
+                      {% for pi in cat['pis'] %}
+                          <button type="button" class="btn btn-secondary tag">{{ pi['category']}} | {{ pi['name']}}</button>
+                      {% endfor %}
+                  {% else %}
+                      <i>No personal information for this category.</i>
+                  {% endif %}
+                  </p></td>
+              </tr>
+              <tr>
+                  <td colspan="4" class="hiddenRow">
+                      <div class="accordion-body collapse" id="accordeon{{loop.index}}" data-catid="{{ cat['category_id'] }}"></div>
+                  </td>
+              </tr>
+           {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+    var objects = [];
+    var map = {};
+    var data = {{ pis|tojson|safe }};
+    $.each(data, function(i, object) {
+        var label = object.category_id + " " + object.name;
+        map[label] = object;
+        objects.push({value: label});
+    });
+
+    var engine = new Bloodhound({
+      local: objects,
+      datumTokenizer: function(d) {
+        return Bloodhound.tokenizers.whitespace(d.value);
+      },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      limit: 300
+    });
+
+    engine.initialize();
+
+    $('.collapse').on('show.bs.collapse', function () {
+        $('.collapse.show').collapse('hide');
+
+        var thisRow = this;
+        var catid = $(this).data('catid');
+        setTimeout(function () {
+            console.log("Show collapsed for "+ catid);
+            $.get("/admin/picollapsed", {catid: catid}, function (data) {
+                console.log("Loaded");
+                $(thisRow).empty();
+                $(thisRow).html(data);
+            });
+        }, 500);
+    });
+
+    $('.collapse').on('hidden.bs.collapse', function () {
+        console.log("Hide collapsed for "+$(this).data('piid'));
+        $(this).empty();
+    });
+</script>

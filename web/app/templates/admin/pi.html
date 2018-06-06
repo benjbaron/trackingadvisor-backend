@@ -1,0 +1,145 @@
+<style>
+    .hiddenRow {
+        padding: 0 !important;
+    }
+    .token {
+        height: initial!important;
+    }
+</style>
+
+{% include 'admin/navbar-top.html' %}
+
+<div id="content" class="container-fluid">
+  <div class="row">
+
+    {% include 'admin/navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Personal information</h1>
+        <p>You have {{pis|length}} personal information.</p>
+      </div>
+
+      <div class="table-responsive">
+        <form class="mb-5">
+          <div class="form-row">
+            <div class="form-group col-md-4">
+              <label for="inputPIname">Name of personal information</label>
+              <input type="text" class="typeahead form-control" id="inputPIname" placeholder="Name">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="inputPICat">Category of the personal information</label>
+              <input type="text" class="typeahead form-control" id="inputPICat" placeholder="Category">
+            </div>
+            <div class="form-group col-md-4">
+              <label for="inputPISubCat">Subcategory of the personal information</label>
+              <input type="text" class="typeahead form-control" id="inputPISubCat" placeholder="Subcategory">
+            </div>
+          </div>
+          <button type="submit" id="addNewPi" class="btn btn-primary">Add new personal information</button>
+        </form>
+
+        <table id="piTable" class="table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>Category</th>
+              <th>Name</th>
+              <th>Sub-category</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for d in pis %}
+              <tr>
+                  <td><img src="{{ url_for('static', filename='img/icons/' ~ d['icon'] ~ '.svg') }}" width="20" height="20"/></td>
+                  <td>{{ d['category_id'] }}</td>
+                  <td>{{ d['name'] }}</td>
+                  <td>{{ d['subcategory_name'] }}</td>
+              </tr>
+           {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>
+<script>
+    var categoriesData = {{ categories|tojson|safe }};
+    var categoriesObjects = [];
+    var categoriesImg = {};
+    $.each(categoriesData, function(i, category) {
+        categoriesImg[category.name] = category.icon;
+        categoriesObjects.push({value: category.name});
+    });
+
+    var subCategoriesData = {{ subcategories|tojson|safe }};
+    var subCategoriesObjects = [];
+    var subCategoriesImg = {};
+    $.each(subCategoriesData, function(i, subCategory) {
+        subCategoriesImg[subCategory.name] = subCategory.icon;
+        subCategoriesObjects.push({value: subCategory.name});
+    });
+
+    var categories = new Bloodhound({
+      local: categoriesObjects,
+      datumTokenizer: function(d) {
+        return Bloodhound.tokenizers.whitespace(d.value);
+      },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      limit: 50
+    });
+
+    categories.initialize();
+
+    var subCategories = new Bloodhound({
+      local: subCategoriesObjects,
+      datumTokenizer: function(d) {
+        return Bloodhound.tokenizers.whitespace(d.value);
+      },
+      queryTokenizer: Bloodhound.tokenizers.whitespace,
+      limit: 50
+    });
+
+    subCategories.initialize();
+
+    $('#inputPICat').typeahead({
+      hint: true,
+      highlight: true,
+      minLength: 0
+    },
+    {
+      name: 'picategories',
+      source: categories.ttAdapter()
+    });
+
+    $('#inputPISubCat').typeahead({
+      hint: true,
+      highlight: true,
+      minLength: 0
+    },
+    {
+      name: 'pisubcategories',
+      source: subCategories.ttAdapter()
+    });
+
+    $('#addNewPi').on('click', function(event) {
+        event.preventDefault(); // To prevent following the link
+
+        var name = $('#inputPIname').val();
+        var cat = $('#inputPICat').val();
+        var catImg = categoriesImg[cat];
+        var subCat = $('#inputPISubCat').val();
+        var subCatImg = subCategoriesImg[subCat];
+
+        if (name === '' || cat === '') {
+            return
+        }
+
+        $.getJSON("/admin/addpi", {name: name, cat: cat, catimg: catImg, subcat: subCat, subcatimg: subCatImg}, function (pi) {
+            $('#piTable').prepend('<tr><td><img src="'+pi.icon+'" width="20" height="20"/></td><td>'+pi.picid+'</td><td>'+pi.name+'</td><td>'+pi.subcategory_name+'</td></tr>');
+            $('#inputPIname').val('');
+            $('#inputPICat').val('');
+            $('#inputPISubCat').val('');
+        });
+    });
+</script>

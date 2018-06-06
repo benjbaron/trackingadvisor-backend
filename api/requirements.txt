@@ -1,0 +1,17 @@
+raven
+pymongo
+flask
+flask_mail
+flask_socketio
+kombu
+psycopg2-binary
+geojson
+shapely
+requests
+werkzeug
+geocoder
+numpy
+sklearn
+scipy
+nltk
+pika

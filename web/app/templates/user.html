@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>TrackingAdvisor</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon" />
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+      <!-- Mapbox CSS -->
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+    <script src='https://api.mapbox.com/mapbox.js/plugins/turf/v2.0.2/turf.min.js'></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+  </head>
+
+  <body>
+    {% if authenticated and exists %}
+    <div id="welcome" class="container d-flex h-100">
+      <div class="row align-self-center w-100">
+        <div class="col-6 mx-auto">
+          <img height="100" width="100" class="image-center" src="{{ url_for('static', filename='img/location-arrow.svg') }}">
+          <h2 class="text-center">Welcome to TrackingAdvisor</h2>
+          <p class="text-center">You have been successfully authenticated.</br> We are now loading your data.</p>
+          <img height="25" width="50" class="image-center" src="{{ url_for('static', filename='img/loading-dots.svg') }}">
+        </div>
+      </div>
+    </div>
+    <script>
+        $(function() {
+            setTimeout(function() {
+                // remove the content in the body and load the dashboard
+                $.get("/user/{{ login }}/dashboard", function (data) {
+                    $("#welcome").remove();
+                    $("body").append(data);
+                });
+            }, 2000);
+        });
+    </script>
+
+    {% elif exists %}
+
+    {% include 'dashboard.html' %}
+
+    {% else %}
+
+    <div id="welcome" class="container d-flex h-100">
+      <div class="row align-self-center w-100">
+        <div class="col-6 mx-auto">
+          <img height="100" width="100" class="image-center" src="{{ url_for('static', filename='img/location-arrow.svg') }}">
+          <h2 class="text-center">TrackingAdvisor</h2>
+          <p class="text-center">There has been a problem with your authentication.</br>Please try again by clicking on the link below.</p>
+          <p class="text-center"><a href="javascript:history.back()">Back to the login page</a></p>
+        </div>
+      </div>
+    </div>
+
+    {% endif %}
+  </body>
+</html>
+

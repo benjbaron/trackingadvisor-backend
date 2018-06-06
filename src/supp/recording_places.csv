@@ -1,0 +1,71 @@
+Location,PlaceID,Category,Type,Latitude,Longitude,icon
+Blackfriars Bridge,B1,Bridge,1,51.509327,-0.104397,bridge
+London Bridge,B2,Bridge,1,51.508995,-0.087992,bridge
+Millenium Bridge,B3,Bridge,1,51.509769,-0.098564,bridge
+Southwark Bridge,B4,Bridge,1,51.509076,-0.094001,bridge
+Tower Bridge,B5,Bridge,1,51.50567,-0.075389,bridge
+Waterloo Bridge,B6,Bridge,1,51.50905,-0.116881,bridge
+Chelsea Bridge,B7,Bridge,1,51.484163,-0.149696,bridge
+Albert Bridge,B8,Bridge,1,51.48215,-0.166645,bridge
+Vauxhall Bridge,B9,Bridge,1,51.487849,-0.127125,bridge
+Putney Bridge,B10,Bridge,1,51.467417,-0.212756,bridge
+Other,BX,Bridge,1,51.467417,-0.212756,bridge
+Southwark Cathedral,C1,Church,2,51.506308,-0.089607,church
+St John's Church (Smith Square),C2,Church,2,51.495951,-0.127064,church
+Westminster Cathedral,C3,Church,2,51.495996,-0.139412,church
+Brompton Oratory,C4,Church,2,51.497019,-0.169423,church
+St. Peter's Italian,C5,Church,2,51.522546,-0.109159,church
+St. Cecilia's & St. Anselm,C6,Church,2,51.516832,-0.119557,church
+Polish Church,C7,Church,2,51.534426,-0.100754,church
+St. Monica (Hoxton),C8,Church,2,51.528381,-0.081444,church
+St. James Spanish Place,C9,Church,2,51.518338,-0.152186,church
+Carmelites,C10,Church,2,51.504072,-0.192596,church
+St John the Evangelist ,C11,Church,2,51.534105,-0.103084,church
+Our Lady of Victory,C12,Church,2,51.499251,-0.197657,church
+Other,CX,Church,2,51.499251,-0.197657,church
+Battersea Park,P1,Park,3,51.479113,-0.156742,park
+Hyde Park,P2,Park,3,51.507293,-0.166012,park
+Ravencourt Park,P3,Park,3,51.496653,-0.238516,park
+St James Park,P4,Park,3,51.502446,-0.134875,park
+Northwick Park,P5,Park,3,51.574226,-0.312128,park
+Alexandra Park,P6,Park,3,51.595318,-0.126424,park
+Priory Park,P7,Park,3,51.586328,-0.125946,park
+Finsbury Park,P8,Park,3,51.571013,-0.09914,park
+Clissold Park,P9,Park,3,51.560204,-0.090006,park
+Shoreditch Park,P10,Park,3,51.533737,-0.084642,park
+Other,PX,Park,3,51.533737,-0.084642,park
+Angel1,S1,Starbucks,4,51.533278,-0.106573,coffee
+Fenchurch Street,S2,Starbucks,4,51.512038,-0.075367,coffee
+Old Street,S3,Starbucks,4,51.526444,-0.088061,coffee
+Oxford Circus,S4,Starbucks,4,51.514924,-0.144019,coffee
+Strand,S5,Starbucks,4,51.511371,-0.119959,coffee
+Angel2,S6,Starbucks,4,51.534789,-0.105296,coffee
+Victoria,S7,Starbucks,4,51.494558,-0.146794,coffee
+Kings Cross (out),S8,Starbucks,4,51.530912,-0.121990,coffee
+Tavistock Square,S9,Starbucks,4,51.526044,-0.12815,coffee
+Tottenham Court Road (UCL),S10,Starbucks,4,51.523026,-0.135591,coffee
+High Street Kensington,S11,Starbucks,4,51.502474,-0.188517,coffee
+Other,SX,Starbucks,4,51.502474,-0.188517,coffee
+Fenchurch Street,Tn1,Train,5,51.511497,-0.078184,train
+Liverpool Street,Tn2,Train,5,51.519055,-0.081465,train
+London Bridge,Tn3,Train,5,51.505357,-0.085919,train
+St Pancras,Tn4,Train,5,51.531404,-0.126159,train
+Kings Cross,Tn5,Train,5,51.531976,-0.124456,train
+Euston ,Tn6,Train,5,51.528292,-0.133297,train
+Victoria,Tn7,Train,5,51.495343,-0.143888,train
+Paddington,Tn8,Train,5,51.516937,-0.176924,train
+Marylebone,Tn9,Train,5,51.522927,-0.163109,train
+Waterloo,Tn10,Train,5,51.503346,-0.112316,train
+Other,TnX,Train,5,51.503346,-0.112316,train
+Angel,Tb1,Tube,6,51.532931,-0.105852,metro
+Bank,Tb2,Tube,6,51.513719,-0.089114,metro
+Green Park,Tb3,Tube,6,51.507093,-0.142839,metro
+Kings Cross,Tb4,Tube,6,51.530442,-0.123783,metro
+London Bridge,Tb5,Tube,6,51.505994,-0.086906,metro
+Moorgate,Tb6,Tube,6,51.518623,-0.088046,metro
+Oxford Circus,Tb7,Tube,6,51.515399,-0.141845,metro
+Picadilly Circus,Tb8,Tube,6,51.510335,-0.134158,metro
+Victoria,Tb9,Tube,6,51.495397,-0.143876,metro
+Waterloo,Tb10,Tube,6,51.503579,-0.113421,metro
+Euston,Tb11,Tube,6,51.528194,-0.133163,metro
+Other,TbX,Tube,6,51.528194,-0.133163,metro

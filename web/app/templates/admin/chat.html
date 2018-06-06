@@ -1,0 +1,177 @@
+<style>
+    #chat-sidebar {
+        overflow-y: auto;
+    }
+
+    .chat {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        overflow-y: scroll;
+    }
+
+    .chat li {
+        margin-bottom: 10px;
+        padding-bottom: 5px;
+        border-bottom: 1px solid #B3A9A9;
+    }
+
+    .chat li.left .chat-body {
+        margin-left: 10px;
+    }
+
+    .chat li.right .chat-body {
+        margin-right: 10px;
+    }
+
+
+    .chat li .chat-body p {
+        margin: 0;
+        color: #777777;
+    }
+
+    .panel .slidedown .glyphicon, .chat .glyphicon {
+        margin-right: 15px;
+    }
+
+    .panel-body {
+        overflow-y: scroll;
+        height: 250px;
+    }
+
+</style>
+
+{% include 'admin/navbar-top.html' %}
+
+<div id="content" class="container-fluid h-100">
+  <div class="row h-100">
+
+    {% include 'admin/navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4 d-flex flex-column h-100">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Chat</h1>
+      </div>
+      <div class="row h-100">
+          <div id="chat-sidebar" class="col-3">
+              <div class="sidebar-scroll" id="list-group">
+                <ul class="list-group list-group-flush">
+                  {% for user in users %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center" data-userid="{{ user['user_id'] }}">{{ user['user_id'] }}<span class="badge badge-primary badge-pill">{{ user['count'] }}</span></li>
+                  {% endfor %}
+                </ul>
+              </div>
+          </div>
+          <div id="chat" class="d-flex flex-column col-9 ml-sm-auto">
+              <ul class="chat mb-auto"></ul>
+              <div class="row d-flex align-items-end mb-4 mt-5">
+                <div class="col-9">
+                  <input id="chat-text" type="text" placeholder="Enter your message here" class="form-control" />
+                </div>
+                <div class="col-3">
+                  <button id="chat-send" class="btn btn-primary btn-block">Send</button>
+                </div>
+              </div>
+          </div>
+      </div>
+    </main>
+
+  </div>
+</div>
+<script>
+var selectedUser = null;
+var chatInterval = null;
+var numberOfMessages = 0;
+
+$("#chat-sidebar .list-group-item").off('click').on("click", function(e) {
+    $("#chat-sidebar .list-group-item.active").removeClass("active");
+    $(this).addClass("active");
+    var userid = $(this).data("userid");
+    selectedUser = userid;
+    $.get("/admin/chatmessages", {userid: userid}, function (data) {
+        $("#chat ul.chat").empty();
+        $("#chat ul.chat").append(data);
+        numberOfMessages = $("#chat ul.chat li").length;
+        if (chatInterval == null) {
+            chatInterval = setInterval("ajaxd()",2500);
+        }
+    });
+});
+
+$('#chat-send').on('click', function(e) {
+    console.log("clicked on send");
+    if (selectedUser != null) {
+        var msg = $('#chat-text').val();
+        sendMessage(selectedUser, msg);
+    }
+
+    event.preventDefault();
+});
+
+$('#chat-text').on('keypress', function (e) {
+    if(e.which === 13 && selectedUser != null) {
+        //Disable textbox to prevent multiple submit
+        $(this).attr("disabled", "disabled");
+
+        var msg = $('#chat-text').val();
+        sendMessage(selectedUser, msg);
+
+        //Enable the textbox again if needed.
+        $(this).removeAttr("disabled");
+    }
+});
+
+function ajaxd() {
+    if (selectedUser != null) {
+        $.get("/admin/chatmessages", {userid: selectedUser}, function (data) {
+
+            $("#chat ul.chat").empty();
+            $("#chat ul.chat").append(data);
+
+            var newNumberOfMessages = $("#chat ul.chat li").length;
+            if (newNumberOfMessages > numberOfMessages) {
+                $("#chat ul.chat").animate({ scrollTop: $("#chat ul.chat").get(0).scrollHeight }, "slow");
+            }
+            numberOfMessages = $("#chat ul.chat li").length;
+        });
+    }
+}
+
+function sendMessage(userid, msg) {
+    $.get("/admin/sendmessage", {
+        userid: userid,
+        message: msg,
+        timestamp: Date.now() / 1000,
+        sender: false
+    }, function (data) {
+        $('#chat-text').val('');
+        $.get("/admin/chatmessages", {userid: userid}, function (data) {
+            $("#chat ul.chat").empty();
+            $("#chat ul.chat").append(data);
+            $("#chat ul.chat").animate({ scrollTop: $("#chat ul.chat").get(0).scrollHeight }, "slow");
+        });
+    });
+}
+
+$(window).on("blur focus", function(e) {
+    var prevType = $(this).data("prevType");
+
+    if (prevType != e.type) {   //  reduce double fire issues
+        switch (e.type) {
+            case "blur":
+                // do work
+                console.log("Blur mode");
+                clearInterval(chatInterval);
+                chatInterval = null;
+                break;
+            case "focus":
+                // do work
+                console.log("Focus mode");
+                chatInterval = setInterval("ajaxd()",2500);
+                break;
+        }
+    }
+
+    $(this).data("prevType", e.type);
+})
+</script>

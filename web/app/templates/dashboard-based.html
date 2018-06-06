@@ -1,0 +1,88 @@
+<nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+  <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="{{ url_for('static', filename='img/location-arrow.svg') }}">TrackingAdvisor</a>
+  <ul class="navbar-nav px-3">
+    <li class="nav-item text-nowrap">
+      <a class="nav-link" id="sign-out" href="#">Sign out</a>
+    </li>
+  </ul>
+</nav>
+
+<div class="container-fluid">
+  <div class="row">
+    <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+      <div class="sidebar-sticky">
+        <ul class="nav flex-column">
+          <li class="nav-item">
+            <a class="nav-link active" href="#">
+              <span data-feather="home"></span>
+              Dashboard <span class="sr-only">(current)</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">
+              <span data-feather="map"></span>
+              My Map
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="#">
+              <span data-feather="bar-chart-2"></span>
+              My Statistics
+            </a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Dashboard</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group mr-2">
+            <button class="btn btn-sm btn-outline-secondary">Export</button>
+          </div>
+        </div>
+      </div>
+
+       <section class="row text-center placeholders">
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+              <h2 class="card-title">22</h2>
+              <h4>days</h4>
+              <p class="card-text">The study has lasted for 22 days (maximum duration).</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+              <h2 class="card-title">22</h2>
+              <h4>visits</h4>
+              <p class="card-text">Together, the participants have visited 22 places.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+              <h2 class="card-title">22</h2>
+              <h4>places</h4>
+              <p class="card-text">Together, the participants made 22 visits.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3">
+          <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+              <h2 class="card-title">22</h2>
+              <h4>personal information</h4>
+              <p class="card-text">As of now, 22 users are currently participating in the study.</p>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+</div>

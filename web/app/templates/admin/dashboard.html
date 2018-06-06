@@ -1,0 +1,77 @@
+{% include 'admin/navbar-top.html' %}
+
+<div id="content" class="container-fluid">
+  <div class="row">
+
+    {% include 'admin/navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Admin Dashboard</h1>
+      </div>
+
+       <section class="row text-center placeholders">
+        <div class="col-6 col-sm-3">
+          <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+              <h3 class="card-title">{{ stats['nb_users'] }} users</h3>
+              <p class="card-text">As of now, {{ stats['nb_users'] }} users are currently participating in the study.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+              <h3 class="card-title">{{ stats['nb_days'] }} days</h3>
+              <p class="card-text">The study has lasted for {{ stats['nb_days'] }} days (maximum duration).</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+              <h3 class="card-title">{{ stats['nb_places'] }} places</h3>
+              <p class="card-text">Together, the participants have visited {{ stats['nb_places'] }} places.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+              <h3 class="card-title">{{ stats['nb_visits'] }} visits</h3>
+              <p class="card-text">Together, the participants made {{ stats['nb_visits'] }} visits.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <h2>Participating users</h2>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>User ID</th>
+              <th>Join date</th>
+              <th># places</th>
+              <th># visits</th>
+              <th># days</th>
+              <th>Last update</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for d in users %}
+              <tr>
+                  <td>{{ d['user_id'] }}</td>
+                  <td>{{ d['date_added'] }}</td>
+                  <td>{{ d['nb_places'] }}</td>
+                  <td>{{ d['nb_visits'] }}</td>
+                  <td>{{ d['nb_days'] }}</td>
+                  <td>{{ d['latest_visit'] }}</td>
+              </tr>
+           {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>

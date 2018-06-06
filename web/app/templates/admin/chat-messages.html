@@ -1,0 +1,13 @@
+{% for msg in messages %}
+    <li class="left clearfix">
+        <div class="chat-body clearfix">
+            <div class="header">
+                <strong class="primary-font">{{ 'User' if msg['sender'] else 'Admin' }}</strong> <small class="pull-right text-muted">
+                    <span class="glyphicon glyphicon-time"></span>12 mins ago</small>
+            </div>
+            <p>
+                {{ msg['text'] }}
+            </p>
+        </div>
+    </li>
+{% endfor %}

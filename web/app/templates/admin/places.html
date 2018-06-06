@@ -1,0 +1,63 @@
+<style>
+    #sidebar {
+        overflow-y: auto;
+    }
+</style>
+
+{% include 'admin/navbar-top.html' %}
+
+<div id="content" class="container-fluid h-100">
+  <div class="row h-100">
+
+    {% include 'admin/navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4 d-flex flex-column h-100">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Places</h1>
+      </div>
+      <div class="row h-100">
+          <div id="sidebar" class="col-3">
+              <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum</p>
+          </div>
+          <div id="map" class="col-9 ml-sm-auto"></div>
+      </div>
+    </main>
+
+  </div>
+</div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuamJhcm9uIiwiYSI6InItaHotTkkifQ.Im25SdEu7d8FNUSXKq8orA';
+
+    var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v9',
+        center: [-96, 37.8],
+        zoom: 3
+    });
+
+    map.on('dragend', function(e){
+        console.log(e);
+        reloadPlaces();
+    });
+
+    map.on('zoomend', function(e) {
+        console.log(e);
+        reloadPlaces();
+    });
+
+    function reloadPlaces() {
+        var mapBounds = processLatLng(map.getBounds());
+		console.log(mapBounds);
+        $.getJSON('/admin/getplaces', mapBounds, function (data) {
+            console.log(data);
+        });
+    }
+
+    function processLatLng(bounds) {
+        return {
+            neLat: bounds._ne.lat, neLng: bounds._ne.lng,
+            swLat: bounds._sw.lat, swLng: bounds._sw.lng
+        }
+    }
+
+</script>

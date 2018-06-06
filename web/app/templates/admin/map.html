@@ -1,0 +1,359 @@
+<style>
+  #map {
+    top: 200px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    width: 100%;
+    height: auto;
+  }
+
+  #user-days {
+    overflow-y: hidden;
+    overflow-x: auto;
+    height: 60px;
+  }
+
+  #user-days .nav-pills {
+    padding: 0px 10px;
+    flex-wrap: initial!important;
+  }
+
+  #user-days .nav-link {
+    width: 130px;
+    text-align: center;
+  }
+
+  .scrollable-menu {
+      height: auto;
+      max-height: 200px;
+      overflow-x: hidden;
+  }
+</style>
+
+{% include 'admin/navbar-top.html' %}
+
+<div id="content" class="container-fluid h-100">
+  <div class="row h-100">
+
+    {% include 'admin/navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="mr-auto h2">Map</h1>
+        <div class="mb-2 mb-md-0 align-self-center"><p class="mt-3 mb-0 mr-3" id="selected-user">No selected user</p></div>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group" id="user-list">
+            <button type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              Pick a user
+            </button>
+            <div class="dropdown-menu scrollable-menu dropdown-menu-right">
+              <button class="dropdown-item" type="button" data-id="all">All</button>
+              {% for k,v in users.items() %}
+                <button class="dropdown-item" type="button" data-id="{{ k }}">{{ k }} ({{ v['nb_days'] }})</button>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" id="user-days">
+        <ul class="nav nav-pills"></ul>
+      </div>
+
+      <div id="map"></div>
+
+    </main>
+  </div>
+</div>
+
+
+<script>
+    var users = {{ users|tojson|safe }};
+
+    $(document).on("click", "#overview", function () {
+        $("#main-menu a.nav-link").removeClass("active");
+        $("#overview").addClass("active");
+        $("#user-list").addClass("hidden");
+        $("#map").css({ top: '70px' });
+
+        map.setLayoutProperty('all-visits-heat', 'visibility', 'visible');
+        map.setLayoutProperty('all-visits-point', 'visibility', 'visible');
+
+        if (pointsLayer) {
+            map.setLayoutProperty('day-points', 'visibility', 'none');
+            map.setLayoutProperty('day-points-time', 'visibility', 'none');
+        }
+    });
+
+    $(document).on("click", "#users", function () {
+        $("#main-menu a.nav-link").removeClass("active");
+        $("#users").addClass("active");
+        $("#user-list").removeClass("hidden");
+        $("#map").css({ top: '70px' });
+    });
+
+
+    $(document).on("click", "#user-list .dropdown-item", function () {
+        $('#user-days ul').empty();
+        var userId = $(this).data("id");
+        if (userId === "all") {
+            if (pointsLayer) {
+                map.setLayoutProperty('day-points', 'visibility', 'none');
+                map.setLayoutProperty('day-points-time', 'visibility', 'none');
+                map.setLayoutProperty('day-visits', 'visibility', 'none');
+                map.setLayoutProperty('day-visits-name', 'visibility', 'none');
+            }
+            map.setLayoutProperty('all-visits-heat', 'visibility', 'visible');
+            map.setLayoutProperty('all-visits-point', 'visibility', 'visible');
+            $('#selected-user').html('No selected user');
+            return
+        }
+
+        // populate the user-days
+        var items = [];
+        $.each(users[userId]['days'], function(i, day) {
+          items.push('<li class="nav-item"><a class="nav-link" data-toggle="pill" data-user="'+userId+'" data-day="'+day+'" href="#'+day+'">'+day+'</a></li>');
+        });  // close each()
+
+        $('#user-days ul').append( items.join('') );
+        $('#selected-user').html('Selected user: <b>'+ userId +'</b>');
+    });
+
+
+    $(document).on("click", "#user-days .nav-link", function () {
+        var userId = $(this).data("user");
+        var day = $(this).data("day");
+
+        var params = {
+            day: day,
+            userid: userId,
+            type: "geojson"
+        };
+        $.getJSON('/fulltrace', params, function(data) {
+            map.setLayoutProperty('all-visits-heat', 'visibility', 'none');
+            map.setLayoutProperty('all-visits-point', 'visibility', 'none');
+
+            if (pointsLayer) {
+                map.setLayoutProperty('day-points', 'visibility', 'visible');
+                map.setLayoutProperty('day-points-time', 'visibility', 'visible');
+                map.getSource('day-points').setData(data.points);
+
+                map.setLayoutProperty('day-visits', 'visibility', 'visible');
+                map.setLayoutProperty('day-visits-name', 'visibility', 'visible');
+                map.getSource('day-visits').setData(data.visits);
+            } else {
+                map.addSource('day-points', {
+                    type: "geojson",
+                    data: data.points
+                });
+
+                map.addSource('day-visits', {
+                    type: "geojson",
+                    data: data.visits
+                });
+
+                map.addLayer({
+                    id: "day-points",
+                    source: "day-points",
+                    type: "circle",
+                    paint: {
+                        "circle-radius": 5,
+                        "circle-color": "#007cbf",
+                        "circle-opacity": 0.5
+                    }
+                });
+
+                map.addLayer({
+                    id: "day-visits",
+                    source: "day-visits",
+                    type: "circle",
+                    paint: {
+                        'circle-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'dur'],
+                            1, 10,
+                            86400, 15
+                        ],
+                        "circle-color": "#fc165a",
+                        "circle-opacity": 0.5
+                    }
+                });
+
+                map.addLayer({
+                    id: "day-points-time",
+                    source: "day-points",
+                    type: "symbol",
+                    layout: {
+                        "text-field": "{label}",
+                        "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                        "text-size": 12,
+                        "text-anchor": "center"
+                    },
+                    paint: {
+                        "text-color": "#ffffff",
+                        "text-translate": [0,-10]
+                    }
+                });
+
+                map.addLayer({
+                    id: "day-visits-name",
+                    source: "day-visits",
+                    type: "symbol",
+                    layout: {
+                        "text-field": "{label}",
+                        "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Bold"],
+                        "text-size": 15,
+                        "text-anchor": "center"
+                    },
+                    paint: {
+                        "text-color": "#ffffff",
+                        "text-translate": [0,20]
+                    }
+                });
+
+
+
+                pointsLayer = true;
+            }
+
+            var bbox = turf.extent(data.points);
+            map.fitBounds(bbox, {padding: 50});
+        });
+    });
+
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuamJhcm9uIiwiYSI6InItaHotTkkifQ.Im25SdEu7d8FNUSXKq8orA';
+    var pointsLayer = false;
+
+    var map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/dark-v9',
+        center: [-96, 37.8],
+        zoom: 3
+    });
+
+    map.on("load", function() {
+        var data = {{ visits|tojson|safe }};
+        map.addControl(new mapboxgl.NavigationControl());
+
+        map.addSource("all-visits", {
+            "type": "geojson",
+            "data": data
+        });
+
+        map.addLayer({
+            "id": "all-visits-heat",
+            "type": "heatmap",
+            "source": "all-visits",
+            "maxzoom": 14,
+            "paint": {
+                // Increase the heatmap weight based on frequency and property magnitude
+                "heatmap-weight": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "nb_visits"],
+                    0, 0,
+                    100, 1
+                ],
+                // Increase the heatmap color weight weight by zoom level
+                // heatmap-intensity is a multiplier on top of heatmap-weight
+                "heatmap-intensity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    0, 1,
+                    14, 3
+                ],
+                // Color ramp for heatmap.  Domain is 0 (low) to 1 (high).
+                // Begin color ramp at 0-stop with a 0-transparancy color
+                // to create a blur-like effect.
+                "heatmap-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["heatmap-density"],
+                    0, "rgba(33,102,172,0)",
+                    0.2, "rgb(103,169,207)",
+                    0.4, "rgb(209,229,240)",
+                    0.6, "rgb(253,219,199)",
+                    0.8, "rgb(239,138,98)",
+                    1, "rgb(178,24,43)"
+                ],
+                // Adjust the heatmap radius by zoom level
+                "heatmap-radius": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    0, 2,
+                    14, 20
+                ],
+                // Transition from heatmap to circle layer by zoom level
+                "heatmap-opacity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    12, 1,
+                    14, 0
+                ]
+            }
+        });
+
+        map.addLayer({
+            "id": "all-visits-point",
+            "type": "circle",
+            "source": "all-visits",
+            "minzoom": 12,
+            "paint": {
+                // Size circle radius by earthquake magnitude and zoom level
+                "circle-radius": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    12, [
+                        "interpolate",
+                        ["linear"],
+                        ["get", "nb_visits"],
+                        1, 1,
+                        2, 2,
+                        10, 3,
+                        100, 4
+                    ],
+                    16, [
+                        "interpolate",
+                        ["linear"],
+                        ["get", "nb_visits"],
+                        1, 5,
+                        2, 7,
+                        5, 10,
+                        10, 13,
+                        100, 15
+                    ]
+                ],
+                // Color circle by earthquake magnitude
+                "circle-color": [
+                    "interpolate",
+                    ["linear"],
+                    ["get", "dur"],
+                    1, "rgba(33,102,172,0)",
+                    2, "rgb(103,169,207)",
+                    5, "rgb(209,229,240)",
+                    10, "rgb(253,219,199)",
+                    25, "rgb(239,138,98)",
+                    100, "rgb(178,24,43)"
+                ],
+                "circle-stroke-color": "white",
+                "circle-stroke-width": 1,
+                // Transition from heatmap to circle layer by zoom level
+                "circle-opacity": [
+                    "interpolate",
+                    ["linear"],
+                    ["zoom"],
+                    12, 0,
+                    13, 1
+                ]
+            }
+        })
+    });
+
+</script>

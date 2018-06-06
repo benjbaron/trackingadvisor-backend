@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TrackingAdvisor Survey</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon" />
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    <script src="https://surveyjs.azureedge.net/1.0.22/survey.jquery.js"></script>
+    <style>
+        body {
+            background-color: #fff;
+        }
+
+        .panel-body {
+            margin-top: 20px;
+            margin-right: 20px;
+            margin-left: 20px;
+        }
+
+        .btn-green {
+            background-color: #500778;
+            color: #fff;
+            border-radius: 3px;
+        }
+
+        .btn-green:hover {
+          background-color: #c6b0bc;
+          color: #fff;
+        }
+
+        .my-rating {
+          font-size: 14px;
+        }
+
+        .panel-footer {
+            background-color: #fff;
+            text-align: right;
+        }
+
+        .progress-bar {
+            background-color: #500778!important;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="fluid-container" id="login-screen">
+      <div class="flexbox-container">
+        <div class="col-md-12 col-lg-12 col-sm-12 col-xs-12 mt-5 mb-4">
+            <div class="d-flex justify-content-center">
+                <img height="40" width="40" class="mt-1 mr-4" src="{{ url_for('static', filename='img/location-arrow.svg') }}">
+                <h1>TrackingAdvisor</h1>
+            </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div id="surveyElement"></div>
+    <div id="surveyResult"></div>
+
+    <script type="text/javascript" src="{{ url_for('static', filename='js/survey.js') }}"></script>
+
+</body>
+</html>

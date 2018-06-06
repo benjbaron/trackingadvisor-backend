@@ -1,0 +1,13 @@
+<nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+  <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="{{ url_for('static', filename='img/location-arrow.svg') }}">TrackingAdvisor Admin</a>
+  <ul class="navbar-nav px-3">
+    <li class="nav-item text-nowrap">
+      <a class="nav-link" id="sign-out" href="#">Sign out</a>
+    </li>
+  </ul>
+</nav>
+<script>
+  $(document).off('click', '#sign-out').on('click','#sign-out', function(e) {
+    console.log("clicked on sign out");
+  });
+</script>

@@ -1,0 +1,70 @@
+{% include 'navbar-top.html' %}
+
+<div id="content" class="container-fluid">
+  <div class="row">
+
+    {% include 'navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Dashboard</h1>
+        <div class="btn-toolbar mb-2 mb-md-0">
+          <div class="btn-group mr-2">
+            <button id="export-modal-button" class="btn btn-sm btn-outline-secondary">Export</button>
+          </div>
+        </div>
+      </div>
+      <div id="export-modal"></div>
+
+       <section class="row text-center placeholders">
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+              <h2 class="card-title">{{ user['nb_days'] }}</h2>
+              <h4>days</h4>
+              <p class="card-text">You have been participating in the study for {{ user['nb_days'] }} days.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+              <h2 class="card-title">{{ user['nb_places'] }}</h2>
+              <h4>visits</h4>
+              <p class="card-text">During your participation in the study, you have visited {{ user['nb_places'] }} places.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+              <h2 class="card-title">{{ user['nb_visits'] }}</h2>
+              <h4>places</h4>
+              <p class="card-text">Overall, you made {{ user['nb_visits'] }} visits.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3">
+          <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+              <h2 class="card-title">{{ user['nb_pi'] }}</h2>
+              <h4>personal information</h4>
+              <p class="card-text">With your movements, you have disclosed {{ user['nb_pi'] }} unique personal information about you.</p>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+</div>
+<script>
+  $(document).off('click', '#export-modal-button').on('click','#export-modal-button', function(e) {
+    console.log("Show modal");
+    $.get('/user/{{ login }}/modal', function (data) {
+        console.log("done");
+        $("#export-modal").html(data);
+        $('#export-modal-content').modal('show');
+    });
+  });
+</script>

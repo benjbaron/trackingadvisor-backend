@@ -1,0 +1,31 @@
+<div id="export-modal-content" class="modal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Export your data</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+          <p>With this tool, you can download the data we have about you.</br>Click on "Download data" to download a zip archive of your data.</p>
+      </div>
+      <div class="modal-footer">
+        <button id="export-modal-download" type="button" class="btn btn-primary">Download data</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+    $(document).off('click', '#export-modal-download').on('click','#export-modal-download', function(e) {
+        var loadingText = '<i class="fa fa-circle-o-notch fa-spin"></i> loading...';
+        if ($(this).html() !== loadingText) {
+          $(this).data('original-text', $(this).html());
+          $(this).html(loadingText);
+        }
+
+        location.href = "/user/{{ login }}/export";
+        $(this).html($(this).data('original-text'));
+    });
+</script>

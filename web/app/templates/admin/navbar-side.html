@@ -1,0 +1,63 @@
+<nav class="col-md-2 d-none d-md-block bg-light sidebar">
+  <div class="sidebar-sticky">
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'dashboard' }}" data-page="dashboard" href="#">
+          <span data-feather="home"></span>
+          Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'map' }}" data-page="map" href="#">
+          <span data-feather="map"></span>
+          Map
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'places' }}" data-page="places" href="#">
+          <span data-feather="map-pin"></span>
+          Places
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'placecategories' }}" data-page="placecategories" href="#">
+          <span data-feather="list"></span>
+          Place categories
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'pi' }}" data-page="pi" href="#">
+          <span data-feather="heart"></span>
+          Personal information
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'chat' }}" data-page="chat" href="#">
+          <span data-feather="message-circle"></span>
+          Messages
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+<script>
+  feather.replace();
+  $(".sidebar .nav-link").off('click').on("click", function(e) {
+    $(".sidebar .nav-link.active").removeClass("active");
+    $(this).addClass("active");
+    var loadingURL = "{{ url_for('static', filename='img/loading-circle.svg') }}";
+    $(this).append('<img class="loading" src="'+loadingURL+'" width="20" height="20">');
+    $.get("/admin/"+ $(this).data("page"), function (data) {
+        $("body").empty();
+        $("body").append(data);
+        $(this).find('img.loading').remove();
+
+        // stop the chat interval query
+        if (typeof chatInterval !== 'undefined' && chatInterval != null && !$("#chat").length)  {
+          console.log("Clear the interval");
+          clearInterval(chatInterval);
+        }
+    });
+  });
+
+</script>

@@ -1,0 +1,38 @@
+<nav class="col-md-2 d-none d-md-block bg-light sidebar">
+  <div class="sidebar-sticky">
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'dashboard' }}" data-page="dashboard" href="#">
+          <span data-feather="home"></span>
+          Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'map' }}" data-page="map" href="#">
+          <span data-feather="map"></span>
+          My Map
+        </a>
+      </li>
+      <!--<li class="nav-item">-->
+        <!--<a class="nav-link{{ ' active' if page == 'stats' }}" data-page="stats" href="#">-->
+          <!--<span data-feather="bar-chart-2"></span>-->
+          <!--My Statistics-->
+        <!--</a>-->
+      <!--</li>-->
+    </ul>
+  </div>
+</nav>
+<script>
+  feather.replace();
+  $(".sidebar .nav-link").off('click').on("click", function(e) {
+    $(".sidebar .nav-link.active").removeClass("active");
+    $(this).addClass("active");
+    var loadingURL = "{{ url_for('static', filename='img/loading-circle.svg') }}";
+    $(this).append('<img class="loading" src="'+loadingURL+'" width="20" height="20">');
+    $.get("/user/{{ login }}/"+ $(this).data("page"), function (data) {
+        $("#content").remove();
+        $("body").append(data);
+        $(this).find('img.loading').remove();
+    });
+  });
+</script>
