@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Semantica</title>
+    <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
+
+    <!-- Bootstrap core JavaScript -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <style>
+      .container {
+        height: 100%;
+        display: grid;
+      }
+      #loader {
+          margin: auto;
+      }
+      .progress-meter .background {
+        fill: #ccc;
+      }
+      .progress-meter .foreground {
+        fill: #000;
+      }
+      .progress-meter text {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        font-weight: bold;
+      }
+      .button {
+        background-color: #4CAF50;
+        border: none;
+        color: white;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: auto;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+        <div id="loader"></div>
+    </div>
+    <script>
+      var userPlaces = window.sessionStorage.getItem('userPlaces');
+      var places = JSON.parse(userPlaces);
+
+      var socket = io.connect('wss://' + document.domain + ":" + location.port + "/load",
+          {path: '/semantica/study/socket.io'});
+
+      socket.on('connect', function() {
+          // on a connection, join a room
+          socket.emit('join_room');
+      });
+
+      socket.on('join_room', function(data) {
+          console.log(data);
+      });
+
+      var width = 960,
+          height = 500,
+          twoPi = 2 * Math.PI,
+          total = 1308573, // must be hard-coded if server doesn't report Content-Length
+          formatPercent = d3.format(".0%");
+
+      var progress = {};
+
+      function buildProgress() {
+          var arc = d3.svg.arc()
+              .startAngle(0)
+              .innerRadius(120)
+              .outerRadius(175);
+          progress.arc = arc;
+
+          var svg = d3.select("#loader").append("svg")
+              .attr("width", width)
+              .attr("height", height)
+              .append("g")
+              .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
+          progress.svg = svg;
+
+          var meter = svg.append("g")
+              .attr("class", "progress-meter");
+
+          meter.append("path")
+              .attr("class", "background")
+              .attr("d", arc.endAngle(twoPi));
+          progress.meter = meter;
+
+          var foreground = meter.append("path")
+              .attr("class", "foreground");
+          progress.foreground = foreground;
+
+          var text = meter.append("text")
+              .attr("text-anchor", "middle")
+              .attr('font-size', '50px')
+              .attr("dominant-baseline", "central");
+          progress.text = text;
+
+          var message = meter.append("text")
+              .attr("text-anchor", "middle")
+              .attr('font-size', '25px')
+              .attr("dy", "8.55em");
+          progress.message = message;
+          progress.currentProgess = 0.0;
+      }
+
+      socket.on('update', function(data) {
+          console.log(data);
+          var i = d3.interpolate(progress.currentProgess, data.progress);
+          d3.transition().tween("progress", function() {
+            return function(t) {
+              p = i(t);
+              progress.foreground.attr("d", progress.arc.endAngle(twoPi * p));
+              progress.text.text(formatPercent(p));
+              progress.message.text(data.message);
+            };
+          });
+          progress.currentProgess = data.progress;
+          if(progress.currentProgess === 1.0) {
+              progress.meter.transition().delay(250).attr("transform", "scale(0)").each("end", function() {
+                  var placeIds = [];
+                  let userPis = window.sessionStorage.getItem('userPis');
+
+                  var pis = {};
+                  if (userPis !== undefined) {
+                      pis = JSON.parse(userPis);
+                  }
+
+                  Object.keys(places).forEach(function(placeId, index) {
+                      if (pis === null || pis === undefined || !(placeId in pis)) {
+                          placeIds.push(placeId);
+                      }
+                  });
+
+                  $.getJSON("getpis", {ids: placeIds}, function (d) {
+                      if (pis === null || pis === undefined) {
+                          pis = {};
+                      }
+                      
+                      Object.keys(d).forEach(function(placeId, index){
+                          pis[placeId] = d[placeId];
+                      });
+
+                      var pisString = JSON.stringify(pis);
+                      window.sessionStorage.setItem('userPis', pisString);
+                      window.location.href = 'pi';
+                  });
+              });
+          }
+      });
+
+      /* ON START */
+      $(function() {
+          socket.emit('update', {places: places});
+          buildProgress();
+      });
+
+    </script>
+  </body>
+</html>
+

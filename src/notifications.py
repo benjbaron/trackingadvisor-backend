@@ -280,7 +280,7 @@ if __name__ == '__main__':
         message = sys.argv[4]
         day = sys.argv[5] if len(sys.argv) > 5 else ""
 
-        send_push_notification(user_id, notification_type, message, day)
+        send_push_notification(user_id, notification_type, message, day, use_sandbox=True)
 
     elif arg == 'push-update':
         if len(sys.argv) != 3:

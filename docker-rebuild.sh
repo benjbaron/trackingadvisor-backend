@@ -34,5 +34,9 @@ if [ "$2" == "run" ] || [ "$3" == "run" ]; then
         docker run -d --restart=always -v ~/semantica/cronlogs:/app/cronlogs -v ~/semantica/to_process:/app/to_process -v ~/semantica/user_traces:/app/user_traces --name semantica-$folder -t semantica-$folder
     fi
 
+    if [ $folder == "study" ]; then
+        docker run -d --restart=always -e DB_HOSTNAME="colossus07" --name semantica-$folder -p 8001:8000 -t semantica-$folder
+    fi
+
     echo "Done running $folder"
 fi

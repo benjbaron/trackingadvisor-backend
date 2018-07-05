@@ -45,7 +45,7 @@ def construct_url(base, params={}):
 
 
 def send_request(base, params={}):
-    """ Forms the request to send to the API and returns the data if no errors occured """
+    """ Forms the request to send to the API and returns the data if no errors occurred """
     nb_req = 0
     while nb_req < NB_MAX_REQ:
         full_url = base + "?" + "&".join(["%s=%s" % (k, v.replace(' ', '+')) for (k, v) in params.items()])

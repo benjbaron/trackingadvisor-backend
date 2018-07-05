@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Semantica | Search places</title>
+    <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+      <!-- Mapbox CSS -->
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- Custom styles for this template -->
+    <link href="static/css/dashboard.css" rel="stylesheet">
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+    <script src="static/js/search.js"></script>
+
+      <style>
+          html, body {
+            height: 100%;
+            overflow: hidden;
+          }
+
+          #content {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            overflow: auto;
+          }
+
+          #map {
+            top: 220px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            position: absolute;
+            width: 100%;
+            height: auto;
+            border-top: 2px solid #b3b3b3;
+          }
+
+          #refresh-search {
+            top: 240px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            position: absolute;
+            height: 40px;
+          }
+
+          #refresh-search .btn {
+            border-radius: 20px!important;
+            border-color: #500778;
+            background-color: #500778;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+          }
+
+          #refresh-search .btn:active {
+            border-color: #7c05ae;
+            background-color: #7c05ae;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.40)!important;
+          }
+
+          #selected-places {
+            overflow-y: hidden;
+            overflow-x: auto;
+            height: 150px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            margin-left: 0px;
+            padding-left: 15px;
+            padding-right: 15px;
+            flex-wrap: initial!important;
+          }
+
+          #selected-places::after {
+            content: ''; /* Insert space before the first item and after the last one */
+            min-width: 1px;
+            min-height: 100%;
+          }
+
+          #selected-places .card {
+            font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
+            min-width: 200px;
+            max-width: 200px;
+            max-height: 130px;
+            min-height: 130px;
+            margin-left: 10px;
+            flex-wrap: initial!important;
+            border-radius: 3px!important;
+            border-width: 0px!important;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+          }
+
+
+
+          #selected-places .card-header {
+            background: #500778;
+            padding: 10px!important;
+            border-bottom-width: 0px!important;
+          }
+
+          #selected-places .card-header h5 {
+            display: block;
+            color: #fff;
+            font-weight: 700;
+            font-size: 1rem!important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 2;
+            line-height: 1.3rem;
+            max-height: 2.6rem;
+            margin-bottom: 0px!important;
+            min-height: 40px;
+          }
+
+          #selected-places .card-body {
+            padding: 5px 10px!important;
+          }
+
+          #selected-places .card-text {
+            font-size: 0.75rem!important;
+            line-height: 1rem!important;
+            margin-bottom: 0.25rem!important;
+          }
+
+          #selected-places .card-link {
+            color: darkred;
+          }
+
+          #selected-places .card.init {
+            background-color: none!important;
+            border: 2px solid #500778!important;
+            border-radius: 7px!important;
+            box-shadow: none!important;
+=         }
+
+          #selected-places .card.init .card-text {
+            font-style: italic!important;
+            font-size: 0.9rem!important;
+          }
+
+          #selected-places .card.init .card-title {
+            font-weight: bold!important;
+            font-size: 1.5rem!important;
+            margin-top: 10px;
+            color: #500778;
+          }
+
+          #search-results .list-group-item.active {
+            background-color: #c6b0bc;
+            border-color: #c6b0bc;
+            color: black;
+          }
+
+          #search-results .list-group-item.active .btn {
+            background-color: #500778;
+            border-color: #500778;
+          }
+
+          .navbar-text {
+            font-size: 1rem!important;
+          }
+      </style>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
+      <span class="navbar-text col-sm-3 col-md-2 mr-auto ml-3"><b>Your places</b></span>
+      <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Go to the next step</button>
+    </nav>
+
+    <div id="content" class="container-fluid h-100">
+      <div class="row h-100">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+          <div class="sidebar-sticky d-flex flex-column">
+            <div class="col-auto mt-3 mb-3">
+              <form class="card card-sm">
+                  <div class="card-body row no-gutters align-items-center">
+                      <div class="ml-1 col-auto">
+                          <i class="fa fa-search"></i>
+                      </div>
+                      <div class="col">
+                          <input id="search-place" class="form-control border-0" type="search" placeholder="Search place...">
+                      </div>
+                  </div>
+              </form>
+            </div>
+            <div id="search-results">
+              <ul class="list-group list-group-flush"></ul>
+            </div>
+          </div>
+        </nav>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-0 h-100">
+          <div class="d-flex flex-row card-deck w-100" id="selected-places"></div>
+          <div id="map"></div>
+          <div id="refresh-search" class="row justify-content-center align-items-center" style="display: none;">
+            <a class="btn btn-primary" href="#" role="button">Search again for this area</a>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script>
+        // https://www.mapbox.com/help/building-a-store-locator/#finished-product
+        // This will let you use the .remove() function later on
+        if (!('remove' in Element.prototype)) {
+          Element.prototype.remove = function() {
+            if (this.parentNode) {
+              this.parentNode.removeChild(this);
+            }
+          };
+        }
+
+        var isSearchingPlace = false;
+        var delayTimer;
+        var placeLayer = false;
+        var markers = [];
+        var popups = [];
+        var placeholderTypes = ["place", "restaurant", "hotel", "work", "bar", "pub", "supermarket", "tourist attraction", "museum"];
+        var placeholderIndex = 0;
+        var selectedPlaces = {};
+        var currentCoordinates = [-0.134548, 51.524526];
+        var currentSearchArea = turf.buffer(turf.point(currentCoordinates), 0.3, {units: 'kilometers'});
+        var currentZoom = 8;
+        var triggeredBySearchPlaces = false;
+        var triggeredByUserPosition = false;
+
+        function distance(coords1, coords2) {
+            var from = turf.point(coords1);
+            var to = turf.point(coords2);
+            return turf.distance(from, to);
+        }
+
+        function getIPLocation() {
+            console.log("getIPLocation");
+            $.getJSON("location", {}, function (d) {
+                if (d.lat !== null && d.lon !== null) {
+                  triggeredByUserPosition = true;
+                  flyToLocation(d.lon, d.lat);
+                }
+            });
+        }
+
+        function getLocation() {
+            console.log("getLocation");
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, errorPosition, {timeout:10000});
+            } else {
+                getIPLocation();
+            }
+        }
+
+        function showPosition(position) {
+            console.log("showPosition");
+            triggeredByUserPosition = true;
+            flyToLocation(position.coords.longitude, position.coords.latitude);
+        }
+
+        function errorPosition(error) {
+            console.log("errorPosition: (" + error.code + "): " + error.message);
+            getIPLocation();
+        }
+
+        function searchPlaceholderTimeout() {
+            setTimeout(function() {
+                $('#search-place').attr("placeholder", "Search "+placeholderTypes[placeholderIndex]+"...");
+                placeholderIndex = (placeholderIndex + 1) % placeholderTypes.length;
+                searchPlaceholderTimeout();
+            }, 1500)
+        }
+
+        function showInitialCard() {
+            $('<div class="card init"><div class="card-body d-flex flex-column"><h5 class="card-title">Select places</h5><p class="card-text">Use the search bar on the left to select at least <b>5 places</b> that you have visited.</p></div></div>')
+                .appendTo($('#selected-places'))
+                .fadeIn('slow');
+        }
+
+        // ON START
+        $(function() {
+            let userPlaces = window.sessionStorage.getItem('userPlaces');
+            if (userPlaces && userPlaces.length !== 0) {
+                places = JSON.parse(userPlaces);
+                Object.keys(places).forEach(function(placeId, index) {
+                    addPlace(places[placeId].place);
+                });
+            } else {
+                showInitialCard();
+            }
+            searchPlaceholderTimeout();
+        });
+
+        mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuamJhcm9uIiwiYSI6InItaHotTkkifQ.Im25SdEu7d8FNUSXKq8orA';
+
+        var map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/benjbaron/cjiyeb3zs97f92rnvy6f5mk8d',
+            center: currentCoordinates,
+            zoom: currentZoom
+        });
+
+        map.on('load', function() {
+            getLocation();
+            $('#refresh-search').click(function(e) {
+                var query = $("#search-place").val();
+                searchPlaces(query);
+            });
+        });
+
+        function toggleSearchRefreshButton() {
+            var zoomDiff = Math.abs(map.getZoom() - currentZoom);
+            var coords = [map.getCenter().lng, map.getCenter().lat];
+            var distanceDiff = distance(coords, currentCoordinates);
+            // TODO: currentSearchArea
+            var pt = turf.point(coords);
+            let currentSearchAreaBuffered = turf.buffer(currentSearchArea, 0.3, {units: 'kilometers'});
+            let within = turf.booleanWithin(pt, currentSearchAreaBuffered);
+
+            if (!within && distanceDiff >= 0.75) {
+              // show the search new area button
+              $('#refresh-search').show();
+          } else {
+              $('#refresh-search').hide();
+          }
+        }
+
+        map.on('zoom', function() {
+          toggleSearchRefreshButton();
+        });
+
+        map.on('drag', function() {
+          toggleSearchRefreshButton();
+        });
+
+        function flyToLocation(lon, lat) {
+          map.flyTo({
+            center: [lon, lat],
+            zoom: 14
+          });
+        }
+
+        function flyToFeature(currentFeature) {
+          map.flyTo({
+            center: currentFeature.geometry.coordinates,
+            zoom: 18
+          });
+        }
+
+        function createPopUp(currentFeature) {
+          var popUps = document.getElementsByClassName('mapboxgl-popup');
+          // Check if there is already a popup on the map and if so, remove it
+          if (popUps[0]) popUps[0].remove();
+
+          var popup = new mapboxgl.Popup({ closeOnClick: false })
+            .setLngLat(currentFeature.geometry.coordinates)
+            .setHTML('<h3>' + currentFeature.properties.name + '</h3>' +
+              '<h4>' + currentFeature.properties.address + '</h4>')
+            .addTo(map);
+
+          popups.push(popup);
+        }
+
+        function createMarker(currentFeature) {
+          var el = document.createElement('div');
+            // Add a class called 'marker' to each div
+            el.className = currentFeature.properties['icon-name'];
+            // By default the image for your custom marker will be anchored
+            // by its center. Adjust the position accordingly
+            // Create the custom markers, set their position, and add to map
+            var marker = new mapboxgl.Marker(el, { offset: [0, 0] })
+              .setLngLat(currentFeature.geometry.coordinates)
+              .addTo(map);
+
+            markers.push(marker);
+        }
+
+        function deletePlace(place) {
+            var id = place.properties.id;
+            $('#selected-places *[data-id="'+id+'"]').remove();
+            delete selectedPlaces[id];
+            var len = Object.keys(selectedPlaces).length;
+            if (len === 0) {
+                showInitialCard();
+            }
+
+            if (len >= 5) {
+                setDisabledNextStepButton(false);
+            } else {
+                setDisabledNextStepButton(true);
+            }
+
+            var activeItem = $('#search-results ul li.active');
+            if (activeItem) {
+              activeItem.removeClass('active');
+              activeItem.find('button').remove();
+            }
+        }
+
+        function setDisabledNextStepButton(disabled) {
+            if (disabled) {
+                $('#next-step').addClass('btn-outline-secondary')
+                    .removeClass('btn-primary')
+                    .prop("disabled", true)
+                    .off('click');
+            } else {
+                $('#next-step').removeClass('btn-outline-secondary')
+                    .addClass('btn-primary')
+                    .prop("disabled", false)
+                    .on('click', function() {
+                    // save the selected places and show the next step
+                    var places = {};
+                    Object.keys(selectedPlaces).forEach(function(placeId) {
+                       places[placeId] = {
+                           id: placeId,
+                           name: selectedPlaces[placeId].properties.name,
+                           address: selectedPlaces[placeId].properties.address,
+                           icon: selectedPlaces[placeId].properties.icon,
+                           "icon-name": selectedPlaces[placeId].properties['icon-name'],
+                           position: selectedPlaces[placeId].properties.position,
+                           place: selectedPlaces[placeId]
+                       };
+                    });
+
+                    var placesString = JSON.stringify(places);
+                    window.sessionStorage.setItem('userPlaces',placesString);
+                    window.location.href = 'loadpi';
+                });
+            }
+        }
+
+        function addPlace(place) {
+            var id = place.properties.id;
+            if (!(id in selectedPlaces)) {
+                // remove the init card
+                $('#selected-places .card.init').remove();
+
+                // add the place
+                selectedPlaces[id] = place;
+                if (Object.keys(selectedPlaces).length >= 5) {
+                    setDisabledNextStepButton(false);
+                } else {
+                    setDisabledNextStepButton(true);
+                }
+
+                var el = $('<div class="card" data-id="'+id+'"><div class="card-header"><h5>'+place.properties.name+'</h5></div><div class="card-body d-flex flex-column"><p class="card-text">'+place.properties.address+'</p><a href="#" data-id="'+id+'" class="card-link mt-auto"><i class="fa fa-times"></i> Delete</a></div></div>')
+                    .hide()
+                    .prependTo($('#selected-places'))
+                    .fadeIn('slow');
+                el.find('.card-link').click(function (e) {
+                    e.originalEvent.stopPropagation();
+                    var id = $(this).data('id');
+                    deletePlace(selectedPlaces[id]);
+                });
+
+                el.click(function (e) {
+                    e.originalEvent.stopPropagation();
+
+                    var id = $(this).data('id');
+                    var place = selectedPlaces[id];
+                    var i = place.properties.position;
+                    var listing = $("#search-results ul").find("[data-position='" + i + "']");
+
+                    placeClick(place, listing);
+                })
+            }
+        }
+
+        function placeClick(place, listing) {
+            // 1. Fly to the point associated with the clicked link
+            flyToFeature(place);
+            // 2. Close all other popups and display popup for clicked store
+            createPopUp(place);
+            // 3. Highlight listing in sidebar (and remove highlight for all other listings)
+            var activeItem = $('#search-results ul li.active');
+            if (activeItem) {
+              activeItem.removeClass('active');
+              activeItem.find('button').remove();
+            }
+            listing.addClass('active');
+
+            var id = place.properties.id;
+            if (!(id in selectedPlaces)) {
+                var btn = $('<button type="button" class="btn btn-secondary btn-sm mt-2" style="width: 120px;"><i class="fa fa-plus"></i> Add place</button>').appendTo(listing.find('.d-flex'));
+                btn.click(function(e) {
+                    console.log('clicked on button');
+                    e.originalEvent.stopPropagation();
+                    // remove the button
+                    btn.remove();
+                    listing.removeClass('active');
+
+                    addPlace(place);
+                });
+            }
+
+            // scroll the search results to the selected item
+            var offset = $('#search-results ul li.active').offset().top + $('#search-results ul li.active').height() - $('#search-results').offset().top;
+            if (offset < 0 || offset > $('#search-results').height()) {
+              $('#search-results').animate({
+                scrollTop: $('#search-results').scrollTop() + $('#search-results ul li.active').offset().top - $('#search-results').offset().top},
+                'slow');
+            }
+        }
+
+        function createLayer(features) {
+            if (placeLayer) {
+                map.getSource('search-result').setData(features);
+                map.removeLayer('search-result');
+            } else {
+                map.addSource('search-result', {
+                    type: "geojson",
+                    data: features
+                });
+            }
+
+            map.addLayer({
+                id: "search-result",
+                source: "search-result",
+                type: "symbol",
+                "layout": {
+                    "icon-image": "{icon-name}-15",
+                    "icon-allow-overlap": true,
+                    "text-field": "{name}",
+                    "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+                    "text-size": 11,
+                    "text-transform": "uppercase",
+                    "text-letter-spacing": 0.05,
+                    "text-max-width": 15,
+                    "text-anchor": "top",
+                    "text-offset": [0, 1]
+                },
+                "paint": {
+                    "text-color": "#000",
+                    "text-halo-color": "#fff",
+                    "text-halo-width": 2
+                }
+            });
+
+            // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
+            map.on('click', 'search-result', function (e) {
+                var place = e.features[0];
+                var i = e.features[0].properties.position;
+                var listing = $("#search-results ul").find("[data-position='" + i + "']");
+
+                placeClick(place, listing);
+            });
+
+            // Change the cursor to a pointer when the it enters a feature in the 'symbols' layer.
+            map.on('mouseenter', 'symbols', function () {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+
+            // Change it back to a pointer when it leaves.
+            map.on('mouseleave', 'symbols', function () {
+                map.getCanvas().style.cursor = '';
+            });
+
+            placeLayer = true;
+        }
+
+        function searchPlaces(query) {
+            console.log("searchPlaces - query: " + query);
+            var bounds = map.getBounds();
+            var center = map.getCenter();
+
+            isSearchingPlace = true;
+            $.getJSON("searchplace", {
+                query: query,
+                lat: center.lat,
+                lon: center.lng,
+                nelat: bounds.getNorthEast().lat,
+                nelon: bounds.getNorthEast().lng,
+                swlat: bounds.getSouthWest().lat,
+                swlon: bounds.getSouthWest().lng,
+            }, function (d) {
+                console.log("got " + d.length + " places");
+                isSearchingPlace = false;
+
+                // remove all markers
+                markers.forEach(function(marker) {
+                    marker.remove();
+                });
+
+                // remove all popups
+                popups.forEach(function(popup) {
+                    popup.remove();
+                });
+
+                // add the items to the list and to the map
+                $('#search-results ul').empty();
+                var places = {
+                    "type": "FeatureCollection",
+                    "features": []
+                };
+
+                $.each(d, function(index, value){
+                    var icon = "static/img/icons/"+value.icon+".svg";
+                    var el = $('<li class="list-group-item d-flex flex-row" data-position="'+index+'"><div class="mr-2"><img width="25" height="25" src="'+icon+'"></div><div class="d-flex flex-column"><b>'+value.name+'</b><small>'+value.address+'</small></div></li>');
+                    $('#search-results ul').append(el);
+
+                    // Add an event listener for the links in the sidebar listing
+                    el.click(function(e) {
+                      // Update the currentFeature to the store associated with the clicked link
+                      var place = data.features[$(this).data("position")];
+                      placeClick(place, $(this));
+                    });
+
+                    // add the feature to the data
+                    var feature = {
+                        "type": "Feature",
+                        "properties": {
+                            "id": value.id,
+                            "icon": icon,
+                            "icon-name": value.icon,
+                            "name": value.name,
+                            "address": value.address,
+                            "position": index
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [value.lon, value.lat]
+                        }
+                    };
+                    places.features.push(feature);
+
+                    // createMarker(feature);
+                });
+
+                createLayer(places);
+
+                var bbox = turf.bbox(places);
+                map.fitBounds(bbox, {padding: 50});
+                triggeredBySearchPlaces = true;
+                data = places;
+            });
+        }
+
+        map.on('moveend', function(){
+            if (triggeredBySearchPlaces) {
+                currentCoordinates = [map.getCenter().lng, map.getCenter().lat];
+                let bounds = map.getBounds();
+                var bbox = [bounds.getSouthWest().lng, bounds.getSouthWest().lat, bounds.getNorthEast().lng, bounds.getNorthEast().lat];
+                currentSearchArea = turf.bboxPolygon(bbox);
+                currentZoom = map.getZoom();
+                triggeredBySearchPlaces = false;
+                toggleSearchRefreshButton();
+            } else if (triggeredByUserPosition) {
+                var query = $("#search-place").val();
+                searchPlaces(query);
+                triggeredByUserPosition = false;
+            }
+        });
+
+        function searchWithThrottle(query) {
+            if (!isSearchingPlace) {
+                clearTimeout(delayTimer);
+                delayTimer = setTimeout(function() {
+                  searchPlaces(query);
+                }, 1000);
+            }
+        }
+
+        $("#search-place").on("paste keyup", function(e) {
+            e.preventDefault();
+            searchWithThrottle($(this).val());
+        }).on("keypress", function (e) {
+            if (e.keyCode === 13) {
+                // Cancel the default action on keypress event
+                e.preventDefault();
+                searchWithThrottle($(this).val());
+            }
+        });
+    </script>
+  </body>
+</html>
+

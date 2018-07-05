@@ -1,0 +1,549 @@
+/*
+ * Base structure
+ */
+
+html,body {
+  height: 100%;
+}
+
+body {
+  font-size: .875rem;
+}
+
+.feather {
+  width: 16px;
+  height: 16px;
+  vertical-align: text-bottom;
+}
+
+.image-center {
+   display: block;
+   margin-left: auto;
+   margin-right: auto;
+   width: 50%;
+}
+
+/*
+ * Sidebar
+ */
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 100; /* Behind the navbar */
+  padding: 48px 0 0; /* Height of navbar */
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+}
+
+.sidebar-sticky {
+  position: relative;
+  top: 0;
+  height: calc(100vh - 48px);
+  border-right: 2px solid #b3b3b3;
+}
+
+#search-results {
+  overflow: hidden;
+  overflow-y: scroll;
+  height: 100%; /* Scrollable contents if viewport is shorter than content. */
+}
+
+@supports ((position: -webkit-sticky) or (position: sticky)) {
+  .sidebar-sticky {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+}
+
+.sidebar .nav-link {
+  font-weight: 500;
+  color: #333;
+}
+
+.sidebar .nav-link .feather {
+  margin-right: 4px;
+  color: #999;
+}
+
+.sidebar .nav-link.active {
+  color: #007bff;
+}
+
+.sidebar .nav-link:hover .feather,
+.sidebar .nav-link.active .feather {
+  color: inherit;
+}
+
+.sidebar-heading {
+  font-size: .75rem;
+  text-transform: uppercase;
+}
+
+/*
+ * Content
+ */
+
+[role="main"] {
+  padding-top: 48px; /* Space for fixed navbar */
+}
+
+/*
+ * Navbar
+ */
+
+.navbar-brand {
+  padding-top: .75rem;
+  padding-bottom: .75rem;
+  font-size: 1rem;
+  background-color: rgba(0, 0, 0, .25);
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
+}
+
+.navbar .form-control {
+  padding: .75rem 1rem;
+  border-width: 0;
+  border-radius: 0;
+}
+
+.form-control-dark {
+  color: #fff;
+  background-color: rgba(255, 255, 255, .1);
+  border-color: rgba(255, 255, 255, .1);
+}
+
+.form-control-dark:focus {
+  border-color: transparent;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
+}
+
+/*
+ * Utilities
+ */
+
+.border-top { border-top: 1px solid #e5e5e5; }
+.border-bottom { border-bottom: 1px solid #e5e5e5; }
+
+/*
+ * Dashboard
+ */
+
+ /* Placeholders */
+.placeholders {
+  padding-bottom: 3rem;
+}
+
+.placeholder img {
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.card-body {
+  padding: 0.25rem;
+}
+
+.btn.tag {
+  padding: 0px 5px!important;
+  font-size: 0.8rem!important;
+}
+
+.form-control:focus {
+  border-color: rgba(0, 0, 0, 0);
+  box-shadow: none;
+}
+
+#scrollable-dropdown-menu .tt-dropdown-menu {
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* MAPBOX CUSTOM MARKERS
+   https://www.mapbox.com/help/custom-markers-gl-js/
+    - Can use a mask for the SVG image */
+
+.beer {
+  background-image: url('/static/img/icons/beer.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.bicycle {
+  background-image: url('/static/img/icons/bicycle.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.birthday-cake {
+  background-image: url('/static/img/icons/birthday-cake.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.book-closed {
+  background-image: url('/static/img/icons/book-closed.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.book {
+  background-image: url('/static/img/icons/book.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.bug {
+  background-image: url('/static/img/icons/bug.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.building {
+  background-image: url('/static/img/icons/building.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.bullhorn {
+  background-image: url('/static/img/icons/bullhorn.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.bus {
+  background-image: url('/static/img/icons/bus.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.camera {
+  background-image: url('/static/img/icons/camera.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.car {
+  background-image: url('/static/img/icons/car.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.chart {
+  background-image: url('/static/img/icons/chart.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.church {
+  background-image: url('/static/img/icons/church.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.coffee {
+  background-image: url('/static/img/icons/coffee.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.comments {
+  background-image: url('/static/img/icons/comments.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.donut {
+  background-image: url('/static/img/icons/donut.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.flask {
+  background-image: url('/static/img/icons/flask.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.food {
+  background-image: url('/static/img/icons/food.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.futbol {
+  background-image: url('/static/img/icons/futbol.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.gamepad {
+  background-image: url('/static/img/icons/gamepad.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.globe {
+  background-image: url('/static/img/icons/globe.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.hand-loader {
+  background-image: url('/static/img/icons/hand-loader.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.heart {
+  background-image: url('/static/img/icons/heart.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.heartbeat {
+  background-image: url('/static/img/icons/heartbeat.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.home {
+  background-image: url('/static/img/icons/home.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.image {
+  background-image: url('/static/img/icons/image.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.language {
+  background-image: url('/static/img/icons/language.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.map-marker {
+  background-image: url('/static/img/icons/map-marker.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.masks {
+  background-image: url('/static/img/icons/masks.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.mountain {
+  background-image: url('/static/img/icons/mountain.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.paper-plane {
+  background-image: url('/static/img/icons/paper-plane.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.paw {
+  background-image: url('/static/img/icons/paw.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.plane {
+  background-image: url('/static/img/icons/plane.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.play {
+  background-image: url('/static/img/icons/play.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.popcorn {
+  background-image: url('/static/img/icons/popcorn.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.road {
+  background-image: url('/static/img/icons/road.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.ship {
+  background-image: url('/static/img/icons/ship.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.shop {
+  background-image: url('/static/img/icons/shop.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.shopping-bag {
+  background-image: url('/static/img/icons/shopping-bag.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.shopping-cart {
+  background-image: url('/static/img/icons/shopping-cart.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.stethoscope {
+  background-image: url('/static/img/icons/stethoscope.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.street-view {
+  background-image: url('/static/img/icons/street-view.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.taxi {
+  background-image: url('/static/img/icons/taxi.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.train {
+  background-image: url('/static/img/icons/train.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.university {
+  background-image: url('/static/img/icons/university.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.users {
+  background-image: url('/static/img/icons/users.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+.venus-mars {
+  background-image: url('/static/img/icons/venus-mars.svg');
+  background-size: cover;
+  width: 25px;
+  height: 25px;
+  cursor: pointer;
+}
+
+
+/* Marker tweaks */
+.mapboxgl-popup {
+  padding-bottom: 10px;
+}
+
+.mapboxgl-popup-close-button {
+  top: -15px !important;
+}
+
+.mapboxgl-popup-content {
+  font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif;
+  padding: 0;
+  width: 180px;
+}
+
+.mapboxgl-popup-content-wrapper {
+  padding: 1%;
+}
+
+.mapboxgl-popup-content h3 {
+  background: #500778;
+  color: #fff;
+  margin: 0;
+  display: block;
+  padding: 10px;
+  border-radius: 3px 3px 0 0;
+  font-weight: 700;
+  margin-top: -15px;
+  font-size: 1.17em !important;
+}
+
+.mapboxgl-popup-content h4 {
+  margin: 0;
+  display: block;
+  padding: 10px;
+  font-weight: 400;
+  font-size: 1em !important;
+}
+
+.mapboxgl-popup-content div {
+  padding: 10px;
+}
+
+.mapboxgl-container .leaflet-marker-icon {
+  cursor: pointer;
+}
+
+.mapboxgl-popup-anchor-top > .mapboxgl-popup-content {
+  margin-top: 15px;
+}
+
+.mapboxgl-popup-anchor-top > .mapboxgl-popup-tip {
+  border-bottom-color: #91c949;
+}
