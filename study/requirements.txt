@@ -16,3 +16,5 @@ sklearn
 scipy
 nltk
 pika
+pillow
+lxml

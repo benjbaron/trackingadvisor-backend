@@ -57,8 +57,9 @@ def send_request(base, params={}):
         full_url += "&v=20150906&m=foursquare&locale=en"
         try:
             data = requests.get(full_url).json()  # json.load(urllib2.urlopen(full_url))
-        except:
+        except Exception as e:
             print("Failed getting the response")
+            print(e.__doc__)
             nb_req += 1
             time.sleep(min(1, nb_req/10))
             continue
@@ -117,6 +118,7 @@ def sort_place_score(places):
 
 
 def get_place(venue_id):
+    print("venue: %s" % venue_id)
     if not is_place_in_db(venue_id):
         print("place not in DB")
         get_complete_venue(venue_id)
@@ -567,11 +569,11 @@ def get_complete_venue_from_db(venue_id):
                    array_agg(DISTINCT ch.name ORDER BY ch.name) as chains
             FROM (
                 SELECT venue_id,
-                unnest(v1.categories) as category_id,
-                unnest(v1.chains) as chain_id
+                unnest(coalesce(nullif(v1.categories,'{}'),array[null::text])) as category_id,
+		        unnest(coalesce(nullif(v1.chains,'{}'),array[null::text])) as chain_id
                 FROM venues v1
                 WHERE venue_id = %s
-            ) v1 JOIN categories c ON c.category_id = v1.category_id
+            ) v1 LEFT OUTER JOIN categories c ON c.category_id = v1.category_id
                  LEFT OUTER JOIN chains ch ON ch.chain_id = v1.chain_id
             GROUP BY v1.venue_id
         ) t JOIN venues v ON v.venue_id = t.venue_id

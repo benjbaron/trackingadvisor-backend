@@ -9,7 +9,6 @@
     <title>Semantica</title>
     <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
 
-    <!-- Bootstrap core JavaScript -->
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
     <script src="https://d3js.org/d3.v3.min.js"></script>
@@ -53,12 +52,14 @@
     <script>
       var userPlaces = window.sessionStorage.getItem('userPlaces');
       var places = JSON.parse(userPlaces);
+      var hasUpdated = false;
 
-      var socket = io.connect('wss://' + document.domain + ":" + location.port + "/load",
-          {path: '/semantica/study/socket.io'});
+      var socket = io.connect('https://' + document.domain + ":" + location.port + "/load",
+          {path: '/semantica/study/socket.io', forceNew: true});
 
       socket.on('connect', function() {
           // on a connection, join a room
+          console.log("Connect");
           socket.emit('join_room');
       });
 
@@ -115,6 +116,7 @@
       }
 
       socket.on('update', function(data) {
+          hasUpdated = true;
           console.log(data);
           var i = d3.interpolate(progress.currentProgess, data.progress);
           d3.transition().tween("progress", function() {
@@ -163,6 +165,15 @@
       $(function() {
           socket.emit('update', {places: places});
           buildProgress();
+
+          setTimeout(function() {
+              if (!hasUpdated) {
+                  console.log("Reload page");
+                  window.location.reload(false);
+              } else {
+                  console.log("No page reload");
+              }
+          }, 1000)
       });
 
     </script>

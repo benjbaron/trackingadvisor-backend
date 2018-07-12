@@ -570,6 +570,25 @@ def load_user_places(user_id, day):
     return result
 
 
+def load_all_foursquare_user_places(user_id):
+    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+    query_string = """
+        SELECT p.venue_id as venue_id, p.name as name, p.address as address, p.icon as icon, p.longitude as lon, p.latitude as lat, nb_visits
+        FROM (
+            SELECT p1.place_id, SUM(1) as nb_visits
+            FROM visits v
+            JOIN places p1 ON p1.place_id = v.place_id
+            WHERE v.user_id = %s AND v.deleted <> TRUE AND p1.venue_id <> ''
+            GROUP BY p1.place_id
+        ) t JOIN places p ON t.place_id = p.place_id
+        ORDER BY nb_visits DESC
+        LIMIT 25;"""
+    data = (user_id, )
+
+    cursor.execute(query_string, data)
+    return [dict(record) for record in cursor]
+
+
 def load_user_place(user_id, place_id):
     connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
 

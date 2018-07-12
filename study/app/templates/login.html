@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Semantica | TrackingAdvisor Login</title>
+    <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet"/>
+
+      <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+      // see https://stackoverflow.com/questions/41381444/websocket-connection-failed-error-during-websocket-handshake-unexpected-respon/41396396#41396396
+      var isGettingPlaces = false;
+      var hasPlaces = false;
+
+      var socket = io.connect('https://' + document.domain + ":" + location.port + "/auth",
+          {path: '/semantica/study/socket.io'});
+
+      socket.on('connect', function() {
+          // on a connection, join a room
+          console.log("Connected to the server");
+          socket.emit('join_room');
+      });
+
+      socket.on('authclientrequest', function(data) {
+          // redirect the page to the user page
+          console.log("client authenticated");
+          console.log(data);
+          getUserPlaces(data.login);
+      });
+
+      socket.on('connect_error', function(error) {
+        console.log("connect_error: "+error);
+      });
+
+      socket.on('error', function (err) {
+          console.log(err);
+      });
+
+      function getUserPlaces(login) {
+          if (!isGettingPlaces && !hasPlaces) {
+              isGettingPlaces = true;
+              if (!hasPlaces) {
+                  console.log("Getting places from server...");
+                  $.getJSON("getuserplaces", {login: login}, function (d) {
+                      console.log("Got places from server");
+                      console.log(d);
+
+                      var places = {};
+                      Object.keys(d).forEach(function(index) {
+                          var icon = "static/img/icons/"+d[index].icon+".svg";
+                          var placeId = d[index]['venue_id'];
+                          var feature = {
+                              "type": "Feature",
+                              "properties": {
+                                  "id": placeId,
+                                  "icon": icon,
+                                  "icon-name": d[index].icon,
+                                  "name": d[index].name,
+                                  "address": d[index].address,
+                                  "position": index
+                              },
+                              "geometry": {
+                                  "type": "Point",
+                                  "coordinates": [d[index].lon, d[index].lat]
+                              }
+                          };
+
+                          places[placeId] = {
+                              id: placeId,
+                              name: feature.properties.name,
+                              address: feature.properties.address,
+                              icon: feature.properties.icon,
+                              "icon-name": feature.properties['icon-name'],
+                              position: feature.properties.position,
+                              privacyRating: 0,
+                              frequencyRating: 0,
+                              place: feature
+                          };
+
+                          index += 1;
+                      });
+
+                      // save the dta in the session storage
+                      var placesString = JSON.stringify(places);
+                      window.sessionStorage.setItem('userPlaces', placesString);
+                      window.location.href = 'loadpi';
+                      isGettingPlaces = false;
+                      hasPlaces = true;
+                  });
+              }
+          }
+      }
+    </script>
+
+  </head>
+  <body>
+    <style type="text/css">
+      html,
+      body,
+      .fluid-container {
+          height: 100%;
+      }
+
+      .flexbox-container {
+          display: -ms-flexbox;
+          display: -webkit-flex;
+          display: flex;
+          -ms-flex-align: center;
+          -webkit-align-items: center;
+          -webkit-box-align: center;
+          align-items: center;
+          height: 100%;
+      }
+
+      .image-center {
+           display: block;
+           margin-left: auto;
+           margin-right: auto;
+           width: 50%;
+      }
+    </style>
+
+    <div class="fluid-container" id="login-screen">
+      <div class="flexbox-container">
+        <div class="col-md-4 col-lg-4 col-sm-12 col-xs-12 col-md-offset-4 col-lg-offset-4">
+          <h1 class="text-center">TrackingAdvisor</h1>
+          <p class="text-center">Open your <b>TrackingAdvisor</b> app, go to <b>Settings > Web access authentication</b> and <span id="login-description">scan the QR code below with the camera in your app</span>.</p>
+          <p id="login-form"><img class="image-center" src="static/img/{{ qrcode }}"></p>
+          <p class="text-center mt-10"><a id="change-login" data-login-type="manual" href="#">Alternative login (without camera)</a></p>
+          <p class="text-center mt-5 mb-3 text-muted">© 2018 UCL</p>
+        </div>
+      </div>
+    </div>
+    <script>
+      $("#change-login").off('click').on("click", function(e) {
+          var loginType = $(this).data("login-type");
+          if (loginType === "manual") {
+              $("#login-form").html('<form class="form-signin">\n' +
+                  '    <input type="text" id="input-auth-code" class="form-control" placeholder="Authentication code" required="" autofocus="">\n' +
+                  '    <button class="mt-5 btn btn-lg btn-primary btn-block" style="margin-top:10px;" type="submit">Sign in</button>\n' +
+                  '</form>');
+              $('#change-login').data('login-type', "qrcode");
+              $('#change-login').text("QRcode login (with camera)");
+              $('#login-description').text("enter the code you see on your app below");
+              $('form').submit(function(e) {
+                  e.preventDefault();
+                  var authCode = $('#input-auth-code').val();
+                  console.log("auth code: " + authCode);
+                  window.location = "/user/"+authCode+"?authenticated=yes";
+              });
+          } else {
+              $('#login-form').html('<img class="image-center" src="../static/img/{{ qrcode }}">');
+              $('#change-login').data('login-type', "manual");
+              $('#change-login').text("Alternative login (without camera)");
+              $('#login-description').text("scan the QR code below with the camera in your app");
+          }
+      });
+    </script>
+
+  </body>
+</html>

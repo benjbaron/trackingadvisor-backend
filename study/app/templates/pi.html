@@ -218,6 +218,7 @@
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-0 h-100">
           <div id="place-title" class="d-flex flex-row flex-md-nowrap align-items-center pt-3 pb-2 pl-4 mb-3 border-bottom"></div>
+          <div id="place-questions" class="d-flex flex-column flex-md-nowrap pl-4 mb-3"></div>
           <div class="d-flex flex-row card-deck w-100" id="personal-information"></div>
         </main>
       </div>
@@ -233,6 +234,7 @@
         let starrrLabelsRelevance = ['Not relevant', 'Slightly relevant', 'Somewhat relevant', 'Relevant', 'Very relevant'];
         let starrrLabelsSensitivty = ['Not sensitive', 'Slightly sensitive', 'Somewhat sensitive', 'Sensitive', 'Very sensitive'];
         var selectedPlace = null;
+        var isUserInput = true;
 
         function sleep(ms) {
           return new Promise(resolve => setTimeout(resolve, ms));
@@ -247,7 +249,7 @@
 
         $(function() {
             showPlaces();
-            $('#add-places').on('click', function(){
+            $('#add-places').on('click', function() {
                 var placeString = JSON.stringify(places);
                 window.sessionStorage.setItem('userPlaces', placeString);
 
@@ -300,15 +302,17 @@
             }
 
             if (pi.ratingRel !== undefined && pi.ratingRel !== 0) {
-                el.find("[data-type='rel']").starrr({
-                    rating: pi.ratingRel
-                }).data('rating', pi.ratingRel).next('.starrr-label').text(starrrLabelsRelevance[pi.ratingRel-1]);
+                el.find("[data-type='rel']")
+                    .starrr("setRating", pi.ratingRel)
+                    .data('rating', pi.ratingRel)
+                    .next('.starrr-label').text(starrrLabelsRelevance[pi.ratingRel-1]);
             }
 
             if (pi.ratingSens !== undefined && pi.ratingSens !== 0) {
-                el.find("[data-type='sens']").starrr({
-                    rating: pi.ratingSens
-                }).data('rating', pi.ratingSens).next('.starrr-label').text(starrrLabelsSensitivty[pi.ratingSens-1]);
+                el.find("[data-type='sens']")
+                    .starrr("setRating", pi.ratingSens)
+                    .data('rating', pi.ratingSens)
+                    .next('.starrr-label').text(starrrLabelsSensitivty[pi.ratingSens-1]);
             }
 
 
@@ -319,7 +323,7 @@
         }
 
         function setRatingLabel(el, type, value) {
-            el.next('.starrr-label').text("");
+            el.next('.starrr-label').text('');
             if (value !== undefined) {
                 if (type === 'rel') {
                     el.next('.starrr-label').text(starrrLabelsRelevance[value-1]);
@@ -428,13 +432,28 @@
 
             selectedPlace = place.id;
 
+            console.log(place);
+
             // show the personal information associated to the selected place
             $('main div').empty();
             $('#place-title').append('<img class="mr-3 mb-1" src="'+place.icon+'" width="35px" height="35px" /><h1 class="mr-auto">'+place.name+'</h1><button id="next-place" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" disabled>Next place</button>');
+            $('#place-questions').append('<div class="d-flex flex-row align-items-center mb-2"><div class="mr-3">How <b>well</b> do you know this place?</div><div><button data-btn-type="1" data-btn-rating="1" class="btn btn-outline-secondary btn-sm mr-3">Not at all</button><button data-btn-type="1" data-btn-rating="2" class="btn btn-outline-secondary btn-sm mr-3">Just a little</button><button data-btn-type="1" data-btn-rating="3" class="btn btn-outline-secondary btn-sm mr-3">Somewhat well</button><button data-btn-type="1" data-btn-rating="4" class="btn btn-outline-secondary btn-sm mr-3">Quite well</button><button data-btn-type="1" data-btn-rating="5" class="btn btn-outline-secondary btn-sm mr-3">Very well</button></div></div>');
+            $('#place-questions').append('<div class="d-flex flex-row align-items-center mb-2"><div class="mr-3">How <b>private</b> do you consider this place?</div><div><button data-btn-type="2" data-btn-rating="1" class="btn btn-outline-secondary btn-sm mr-3">Not private at all</button><button data-btn-type="2" data-btn-rating="2" class="btn btn-outline-secondary btn-sm mr-3">A little private</button><button data-btn-type="2" data-btn-rating="3" class="btn btn-outline-secondary btn-sm mr-3">Somewhat private</button><button data-btn-type="2" data-btn-rating="4" class="btn btn-outline-secondary btn-sm mr-3">Quite private</button><button data-btn-type="2" data-btn-rating="5" class="btn btn-outline-secondary btn-sm mr-3">Very private</button></div></div>');
+
             Object.keys(pis[place.id]).forEach(function (piId, index) {
                 let pi = pis[place.id][piId];
                 addPersonalInformation(pi);
             });
+
+            var frequencyRating = places[selectedPlace].frequencyRating;
+            if (frequencyRating !== 0) {
+                $('#place-questions').find("[data-btn-type='1'][data-btn-rating='"+frequencyRating+"']").addClass('active');
+            }
+
+            var privacyRating = places[selectedPlace].privacyRating;
+            if (privacyRating !== 0) {
+                $('#place-questions').find("[data-btn-type='2'][data-btn-rating='"+privacyRating+"']").addClass('active');
+            }
 
             placeDone(selectedPlace);
 
@@ -445,6 +464,12 @@
             starrr.on('starrr:change', function(e, value){
               let type = $(this).data('type');
               $(this).data('rating', value);
+
+              if (isUserInput) {
+                  console.log("User input");
+                  $(this).data('user', true);
+              }
+
               let parent = $(this).parentsUntil('#personal-information').last();
               let piId = parent.data('id');
 
@@ -457,6 +482,7 @@
 
               setRatingLabel($(this), type, value, true);
               setPersonalInformationDone(parent, piId);
+              isUserInput = true;
             });
 
             starrr.on('starrr:hover', function(e, value) {
@@ -464,6 +490,38 @@
               setRatingLabel($(this), type, value, false);
             });
 
+            $('#place-questions button').on('click', function() {
+                var type = parseInt($(this).data('btn-type'));
+                var rating = parseInt($(this).data('btn-rating'));
+                console.log("Type: " + type + ", Rating: " + rating);
+
+                if (type === 1) {
+                    places[selectedPlace].frequencyRating = rating;
+                    places[selectedPlace].place.properties.frequencyRating = rating;
+                } else if (type === 2) {
+                    places[selectedPlace].privacyRating = rating;
+                    places[selectedPlace].place.properties.privacyRating = rating;
+
+                    $('#personal-information .starrr[data-type="sens"]').each(function(i, el) {
+                      if ($(this).data('user')) {
+                          return true; // continue
+                      }
+
+                      isUserInput = false;
+                      $(this).starrr("setRating", rating)
+                          .data('rating', rating)
+                          .next('.starrr-label').text(starrrLabelsRelevance[rating-1]);
+
+                      let parent = $(this).parentsUntil('#personal-information').last();
+                      let piId = parent.data('id');
+                      pis[selectedPlace][piId].ratingSens = rating;
+
+                    });
+                }
+
+                $('#place-questions').find("[data-btn-type='" + type + "']").removeClass('active');
+                $(this).addClass('active');
+            });
         }
 
     </script>

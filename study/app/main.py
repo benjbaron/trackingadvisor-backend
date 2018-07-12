@@ -1,25 +1,24 @@
+import eventlet
+eventlet.monkey_patch()
+
 from flask import Flask, render_template, request, session, send_file, url_for
 from flask_socketio import SocketIO, emit, send, join_room
-import eventlet
 
+import os
 import json
 import requests
 import random
-
 
 import foursquare
 import keys
 import utils
 import personal_information
-
-# monkey.patch_all()
-
-# monkey.patch_socket()
+import user_traces_db
 
 
 # http://flask.pocoo.org/snippets/35/
 class ReverseProxied(object):
-    '''Wrap the application in this middleware and configure the
+    """ Wrap the application in this middleware and configure the
     front-end server to add these headers, to let you quietly bind
     this to a URL other than / and to an HTTP scheme that is
     different than what is used locally.
@@ -33,8 +32,7 @@ class ReverseProxied(object):
         proxy_set_header X-Script-Name /myprefix;
         }
 
-    :param app: the WSGI application
-    '''
+    :param app: the WSGI application """
     def __init__(self, app):
         self.app = app
 
@@ -55,7 +53,7 @@ class ReverseProxied(object):
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'seManTiCa'
 app.wsgi_app = ReverseProxied(app.wsgi_app)
-socketio = SocketIO(app, logger=True)
+socketio = SocketIO(app, message_queue="amqp://colossus07/socketio", logger=True, engineio_logger=True)
 
 BASE_URL = "https://api.foursquare.com/v2/"
 
@@ -161,6 +159,28 @@ def show_end():
     return render_template('finish.html')
 
 
+@app.route('/login')
+def show_login():
+    print("TrackingAdvisor login")
+    session_id = ""
+    fname = "./static/img/"+session_id+".svg"
+    if 'uid' not in session or not os.path.isfile(fname):
+        # create a new session id
+        session_id = "TrackingAdvisorLogin-" + utils.id_generator()
+        print("created session-id: %s" % session_id)
+        session['uid'] = session_id
+
+        # create the login QR code
+        utils.generate_qr_code(url=session_id,
+                               logo_path="./static/img/location-arrow.svg",
+                               output_file="./static/img/"+session_id+".svg")
+    else:
+        session_id = session['uid']
+        print("used already-existing session-id: %s" % session_id)
+
+    return render_template('login.html', qrcode=session_id+".svg")
+
+
 @app.route('/getpi')
 def get_personal_information():
     place_id = request.args.get('id')
@@ -177,11 +197,21 @@ def get_personal_information():
     return json.dumps(res_pis)
 
 
+@app.route('/getuserplaces')
+def get_authenticated_user_places():
+    login = request.args.get('login')
+    user_id = user_traces_db.get_user_id_from_temp_login(login)
+    print("user_id: %s" % user_id)
+
+    places = user_traces_db.load_all_foursquare_user_places(user_id)
+    print("Got %s places" % places)
+
+    return json.dumps(places)
+
+
 @app.route('/getpis')
 def get_personal_information_list():
-    print(request.args)
     place_ids = request.args.getlist('ids[]')
-    print(place_ids)
 
     res = {}
     for place_id in place_ids:
@@ -209,23 +239,38 @@ def background_thread(room, places):
         i += 1
 
 
+# SocketIO
+
+@socketio.on('connect')
+def socket_connect_auth():
+    print("SocketIO - Connection made to the server")
+    pass
+
+
+# SocketIO for the personal information loading screen
+
 @socketio.on('update', namespace='/load')
 def socket_handle_update(data):
     room = str(session['uid'])
     socketio.start_background_task(target=background_thread, room=room, places=data['places'])
 
 
-@socketio.on('connect', namespace='/load')
-def socket_connect():
-    pass
-
-
 @socketio.on('join_room', namespace='/load')
 def socket_on_join():
     room = str(session['uid'])
     join_room(room)
-    emit('join_room', {'room': room})
+    emit('join_room', {'room': room}, namespace='/load')
+
+
+# SocketIO for the TrackingAdvisor Login screen
+
+@socketio.on('join_room', namespace='/auth')
+def socket_on_room_auth():
+    room = str(session['uid'])
+    join_room(room)
+    emit('join_room', {'room': room}, namespace='/auth')
+    print("SocketIO - Join room %s" % room)
 
 
 if __name__ == "__main__":
-    socketio.run(app, host='0.0.0.0', port=8000)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True, log_output=True)

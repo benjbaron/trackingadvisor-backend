@@ -91,6 +91,6 @@ var slice = [].slice;
           return data[option].apply(data, args);
         }
       });
-    }
+    },
   });
 })(window.jQuery, window);

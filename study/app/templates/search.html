@@ -302,7 +302,7 @@
         $(function() {
             let userPlaces = window.sessionStorage.getItem('userPlaces');
             if (userPlaces && userPlaces.length !== 0) {
-                places = JSON.parse(userPlaces);
+                var places = JSON.parse(userPlaces);
                 Object.keys(places).forEach(function(placeId, index) {
                     addPlace(places[placeId].place);
                 });
@@ -439,6 +439,8 @@
                            icon: selectedPlaces[placeId].properties.icon,
                            "icon-name": selectedPlaces[placeId].properties['icon-name'],
                            position: selectedPlaces[placeId].properties.position,
+                           privacyRating: selectedPlaces[placeId].properties.privacyRating,
+                           frequencyRating: selectedPlaces[placeId].properties.frequencyRating,
                            place: selectedPlaces[placeId]
                        };
                     });
@@ -635,7 +637,9 @@
                             "icon-name": value.icon,
                             "name": value.name,
                             "address": value.address,
-                            "position": index
+                            "position": index,
+                            "frequencyRating": 0,
+                            "privacyRating": 0
                         },
                         "geometry": {
                             "type": "Point",
