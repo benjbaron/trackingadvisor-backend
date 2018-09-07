@@ -102,6 +102,10 @@ def pick_place_color(place_name):
     return UCL_COLORS[idx][1]
 
 
+def current_timestamp():
+    return int(time.mktime(time.gmtime()))
+
+
 def is_weekend(day):
     weekdays = [1, 1, 1, 1, 1, 0, 0]
     day_dt = day_string_to_dt(day)

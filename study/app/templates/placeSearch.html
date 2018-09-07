@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Semantica | Place search</title>
+    <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+    <!-- Custom styles for this template -->
+    <link href="static/css/dashboard.css" rel="stylesheet">
+      <link href="static/css/mprogress.min.css" rel="stylesheet">
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="static/js/typeahead.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="static/js/mprogress.min.js" charset="UTF-8"></script>
+
+    <!-- Icons -->
+    <script src="static/js/search.js"></script>
+
+      <style>
+          html, body {
+              height: 100%;
+              overflow: hidden;
+          }
+
+          #content {
+              position: absolute;
+              top: 0;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              overflow: auto;
+          }
+
+          #search-bar-city {
+              background-color: #d3d3d3;
+          }
+
+          #search-bar-city .form-control {
+              background-color: transparent!important;
+              padding: 13px!important;
+          }
+
+          #search-bar-city .fa {
+              font-size: 18px!important;
+          }
+
+          #search-results {
+              padding-top: 50px;
+          }
+
+          #search-results .list-group-item.active {
+            background-color: #c6b0bc;
+            border-color: #c6b0bc;
+            color: black;
+          }
+
+          #search-results .list-group-item.active .btn {
+            background-color: #500778;
+            border-color: #500778;
+          }
+
+          .navbar-text {
+            font-size: 1rem!important;
+          }
+
+          .typeahead.dropdown-menu {
+              left: -30px!important;
+              padding:10px;
+          }
+
+          .typeahead.dropdown-menu a {
+              color: #212529!important;
+              text-decoration: none!important;
+          }
+
+          .typeahead.dropdown-menu a:hover {
+              color: #500778!important;
+              text-decoration: none!important;
+          }
+      </style>
+  </head>
+
+  <body>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-white flex-md-nowrap p-0 shadow">
+      <div class="col-2 bg-dark navbar-brand mr-0">
+        <a class="col text-white mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
+      </div>
+      <div id="search-bar-city" class="col-2 row no-gutters align-items-center">
+          <div class="ml-1 col-auto">
+              <i class="fa fa-map-marker"></i>
+          </div>
+          <div class="col">
+              <input id="search-city" class="typeahead form-control border-0" type="search" data-provide="typeahead" placeholder="City..." autocomplete="off">
+          </div>
+      </div>
+      <div id="search-bar-place" class="col row no-gutters bg-light align-items-center">
+          <div class="ml-1 col-auto">
+              <i class="fa fa-search"></i>
+          </div>
+          <div class="col">
+              <input id="search-place" class="bg-light form-control border-0" type="search" placeholder="Search place...">
+          </div>
+      </div>
+    </nav>
+    <div id="content" class="container-fluid p-0 h-100">
+        <div id="search-results">
+            <ul class="list-group list-group-flush"></ul>
+        </div>
+    </div>
+    <script>
+        var isSearchingPlace = false;
+        var delayTimerPlace = null;
+        var data = [];
+        var currentCity = null;
+        var mprogress = new Mprogress({
+            template: 3,
+            parent: '#nav'
+        });
+
+
+        function placeClick(place, listing) {
+            // Highlight listing in sidebar (and remove highlight for all other listings)
+            var activeItem = $('#search-results ul li.active');
+            if (activeItem) {
+                activeItem.removeClass('active');
+                activeItem.find('button').remove();
+            }
+            listing.addClass('active');
+
+            var btn = $('<button type="button" class="btn btn-secondary btn-sm ml-auto"><i class="fa fa-check"></i> Select place</button>').appendTo(listing);
+            btn.click(function(e) {
+                e.originalEvent.stopPropagation();
+                window.location.href = 'placepi?place_id='+place.properties.id;
+            });
+        }
+
+
+        function searchPlaces(query) {
+            isSearchingPlace = true;
+            mprogress.start();
+            $.getJSON("searchplace", {
+                query: query,
+                lat: currentCity.geometry.center.lat,
+                lon: currentCity.geometry.center.lng,
+                nelat: currentCity.geometry.bounds.ne.lat,
+                nelon: currentCity.geometry.bounds.ne.lng,
+                swlat: currentCity.geometry.bounds.sw.lat,
+                swlon: currentCity.geometry.bounds.sw.lng
+            }, function (d) {
+                console.log("got " + d.length + " places");
+                isSearchingPlace = false;
+                mprogress.end();
+
+                // add the items to the list and to the map
+                $('#search-results ul').empty();
+                var places = {
+                    "type": "FeatureCollection",
+                    "features": []
+                };
+
+                $.each(d, function (index, value) {
+                    var icon = "static/img/icons/" + value.icon + ".svg";
+                    var el = $('<li class="list-group-item d-flex flex-row" data-position="' + index + '"><div class="mr-2"><img width="25" height="25" src="' + icon + '"></div><div class="d-flex flex-column"><b>' + value.name + '</b><small>' + value.address + '</small></div></li>');
+                    $('#search-results ul').append(el);
+
+                    // Add an event listener for the links in the sidebar listing
+                    el.click(function (e) {
+                        // Update the currentFeature to the store associated with the clicked link
+                        var place = data.features[$(this).data("position")];
+                        placeClick(place, $(this));
+                    });
+
+                    // add the feature to the data
+                    var feature = {
+                        "type": "Feature",
+                        "properties": {
+                            "id": value.id,
+                            "icon": icon,
+                            "icon-name": value.icon,
+                            "name": value.name,
+                            "address": value.address,
+                            "position": index
+                        },
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": [value.lon, value.lat]
+                        }
+                    };
+                    places.features.push(feature);
+
+                });
+
+                data = places;
+            });
+        }
+
+        $("#search-place").on("paste keyup", function(e) {
+            let query = $(this).val();
+            if (!isSearchingPlace && currentCity !== null) {
+                clearTimeout(delayTimerPlace);
+                delayTimerPlace = setTimeout(function() {
+                  searchPlaces(query);
+                }, 500);
+            }
+        });
+
+        jQuery(document).ready(function() {
+           $("#search-city").typeahead({
+               highlight: true,
+               name: 'cities',
+               display: 'city',
+               source: function(query, syncResults, asyncResults) {
+                   $.getJSON("geocode", {
+                        query: query
+                    }, function (d) {
+                        asyncResults(d);
+                    });
+               },
+               menu: '<ul class="typeahead dropdown-menu"></ul>' ,
+               item: '<li class=""><a href="#"></a></li>'
+           }).change(function() {
+              let newCity = $(this).typeahead("getActive");
+              if (newCity && currentCity !== null) {
+                  console.log(newCity);
+                  if (newCity.id === currentCity.id) {
+                      // This means the exact match is found. Use toLowerCase() if you want case insensitive match.
+                      console.log("Same city, do nothing");
+                  } else {
+                      // This means it is only a partial match, you can either add a new item
+                      // or take the active if you don't want new items
+                      console.log("Different city, update");
+                  }
+              }
+
+              currentCity = newCity;
+            });
+        });
+
+
+    </script>
+  </body>
+</html>
+

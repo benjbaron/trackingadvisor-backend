@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Semantica | Place detail</title>
+    <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+    <!-- Custom styles for this template -->
+    <link href="static/css/dashboard.css" rel="stylesheet">
+      <link href="static/css/mprogress.min.css" rel="stylesheet">
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+    <script type="text/javascript" src="static/js/typeahead.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="static/js/mprogress.min.js" charset="UTF-8"></script>
+
+    <!-- Icons -->
+    <script src="static/js/search.js"></script>
+
+      <style>
+          html, body {
+              height: 100%;
+              overflow: hidden;
+          }
+
+          #content {
+              position: absolute;
+              top: 0;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              overflow: auto;
+          }
+
+          .navbar-text {
+            font-size: 1rem!important;
+          }
+          
+          .navbar-text a:hover {
+              text-decoration: none!important;
+          }
+
+          #personal-information {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            margin-left: 0px;
+            padding-left: 0px;
+            flex-wrap: wrap;
+          }
+      </style>
+  </head>
+
+  <body>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <div class="col-2 navbar-brand mr-0">
+        <a class="col text-white mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
+      </div>
+        <div class="navbar-text col-sm-4 col-md-4 mr-auto ml-4">
+            <a class="col text-white mr-0" href="placesearch"><i class="fa fa-chevron-left mr-1"></i> <b>Back to place search...</b></a>
+        </div>
+    </nav>
+
+    <div id="content" class="container-fluid h-100">
+        <main role="main">
+            <div class="d-flex flex-wrap flex-row flex-md-nowrap align-items-left pt-3 pb-2 mb-1 border-bottom">
+                <img id="place-img" width="50px" height="50px" class="mr-3" src="" />
+                <div class="d-flex flex-column">
+                    <h1 id="place-name" class="h2 mb-0"></h1>
+                    <p id="place-address" class="mb-0"></p>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between flex-wrap flex-column flex-md-nowrap align-items-left pb-2 mb-3">
+                <div id="place-categories"></div>
+                <div id="place-name-features"></div>
+                <div id="place-category-features"></div>
+                <div id="place-tips-features"></div>
+
+                <div id="personal-information-loader" class="col-6 mx-auto">
+                  <p class="text-center">The personal information is loading.</p>
+                  <img height="25" width="50" class="image-center" src="static/img/loading-dots.svg">
+                </div>
+
+                <div id="personal-information" class="d-flex flex-row card-deck w-100"></div>
+            </div>
+        </main>
+    </div>
+    <script>
+        // helper function
+        function tag(text) {
+            return '<span class="badge badge-secondary">'+text+'</span>';
+        }
+
+        var place = {{ place|tojson|safe }};
+        console.log(place);
+
+        // set the name of the place
+        var icon = "static/img/icons/" + place.icon + ".svg";
+        $('#place-img').attr("src", icon);
+        $('#place-name').text(place.name);
+        $('#place-address').text(place.location.name);
+        $('#place-categories').html("<b>Categories:</b> "+place.category.join(', ')+"<br/>"+tag("Checkins | "+place['checkins'])+" "+tag("Likes | "+place['nb_likes'])+" "+tag("Tips | "+place['nb_tips']));
+
+        // get place interests (personal information)
+        $.getJSON("computeplacepi", {
+            id: place.id
+        }, function (d) {
+            // sort array d by the sum of scores in "meta"
+            d.sort(function(a, b){
+                var sum_a = a['meta'].reduce((x, y) => x+y['rank'], 0);
+                var sum_b = b['meta'].reduce((x, y) => x+y['rank'], 0);
+                return sum_b / b['meta'].length - sum_a / a['meta'].length;
+            });
+
+            console.log(d);
+
+            $('#personal-information-loader').hide();
+            $('<table class="table" id="personal-information-table"><thead class="thead-light"><th scope="col">Icon</th><th scope="col">Name</th><th scope="col">Tags</th></thead><tbody></tbody></table>')
+                .prependTo($('#personal-information'));
+            var nameFeatures = [];
+            var categoryFeatures = [];
+            var tipFeatures = [];
+            d.forEach(function (pi, index) {
+                addPersonalInformationRow(pi);
+                $.each(pi['meta'], function(i, item) {
+                    if (item['feature_type'] === 'name') {
+                        nameFeatures.push(flattenTags(item['tags']));
+                    } else if (item['feature_type'] === 'categories') {
+                        categoryFeatures.push(flattenTags(item['tags']));
+                    } else if (item['feature_type'] === 'tips') {
+                        tipFeatures.push(flattenTags(item['tags']));
+                    }
+                });
+            });
+
+            $('#place-name-features').html("<b>Name features:</b> "+(Array.from(new Set(nameFeatures.flat()))).join(' | '));
+            $('#place-category-features').html("<b>Category features:</b> "+(Array.from(new Set(categoryFeatures.flat()))).join(' | '));
+            $('#place-tips-features').html("<b>Tips features:</b> "+(Array.from(new Set(tipFeatures.flat()))).join(' | '));
+
+        });
+
+
+        function flattenTags(tags) {
+            return tags.map(function (e) {
+                    if (Array.isArray(e[0])) {
+						console.log('hello - '+e+' - '+e[0]);
+						if (Array.isArray(e[0][0])) {
+                        	return e[0][0].join(" ");
+                        }
+						return e[0].join(" ");
+                    }
+                    return e[0];
+                })
+        }
+
+
+        function formatMeta(meta) {
+            var items = [];
+            $.each(meta, function(i, item) {
+                var lTags = flattenTags(item['tags']).join(' | ');
+                var rTags = item['tags'][0][1].join(' ');
+                var tags = '<b>Tags:</b> '+lTags+' <b>-></b> '+rTags;
+                var rank = '<span class="badge badge-pill badge-primary">Rank ' + item['rank'] + '</span>';
+                var score = '<span class="badge badge-pill badge-danger">Score '+ item['score'].toFixed(2) + '</span>';
+                var type = '<span class="badge badge-pill badge-success">' + item['feature_type'] + '</span>';
+                var model = '<span class="badge badge-info">'+ item['model_type'] + '</span>';
+                var phraser = '<span class="badge badge-info">'+ (item['phrase_modeler'] ? 'phraser' : 'no phraser') + '</span>';
+                var avg = '<span class="badge badge-info">'+ (item['avg'] ? 'avg' : 'no avg') + '</span>';
+                items.push('<li class="list-group-item p-1">'+rank+' '+score+' '+type+' '+model+' '+phraser+' '+avg+'<br/>'+tags);
+            });
+            return '<ul class="list-group list-group-flush">'+items.join('')+'</ul>'
+        }
+
+        function addPersonalInformationRow(pi) {
+            var piId = pi['pi_id'];
+            var name = pi['pi_name'];
+            var category = pi['picid'];
+            var icon = "static/img/icons/" + pi['category_icon'] + ".svg";
+            var el = $('<tr><td><img src="'+icon+'" width="25px" height="25px"/></td><td>'+name+'</td><td>'+formatMeta(pi['meta'])+'</td></tr>')
+                .hide()
+                .prependTo($('#personal-information-table tbody'))
+                .fadeIn('slow');
+        }
+
+
+        // deprecated
+        function addPersonalInformationCards(pi) {
+            var piId = pi['pi_id'];
+            var name = pi['pi_name'];
+            var category = pi['picid'];
+            var icon = "static/img/icons/" + pi['category_icon'] + "-white.svg";
+            var el = $('<div class="card" data-id="'+piId+'"><div class="card-header d-flex flex-row"><img class="mr-2" src="'+icon+'" width="20px" height="20px" /><h5>'+name+'</h5></div><div class="card-body d-flex flex-column"><p class="card-text">Do you find this information <b>relevant</b> to the place?</p><div class="d-flex flex-row"><p class="starrr" data-type="rel" data-rating="0"></p><p class="starrr-label ml-auto"></p></div><p class="card-text">Do you find this information <b>sensitive</b>?</p><div class="d-flex flex-row"><p class="starrr" data-type="sens" data-rating="0"></p><p class="starrr-label ml-auto"></p></div></div></div>')
+                .hide()
+                .prependTo($('#personal-information'))
+                .fadeIn('slow');
+
+            if (pi.done) {
+                el.addClass('done');
+            }
+
+            if (pi.ratingRel !== undefined && pi.ratingRel !== 0) {
+                el.find("[data-type='rel']").starrr({
+                    rating: pi.ratingRel
+                }).data('rating', pi.ratingRel).next('.starrr-label').text(starrrLabelsRelevance[pi.ratingRel-1]);
+            }
+
+            if (pi.ratingSens !== undefined && pi.ratingSens !== 0) {
+                el.find("[data-type='sens']").starrr({
+                    rating: pi.ratingSens
+                }).data('rating', pi.ratingSens).next('.starrr-label').text(starrrLabelsSensitivty[pi.ratingSens-1]);
+            }
+
+
+            el.click(function (e) {
+                e.originalEvent.stopPropagation();
+                console.log("Clicked on personal information");
+            })
+        }
+
+
+
+
+    </script>
+  </body>
+</html>
+

@@ -189,7 +189,7 @@
     <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
       <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
       <span class="navbar-text col-sm-3 col-md-2 mr-auto ml-3"><b>Your places</b></span>
-      <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Go to the next step</button>
+      <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Continue</button>
     </nav>
 
     <div id="content" class="container-fluid h-100">
@@ -338,7 +338,7 @@
             let currentSearchAreaBuffered = turf.buffer(currentSearchArea, 0.3, {units: 'kilometers'});
             let within = turf.booleanWithin(pt, currentSearchAreaBuffered);
 
-            if (!within && distanceDiff >= 0.75) {
+            if (zoomDiff > 3 || (!within && distanceDiff >= 0.25)) {
               // show the search new area button
               $('#refresh-search').show();
           } else {

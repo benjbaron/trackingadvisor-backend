@@ -69,6 +69,21 @@ def login():
     return render_template('login.html', qrcode=session_id+".svg")
 
 
+@app.route('/qrcode', methods=['GET'])
+def generate_qrcode():
+    text = request.args.get('text')
+
+    print("text: \"%s\"" % text)
+    # create the login QR code
+    session_id = "TrackingAdvisorQRCode-" + utils.id_generator()
+    qrcode_filename = "qrcode-" + session_id + ".svg"
+    utils.generate_qr_code(url=text,
+                           logo_path="./static/img/location-arrow.svg",
+                           output_file="./static/img/" + qrcode_filename)
+
+    return render_template('qrcode.html', qrcode=qrcode_filename)
+
+
 @socketio.on('connect')
 def socket_connect():
     print("Connection made to the server")

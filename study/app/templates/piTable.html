@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Semantica | Personal information</title>
+    <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+      <!-- Mapbox CSS -->
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- Custom styles for this template -->
+    <link href="static/css/dashboard.css" rel="stylesheet">
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+
+    <!-- Starrr -->
+    <script src="static/js/starrr.js"></script>
+
+    <style>
+      html, body {
+          height: 100%;
+          overflow: hidden;
+      }
+
+      #content {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        overflow: auto;
+      }
+
+      #place-listing {
+        overflow: hidden;
+        overflow-y: scroll;
+        height: 100%;
+      }
+
+      #personal-information {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        margin-left: 0px;
+        padding-left: 15px;
+        flex-wrap: wrap;
+      }
+
+      #personal-information .card {
+        font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
+        min-width: 250px;
+        max-width: 250px;
+        max-height: 220px;
+        min-height: 220px;
+        margin-left: 10px;
+        margin-bottom: 20px;
+        flex-wrap: initial!important;
+        border-radius: 3px!important;
+        border-width: 0px!important;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+      }
+
+      #personal-information .card-header {
+        background: #500778;
+        padding: 10px!important;
+        border-bottom-width: 0px!important;
+        margin-bottom: 5px;
+      }
+
+      #personal-information .card.done .card-header {
+        background: #c6b0bc;
+      }
+
+      #personal-information .card.done .starrr a, .starrr a:hover {
+        color: #c6b0bc;
+      }
+
+      #personal-information .card.done .card-text {
+        color: #8e8e8e;
+      }
+
+      #personal-information .card-header h5 {
+        display: block;
+        color: #fff;
+        font-weight: 700;
+        font-size: 1rem!important;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-height: 1.3rem;
+        max-height: 2.6rem;
+        margin-bottom: 0px!important;
+        min-height: 40px;
+      }
+
+      #personal-information .card-body {
+        padding: 5px 10px!important;
+      }
+
+      #personal-information .card-text {
+        font-size: 0.85rem!important;
+        line-height: 1rem!important;
+        margin-bottom: 0.25rem!important;
+        font-style: italic;
+      }
+
+      #personal-information .card-link {
+        color: darkred;
+      }
+
+      #personal-information .card.init {
+        background-color: #c6b0bc;
+        border-color: #c6b0bc;
+        color: white;
+=          }
+
+      #personal-information .card.init .card-text {
+        font-style: italic!important;
+        font-size: 0.9rem!important;
+      }
+
+      #personal-information .card.init .card-title {
+        font-weight: bold!important;
+        font-size: 1.5rem!important;
+        margin-top: 10px;
+        color: #500778;
+      }
+
+      #place-listing .list-group-item.active {
+        background-color: #c6b0bc;
+        border-color: #c6b0bc;
+        color: black;
+      }
+
+      #place-listing .list-group-item.done {
+        opacity: 0.5;
+      }
+
+      #place-listing .list-group-item.active .btn {
+        background-color: #500778;
+        border-color: #500778;
+      }
+
+      .navbar-text {
+        font-size: 1rem!important;
+      }
+
+      .starrr {
+          display: inline-block;
+          font-size: 18px;
+      }
+      .starrr i {
+          font-size: 16px;
+          padding: 0 1px;
+          cursor: pointer;
+          color: #ffd119;
+      }
+
+      .starrr a, .starrr a:hover {
+          color: #500778;
+          text-decoration: none!important;
+          padding-right: 3px;
+      }
+
+      .starrr-label {
+          font-size: 0.7rem;
+          color: #999999;
+      }
+
+      #add-places {
+        background-color: #500778!important;
+        border-color: #500778!important;
+      }
+      #add-places:focus {
+        outline: none!important;
+        box-shadow: none;
+        border-color: rgba(0, 0, 0, 0);
+      }
+    </style>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
+      <span class="navbar-text col-sm-3 col-md-2 mr-auto ml-3"><b>Your personal information</b></span>
+      <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Continue</button>
+    </nav>
+
+    <div id="content" class="container-fluid h-100">
+      <div class="row h-100">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+          <div class="sidebar-sticky d-flex flex-column">
+            <div class="col-auto mt-3 mb-3">
+              <button type="button" id="add-places" class="btn btn-primary btn-sm w-100">Add more places</button>
+            </div>
+            <div id="place-listing">
+              <ul class="list-group list-group-flush"></ul>
+            </div>
+          </div>
+        </nav>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-0 h-100">
+          <div id="place-title" class="d-flex flex-row flex-md-nowrap align-items-center pt-3 pb-2 pl-4 mb-3 border-bottom"></div>
+          <div id="place-questions" class="d-flex flex-column flex-md-nowrap pl-4 mb-3"></div>
+          <div class="d-flex flex-row card-deck w-100" id="personal-information"></div>
+        </main>
+      </div>
+    </div>
+    <script>
+        // ON START
+        let userPlaces = window.sessionStorage.getItem('userPlaces');
+        var places = JSON.parse(userPlaces);
+
+        let userPis = window.sessionStorage.getItem('userPis');
+        var pis = JSON.parse(userPis);
+
+        let starrrLabelsRelevance = ['Not relevant', 'Slightly relevant', 'Somewhat relevant', 'Relevant', 'Very relevant'];
+        var selectedPlace = null;
+
+        function sleep(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        $(document).on("mousewheel",function(event,delta){
+          // prevent horizontal scrolling
+          if (event.originalEvent.wheelDeltaX !== 0) {
+            event.preventDefault();
+          }
+        });
+
+        $(function() {
+            showPlaces();
+            $('#add-places').on('click', function() {
+                var placeString = JSON.stringify(places);
+                window.sessionStorage.setItem('userPlaces', placeString);
+
+                var pisString = JSON.stringify(pis);
+                window.sessionStorage.setItem('userPis', pisString);
+
+                window.location.href = 'search';
+            });
+
+            window.setTimeout(function () {
+                var el = $('#place-listing li').first();
+                placeClick(places[el.data('id')], el);
+            }, 500);
+        });
+
+        async function showPlaces() {
+            Object.keys(places).forEach(async function(placeId, index) {
+                let place = places[placeId];
+                addPlace(place);
+                await sleep(50);
+            });
+        }
+
+        function addPlace(place) {
+            let el = $('<li class="list-group-item d-flex flex-row" data-id="'+place.id+'"><div class="mr-3"><img width="25" height="25" src="'+place.icon+'"></div><div class="d-flex flex-column"><b>'+place.name+'</b><small>'+place.address+'</small></div></li>');
+            $('#place-listing ul').append(el);
+
+            placeDone(place.id);
+
+            // Add an event listener for the links in the sidebar listing
+            el.click(function(e) {
+              // Update the currentFeature to the store associated with the clicked link
+              let place = places[$(this).data("id")];
+              placeClick(place, $(this));
+            });
+        }
+
+        function addPersonalInformation(pi) {
+            var piId = pi['pi_id'];
+            var name = pi['pi_name'];
+            var category = pi['picid'];
+            var icon = "static/img/icons/" + pi['category_icon'] + ".svg";
+
+            var el = $('<tr  data-id="'+piId+'"><td><img src="'+icon+'" width="25px" height="25px"/></td><td><b>'+name+'</b></td><td><div class="d-flex flex-row"><p class="starrr mb-0" data-type="rel" data-rating="0"></p><p class="starrr-label ml-4 mb-0 pt-1"></p></div></td></tr>')
+                .hide()
+                .prependTo($('#personal-information-table tbody'))
+                .fadeIn('slow');
+
+            if (pi.done) {
+                el.addClass('done');
+            }
+
+            if (pi.ratingRel !== undefined && pi.ratingRel !== 0) {
+                el.find("[data-type='rel']")
+                    .starrr("setRating", pi.ratingRel)
+                    .data('rating', pi.ratingRel)
+                    .next('.starrr-label').text(starrrLabelsRelevance[pi.ratingRel-1]);
+            }
+        }
+
+        function setRatingLabel(el, type, value) {
+            el.next('.starrr-label').text('');
+            if (value !== undefined) {
+                if (type === 'rel') {
+                    el.next('.starrr-label').text(starrrLabelsRelevance[value-1]);
+                }
+            }
+        }
+
+        function allPlacesDone() {
+            var areAllPlacesDone = true;
+            Object.keys(places).forEach(function(placeId, index) {
+                let place = places[placeId];
+                if (place.done === undefined || !place.done) {
+                    areAllPlacesDone = false;
+                }
+            });
+
+            if (areAllPlacesDone) {
+                $('#next-place').hide();
+                $('#next-step').removeClass('btn-outline-secondary')
+                    .addClass('btn-primary')
+                    .prop("disabled", false)
+                    .on('click', function() {
+                        // save the relevance results in the session variable
+                        var pisString = JSON.stringify(pis);
+                        window.sessionStorage.setItem('userPis', pisString);
+
+                        var placeString = JSON.stringify(places);
+                        window.sessionStorage.setItem('userPlaces', placeString);
+
+                        // Go to the next screen
+                        window.location.href = 'piPrivacy';
+                    });
+            }
+        }
+
+        function placeDone(placeId) {
+            var isPlaceDone = true;
+            if (places[placeId].done === undefined) {
+                Object.keys(pis[placeId]).forEach(function(piId, index) {
+                    if (!pis[placeId][piId].done) {
+                        isPlaceDone = false;
+                    }
+                });
+            } else {
+                isPlaceDone = places[placeId].done;
+            }
+
+            if (isPlaceDone) {
+              $('#place-listing').find("[data-id='" + placeId + "']").addClass('done');
+              $('#next-place').removeClass('btn-outline-secondary')
+                  .addClass('btn-primary')
+                  .prop("disabled", false)
+                  .off('click')
+                  .on('click', function() {
+                      goToNextPlace(placeId);
+                  });
+
+              places[placeId].done = true;
+              allPlacesDone();
+            }
+        }
+
+        function goToNextPlace(placeId) {
+            let total = $('#place-listing li').length;
+            var current = $('#place-listing').find('[data-id="'+placeId+'"]');
+            while (current.hasClass('done')) {
+                if (current.index() === total-1) {
+                    current = $('#place-listing li').first();
+                } else {
+                    current = current.next();
+                }
+                if (current.data('id') === placeId) {
+                    return null;
+                }
+            }
+            placeClick(places[current.data('id')], current);
+        }
+
+        function setPersonalInformationDone(el, piId) {
+            var done = true;
+            el.find('.starrr').each(function(v, i) {
+              if ($(this).data('rating') === 0) {
+                  done = false;
+              }
+            });
+            if (done) {
+              el.addClass('done');
+              if (piId !== undefined) {
+                  pis[selectedPlace][piId].done = true;
+                  placeDone(selectedPlace);
+              }
+            } else {
+              el.removeClass('done');
+            }
+        }
+
+        function placeClick(place, listing) {
+            var activeItem = $('#place-listing ul li.active');
+            if (activeItem) {
+              activeItem.removeClass('active');
+              activeItem.find('button').remove();
+            }
+            listing.addClass('active');
+
+            // scroll the places to the selected item
+            var offset = $('#place-listing ul li.active').offset().top + $('#place-listing ul li.active').height() - $('#place-listing').offset().top;
+            if (offset < 0 || offset > $('#place-listing').height()) {
+              $('#place-listing').animate({
+                scrollTop: $('#place-listing').scrollTop() + $('#place-listing ul li.active').offset().top - $('#place-listing').offset().top},
+                'slow');
+            }
+
+            selectedPlace = place.id;
+
+            console.log(place);
+
+            // show the personal information associated to the selected place
+            $('main div').empty();
+            $('#place-title').append('<img class="mr-3 mb-1" src="'+place.icon+'" width="35px" height="35px" /><h1 class="mr-auto">'+place.name+'</h1><button id="next-place" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" disabled>Next place</button>');
+            $('#place-questions').append('<div class="d-flex flex-row align-items-center mb-2"><div class="mr-3">How <b>well</b> do you know this place?</div><div><button data-btn-type="1" data-btn-rating="1" class="btn btn-outline-secondary btn-sm mr-3">Not at all</button><button data-btn-type="1" data-btn-rating="2" class="btn btn-outline-secondary btn-sm mr-3">Just a little</button><button data-btn-type="1" data-btn-rating="3" class="btn btn-outline-secondary btn-sm mr-3">Somewhat well</button><button data-btn-type="1" data-btn-rating="4" class="btn btn-outline-secondary btn-sm mr-3">Quite well</button><button data-btn-type="1" data-btn-rating="5" class="btn btn-outline-secondary btn-sm mr-3">Very well</button></div></div>');
+            $('#place-questions').append('<div class="d-flex flex-row align-items-center mb-2"><div class="mr-3">How <b>private</b> do you consider this place?</div><div><button data-btn-type="2" data-btn-rating="1" class="btn btn-outline-secondary btn-sm mr-3">Not private at all</button><button data-btn-type="2" data-btn-rating="2" class="btn btn-outline-secondary btn-sm mr-3">A little private</button><button data-btn-type="2" data-btn-rating="3" class="btn btn-outline-secondary btn-sm mr-3">Somewhat private</button><button data-btn-type="2" data-btn-rating="4" class="btn btn-outline-secondary btn-sm mr-3">Quite private</button><button data-btn-type="2" data-btn-rating="5" class="btn btn-outline-secondary btn-sm mr-3">Very private</button></div></div>');
+
+            $('#personal-information').append('<table class="table mr-2" id="personal-information-table"><thead class="thead-light"><th scope="col"></th><th scope="col">Name</th><th scope="col">How relevant is this personal information?</th></thead><tbody></tbody></table>');
+
+            Object.keys(pis[place.id]).reverse().forEach(function (piId, index) {
+                let pi = pis[place.id][piId];
+                addPersonalInformation(pi);
+            });
+
+            var frequencyRating = places[selectedPlace].frequencyRating;
+            if (frequencyRating !== 0) {
+                $('#place-questions').find("[data-btn-type='1'][data-btn-rating='"+frequencyRating+"']").addClass('active');
+            }
+
+            var privacyRating = places[selectedPlace].privacyRating;
+            if (privacyRating !== 0) {
+                $('#place-questions').find("[data-btn-type='2'][data-btn-rating='"+privacyRating+"']").addClass('active');
+            }
+
+            placeDone(selectedPlace);
+
+
+            let starrr = $('.starrr');
+            starrr.starrr();
+
+            starrr.on('starrr:change', function(e, value){
+              let type = $(this).data('type');
+              $(this).data('rating', value);
+
+              let parent = $(this).parentsUntil('tbody').last(); // get the tr row
+              let piId = parent.data('id');
+
+              if (type === "rel") {
+                  pis[selectedPlace][piId].ratingRel = value;
+              }
+
+              $.getJSON("saveresponse", {type: 'rel', piid: piId, pid: selectedPlace, r: value}, function (d) { });
+
+              setRatingLabel($(this), type, value, true);
+              setPersonalInformationDone(parent, piId);
+            });
+
+            starrr.on('starrr:hover', function(e, value) {
+              var type = $(this).data('type');
+              setRatingLabel($(this), type, value, false);
+            });
+
+            $('#place-questions button').on('click', function() {
+                var type = parseInt($(this).data('btn-type'));
+                var rating = parseInt($(this).data('btn-rating'));
+                console.log("Type: " + type + ", Rating: " + rating);
+
+                if (type === 1) {
+                    places[selectedPlace].frequencyRating = rating;
+                    places[selectedPlace].place.properties.frequencyRating = rating;
+                    $.getJSON("saveresponse", {type: 'q1', pid: selectedPlace, r: rating}, function (d) { });
+                } else if (type === 2) {
+                    places[selectedPlace].privacyRating = rating;
+                    places[selectedPlace].place.properties.privacyRating = rating;
+                    $.getJSON("saveresponse", {type: 'q2', pid: selectedPlace, r: rating}, function (d) { });
+                }
+
+                $('#place-questions').find("[data-btn-type='" + type + "']").removeClass('active');
+                $(this).addClass('active');
+            });
+        }
+
+    </script>
+  </body>
+</html>

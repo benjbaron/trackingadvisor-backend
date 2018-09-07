@@ -30,18 +30,6 @@
         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         font-weight: bold;
       }
-      .button {
-        background-color: #4CAF50;
-        border: none;
-        color: white;
-        padding: 15px 32px;
-        text-align: center;
-        text-decoration: none;
-        display: inline-block;
-        font-size: 16px;
-        margin: auto;
-        cursor: pointer;
-      }
     </style>
   </head>
 
@@ -128,7 +116,8 @@
             };
           });
           progress.currentProgess = data.progress;
-          if(progress.currentProgess === 1.0) {
+          if (progress.currentProgess === 1.0) {
+              // end of the personal information load
               progress.meter.transition().delay(250).attr("transform", "scale(0)").each("end", function() {
                   var placeIds = [];
                   let userPis = window.sessionStorage.getItem('userPis');
@@ -150,12 +139,15 @@
                       }
                       
                       Object.keys(d).forEach(function(placeId, index){
-                          pis[placeId] = d[placeId];
+                          pis[placeId] = d[placeId].reduce((result, filter) => {
+                              result[filter['pi_id']] = filter;
+                              return result;
+                          },{});
                       });
 
                       var pisString = JSON.stringify(pis);
                       window.sessionStorage.setItem('userPis', pisString);
-                      window.location.href = 'pi';
+                      window.location.href = 'piTable';
                   });
               });
           }

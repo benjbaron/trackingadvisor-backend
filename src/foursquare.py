@@ -441,7 +441,7 @@ def get_all_places(location, distance=125):
 
 def is_place_in_db(venue_id):
     connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
-    query_string = """SELECT COUNT(*) FROM venues WHERE venue_id = %s;"""
+    query_string = """SELECT COUNT(1) FROM venues WHERE venue_id = %s;"""
     cursor.execute(query_string, (venue_id,))
     count = cursor.fetchone()[0]
     return count > 0
@@ -528,7 +528,7 @@ def save_search_area_to_db(location, boundary, distance):
     query_string = """INSERT INTO search_areas 
     (date_added, longitude, latitude, distance, area, location)
     VALUES (%s, %s, %s, %s, ST_GeomFromText(%s, 4326), ST_GeomFromText(%s, 4326))"""
-    data = (int(time.time()), location['lon'], location['lat'], distance, area_polygon, location_point)
+    data = (utils.current_timestamp(), location['lon'], location['lat'], distance, area_polygon, location_point)
 
     cursor.execute(query_string, data)
     connection.commit()
@@ -545,6 +545,9 @@ def get_complete_venue(venue_id):
     if nb_req == NB_MAX_REQ:
         print('Could not retrieve venue {}'.format(venue_id))
         return {}
+
+    if data is None or 'response' not in data or 'venue' not in data['response']:
+        return None
 
     venue = data['response']['venue']
     save_venue_to_db(venue)
@@ -584,6 +587,9 @@ def get_complete_venue_from_db(venue_id):
 
     cursor.execute(query_string, data)
     rec = cursor.fetchone()
+
+    if rec is None or 'name' not in rec:
+        return None
 
     place = {
         "name": rec['name'],
@@ -765,7 +771,7 @@ def get_all_tips_per_venue_from_db(venue_id):
 
     query_string = """
             SELECT t.tip_id, t.created_at, t.text, t.nb_likes, t.justification, t.justification_type, t.user_id, 
-                   u.firstname, u.lastname, u.gender
+                   u.firstname, u.lastname, u.gender, t.lang
             FROM tips t JOIN users u ON u.user_id = t.user_id      
             WHERE t.venue_id = %s  
             ORDER BY t.created_at DESC;"""
@@ -1073,6 +1079,85 @@ def autocomplete_location(location, query, distance=250, limit=10):
     else:
         print("autocomplete from DB")
         return get_autocomplete_from_db(location, query, distance, limit, cursor=cursor)
+
+
+def load_personal_information():
+    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+    query_string = """
+    SELECT pi_id, name, category_id, subcategory_name, tags, category_icon
+    FROM personal_information
+    ORDER BY category_id ASC, name ASC;"""
+    cursor.execute(query_string)
+    return dict([(res['pi_id'], dict(res)) for res in cursor])
+
+
+def save_place_personal_information_to_db(ppi, cursor=None):
+    """ Save the place personal information (interests) ppi to the database """
+    if not cursor:  # default behavior
+        try_commit = True
+        connection, cursor = utils.connect_to_db("foursquare")
+    else:
+        try_commit = False
+
+    pi_id = ppi['pi_id']
+    venue_id = ppi['place_id']
+    feature_type = ppi['feature_type']
+    avg = ppi['avg']
+    phrase_modeler = ppi['phrase_modeler']
+    model_type = ppi['model_type']
+    score = ppi['score']
+    rank = ppi['rank']
+    tags = ppi['tags']
+
+    query_string = """INSERT INTO place_personal_information
+    (pi_id, venue_id, feature_type, avg, phrase_modeler, model_type, score, rank, tags)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT DO NOTHING"""
+    data = (pi_id, venue_id, feature_type, avg, phrase_modeler, model_type, score, rank, tags)
+
+    cursor.execute(query_string, data)
+    if try_commit:
+        connection.commit()
+
+
+def get_place_personal_information_from_db(venue_id):
+    """ Retrieves the place personal information (interests) ppi from the database """
+    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    SELECT id, pi_id, venue_id, feature_type, avg, phrase_modeler, score, rank, tags, model_type
+    FROM place_personal_information
+    WHERE venue_id = %s
+    ORDER BY rank;"""
+    cursor.execute(query_string, (venue_id,))
+
+    return [dict(res) for res in cursor]
+
+
+def get_place_personal_information_aggregated_from_db(venue_id):
+    """ Retrieves the place personal information (interests) ppi from the database """
+    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    SELECT pi.pi_id, ppi.venue_id, pi.name, pi.category_id, pi.category_icon, AVG(ppi.rank) as rank_avg, COUNT(ppi.id) as nb, AVG(ppi.score) as score_avg
+    FROM place_personal_information ppi
+    JOIN personal_information pi on pi.pi_id = ppi.pi_id
+    WHERE venue_id = %s
+    GROUP BY pi.pi_id, ppi.venue_id
+    ORDER BY rank_avg;"""
+    cursor.execute(query_string, (venue_id,))
+
+    return [dict(res) for res in cursor]
+
+
+def has_place_personal_information_in_db(venue_id):
+    """ Returns true if there are personal information (interests) associated to the venue_id in the database """
+
+    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+    query_string = """SELECT COUNT(1) FROM place_personal_information WHERE venue_id = %s;"""
+    cursor.execute(query_string, (venue_id,))
+    count = cursor.fetchone()[0]
+    return count > 0
 
 
 def get_all_places_within_location(location='', args='location'):

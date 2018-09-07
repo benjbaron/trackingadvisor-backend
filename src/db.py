@@ -56,6 +56,13 @@ def export_user_data(user_id):
     # get the raw traces
     points = user_traces_db.load_all_raw_points(user_id)
 
+    # swap longitude and latitude
+    for point in points:
+        lon = point['longitude']
+        lat = point['latitude']
+        point['longitude'] = lat
+        point['latitude'] = lon
+
     # create a temporary file
     fname = 'user_{}.json'.format(user_id)
     zipfname = 'user_traces.zip'

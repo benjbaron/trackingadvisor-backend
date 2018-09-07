@@ -316,7 +316,7 @@ def add_personal_information(pi):
 def get_all_personal_information():
     connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
     query_string = """
-    SELECT name, category_id, pi_id
+    SELECT name, category_id, pi_id, tags
     FROM personal_information
     ORDER BY category_id ASC, name ASC;"""
     cursor.execute(query_string)
@@ -439,7 +439,7 @@ def match_all_foursquare_categories_to_personal_information_in_db():
     all_foursquare_categories = foursquare.get_all_categories()
     category_ids = [cat['category_id'] for cat in all_foursquare_categories]
 
-    print("macthing the personal information of {} foursquare categories".format(len(category_ids)))
+    print("matching the personal information of {} foursquare categories".format(len(category_ids)))
 
     m = Manager()
     d = m.dict()

@@ -2,9 +2,9 @@
 
 if [[ $# -eq 0 ]] ; then
     echo "Usage:"
-    echo "       $0 [api|web|worker] build"
-    echo "       $0 [api|web|worker] build run"
-    echo "       $0 [api|web|worker] run"
+    echo "       $0 [api|web|worker|study|study-worker] build"
+    echo "       $0 [api|web|worker|study|study-worker] build run"
+    echo "       $0 [api|web|worker|study|study-worker] run"
     exit 0
 fi
 
@@ -36,6 +36,10 @@ if [ "$2" == "run" ] || [ "$3" == "run" ]; then
 
     if [ $folder == "study" ]; then
         docker run -d --restart=always -e DB_HOSTNAME="colossus07" --name semantica-$folder -p 8001:8000 -t semantica-$folder
+    fi
+
+    if [ $folder == "study-worker" ]; then
+        docker run -d --restart=always -v ~/word_embeddings:/app/data --name semantica-$folder -t semantica-$folder
     fi
 
     echo "Done running $folder"
