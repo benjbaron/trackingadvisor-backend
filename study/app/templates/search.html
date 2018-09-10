@@ -20,6 +20,7 @@
 
     <!-- Custom styles for this template -->
     <link href="static/css/dashboard.css" rel="stylesheet">
+    <link href="static/css/mprogress.min.css" rel="stylesheet">
 
     <!-- Bootstrap core JavaScript -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
@@ -27,174 +28,174 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
     <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <script type="text/javascript" src="static/js/mprogress.min.js" charset="UTF-8"></script>
 
     <!-- Icons -->
     <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
-    <script src="static/js/search.js"></script>
 
-      <style>
-          html, body {
-            height: 100%;
-            overflow: hidden;
-          }
+    <style>
+        html, body {
+          height: 100%;
+          overflow: hidden;
+        }
 
-          #content {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            overflow: auto;
-          }
+        #content {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          overflow: auto;
+        }
 
-          #map {
-            top: 220px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            position: absolute;
-            width: 100%;
-            height: auto;
-            border-top: 2px solid #b3b3b3;
-          }
+        #map {
+          top: 220px;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          position: absolute;
+          width: 100%;
+          height: auto;
+          border-top: 2px solid #b3b3b3;
+        }
 
-          #refresh-search {
-            top: 240px;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            position: absolute;
-            height: 40px;
-          }
+        #refresh-search {
+          top: 240px;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          position: absolute;
+          height: 40px;
+        }
 
-          #refresh-search .btn {
-            border-radius: 20px!important;
-            border-color: #500778;
-            background-color: #500778;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
-          }
+        #refresh-search .btn {
+          border-radius: 20px!important;
+          border-color: #500778;
+          background-color: #500778;
+          box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+        }
 
-          #refresh-search .btn:active {
-            border-color: #7c05ae;
-            background-color: #7c05ae;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.40)!important;
-          }
+        #refresh-search .btn:active {
+          border-color: #7c05ae;
+          background-color: #7c05ae;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.40)!important;
+        }
 
-          #selected-places {
-            overflow-y: hidden;
-            overflow-x: auto;
-            height: 150px;
-            margin-top: 20px;
-            margin-bottom: 20px;
-            margin-left: 0px;
-            padding-left: 15px;
-            padding-right: 15px;
-            flex-wrap: initial!important;
-          }
+        #selected-places {
+          overflow-y: hidden;
+          overflow-x: auto;
+          height: 150px;
+          margin-top: 20px;
+          margin-bottom: 20px;
+          margin-left: 0px;
+          padding-left: 15px;
+          padding-right: 15px;
+          flex-wrap: initial!important;
+        }
 
-          #selected-places::after {
-            content: ''; /* Insert space before the first item and after the last one */
-            min-width: 1px;
-            min-height: 100%;
-          }
+        #selected-places::after {
+          content: ''; /* Insert space before the first item and after the last one */
+          min-width: 1px;
+          min-height: 100%;
+        }
 
-          #selected-places .card {
-            font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
-            min-width: 200px;
-            max-width: 200px;
-            max-height: 130px;
-            min-height: 130px;
-            margin-left: 10px;
-            flex-wrap: initial!important;
-            border-radius: 3px!important;
-            border-width: 0px!important;
-            box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
-          }
-
+        #selected-places .card {
+          font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
+          min-width: 200px;
+          max-width: 200px;
+          max-height: 130px;
+          min-height: 130px;
+          margin-left: 10px;
+          flex-wrap: initial!important;
+          border-radius: 3px!important;
+          border-width: 0px!important;
+          box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+        }
 
 
-          #selected-places .card-header {
-            background: #500778;
-            padding: 10px!important;
-            border-bottom-width: 0px!important;
-          }
 
-          #selected-places .card-header h5 {
-            display: block;
-            color: #fff;
-            font-weight: 700;
-            font-size: 1rem!important;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-box-orient: vertical;
-            -webkit-line-clamp: 2;
-            line-height: 1.3rem;
-            max-height: 2.6rem;
-            margin-bottom: 0px!important;
-            min-height: 40px;
-          }
+        #selected-places .card-header {
+          background: #500778;
+          padding: 10px!important;
+          border-bottom-width: 0px!important;
+        }
 
-          #selected-places .card-body {
-            padding: 5px 10px!important;
-          }
+        #selected-places .card-header h5 {
+          display: block;
+          color: #fff;
+          font-weight: 700;
+          font-size: 1rem!important;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          line-height: 1.3rem;
+          max-height: 2.6rem;
+          margin-bottom: 0px!important;
+          min-height: 40px;
+        }
 
-          #selected-places .card-text {
-            font-size: 0.75rem!important;
-            line-height: 1rem!important;
-            margin-bottom: 0.25rem!important;
-          }
+        #selected-places .card-body {
+          padding: 5px 10px!important;
+        }
 
-          #selected-places .card-link {
-            color: darkred;
-          }
+        #selected-places .card-text {
+          font-size: 0.75rem!important;
+          line-height: 1rem!important;
+          margin-bottom: 0.25rem!important;
+        }
 
-          #selected-places .card.init {
-            background-color: none!important;
-            border: 2px solid #500778!important;
-            border-radius: 7px!important;
-            box-shadow: none!important;
+        #selected-places .card-link {
+          color: darkred;
+        }
+
+        #selected-places .card.init {
+          background-color: none!important;
+          border: 2px solid #500778!important;
+          border-radius: 7px!important;
+          box-shadow: none!important;
 =         }
 
-          #selected-places .card.init .card-text {
-            font-style: italic!important;
-            font-size: 0.9rem!important;
-          }
+        #selected-places .card.init .card-text {
+          font-style: italic!important;
+          font-size: 0.9rem!important;
+        }
 
-          #selected-places .card.init .card-title {
-            font-weight: bold!important;
-            font-size: 1.5rem!important;
-            margin-top: 10px;
-            color: #500778;
-          }
+        #selected-places .card.init .card-title {
+          font-weight: bold!important;
+          font-size: 1.5rem!important;
+          margin-top: 10px;
+          color: #500778;
+        }
 
-          #search-results .list-group-item.active {
-            background-color: #c6b0bc;
-            border-color: #c6b0bc;
-            color: black;
-          }
+        #search-results .list-group-item.active {
+          background-color: #c6b0bc;
+          border-color: #c6b0bc;
+          color: black;
+        }
 
-          #search-results .list-group-item.active .btn {
-            background-color: #500778;
-            border-color: #500778;
-          }
+        #search-results .list-group-item.active .btn {
+          background-color: #500778;
+          border-color: #500778;
+        }
 
-          .navbar-text {
-            font-size: 1rem!important;
-          }
-      </style>
+        .navbar-text {
+          font-size: 1rem!important;
+        }
+    </style>
   </head>
 
   <body>
-    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
-      <span class="navbar-text col-sm-3 col-md-2 mr-auto ml-3"><b>Your places</b></span>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <a class="navbar-brand col-3 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
+      <span class="navbar-text col-3 mr-auto ml-3"><b>Your places</b></span>
       <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Continue</button>
     </nav>
 
     <div id="content" class="container-fluid h-100">
       <div class="row h-100">
-        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+        <nav class="col-3 d-none d-md-block bg-light sidebar">
           <div class="sidebar-sticky d-flex flex-column">
             <div class="col-auto mt-3 mb-3">
               <form class="card card-sm">
@@ -214,7 +215,7 @@
           </div>
         </nav>
 
-        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-0 h-100">
+        <main role="main" class="col-9 ml-sm-auto px-0 h-100">
           <div class="d-flex flex-row card-deck w-100" id="selected-places"></div>
           <div id="map"></div>
           <div id="refresh-search" class="row justify-content-center align-items-center" style="display: none;">
@@ -234,7 +235,13 @@
           };
         }
 
+        var mprogress = new Mprogress({
+            template: 3,
+            parent: '#nav'
+        });
+
         var isSearchingPlace = false;
+        var isSelectingPlace = false;
         var delayTimer;
         var placeLayer = false;
         var markers = [];
@@ -259,13 +266,12 @@
             $.getJSON("location", {}, function (d) {
                 if (d.lat !== null && d.lon !== null) {
                   triggeredByUserPosition = true;
-                  flyToLocation(d.lon, d.lat);
+                  flyToLocation(d.lon, d.lat, 14);
                 }
             });
         }
 
         function getLocation() {
-            console.log("getLocation");
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(showPosition, errorPosition, {timeout:10000});
             } else {
@@ -274,9 +280,8 @@
         }
 
         function showPosition(position) {
-            console.log("showPosition");
             triggeredByUserPosition = true;
-            flyToLocation(position.coords.longitude, position.coords.latitude);
+            flyToLocation(position.coords.longitude, position.coords.latitude, 14);
         }
 
         function errorPosition(error) {
@@ -354,10 +359,10 @@
           toggleSearchRefreshButton();
         });
 
-        function flyToLocation(lon, lat) {
+        function flyToLocation(lon, lat, zoom) {
           map.flyTo({
             center: [lon, lat],
-            zoom: 14
+            zoom: zoom
           });
         }
 
@@ -485,11 +490,20 @@
                     var listing = $("#search-results ul").find("[data-position='" + i + "']");
 
                     placeClick(place, listing);
-                })
+                });
+
+                // zoom out and focus on the search
+                flyToLocation(map.getCenter().lng, map.getCenter().lat, 12);
+                
+                // remove all popups
+                popups.forEach(function(popup) {
+                    popup.remove();
+                });
             }
         }
 
         function placeClick(place, listing) {
+            isSelectingPlace = true;
             // 1. Fly to the point associated with the clicked link
             flyToFeature(place);
             // 2. Close all other popups and display popup for clicked store
@@ -543,6 +557,7 @@
                 "layout": {
                     "icon-image": "{icon-name}-15",
                     "icon-allow-overlap": true,
+                    "text-allow-overlap": true,
                     "text-field": "{name}",
                     "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
                     "text-size": 11,
@@ -582,7 +597,7 @@
         }
 
         function searchPlaces(query) {
-            console.log("searchPlaces - query: " + query);
+            mprogress.start();
             var bounds = map.getBounds();
             var center = map.getCenter();
 
@@ -596,7 +611,7 @@
                 swlat: bounds.getSouthWest().lat,
                 swlon: bounds.getSouthWest().lng,
             }, function (d) {
-                console.log("got " + d.length + " places");
+                mprogress.end();
                 isSearchingPlace = false;
 
                 // remove all markers
@@ -663,16 +678,21 @@
         map.on('moveend', function(){
             if (triggeredBySearchPlaces) {
                 currentCoordinates = [map.getCenter().lng, map.getCenter().lat];
-                let bounds = map.getBounds();
+                var bounds = map.getBounds();
                 var bbox = [bounds.getSouthWest().lng, bounds.getSouthWest().lat, bounds.getNorthEast().lng, bounds.getNorthEast().lat];
                 currentSearchArea = turf.bboxPolygon(bbox);
                 currentZoom = map.getZoom();
                 triggeredBySearchPlaces = false;
                 toggleSearchRefreshButton();
             } else if (triggeredByUserPosition) {
+                // ip or gps-based location
                 var query = $("#search-place").val();
                 searchPlaces(query);
                 triggeredByUserPosition = false;
+            } else if (isSelectingPlace) {
+                // do not show the place refresh
+                $('#refresh-search').hide();
+                isSelectingPlace = false;
             }
         });
 

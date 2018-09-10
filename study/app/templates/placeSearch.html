@@ -26,9 +26,6 @@
     <script type="text/javascript" src="static/js/typeahead.js" charset="UTF-8"></script>
     <script type="text/javascript" src="static/js/mprogress.min.js" charset="UTF-8"></script>
 
-    <!-- Icons -->
-    <script src="static/js/search.js"></script>
-
       <style>
           html, body {
               height: 100%;
@@ -160,7 +157,6 @@
                 swlat: currentCity.geometry.bounds.sw.lat,
                 swlon: currentCity.geometry.bounds.sw.lng
             }, function (d) {
-                console.log("got " + d.length + " places");
                 isSearchingPlace = false;
                 mprogress.end();
 

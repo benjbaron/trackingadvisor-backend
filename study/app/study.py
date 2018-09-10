@@ -62,6 +62,19 @@ def save_personal_information_relevance(session_id, place_id, pi_id, rating):
     connection.commit()
 
 
+def save_personal_information_importance(session_id, place_id, pi_id, rating):
+    connection, cursor = utils.connect_to_db("study")
+
+    query_string = """INSERT INTO place_personal_information_importance 
+            (pi_id, place_id, session_id, rating)
+            VALUES (%s, %s, %s, %s)
+            ON CONFLICT (session_id, place_id, pi_id) DO UPDATE SET rating=EXCLUDED.rating;"""
+    data = (pi_id, place_id, session_id, rating)
+
+    cursor.execute(query_string, data)
+    connection.commit()
+
+
 def save_personal_information_privacy(session_id, pi_id, rating):
     connection, cursor = utils.connect_to_db("study")
 

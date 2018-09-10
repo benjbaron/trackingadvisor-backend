@@ -282,6 +282,10 @@ def save_response():
         pi_id = request.args.get('piid')
         place_id = request.args.get('pid')
         study.save_personal_information_relevance(session['sid'], place_id, pi_id, rating)
+    elif t == 'imp':
+        pi_id = request.args.get('piid')
+        place_id = request.args.get('pid')
+        study.save_personal_information_importance(session['sid'], place_id, pi_id, rating)
     elif t == 'pri':
         pi_id = request.args.get('piid')
         study.save_personal_information_privacy(session['sid'], pi_id, rating)
