@@ -111,7 +111,7 @@ def get_places(query, location, bounds, limit=50):
     data = foursquare.send_request(url, params)
     results = []
 
-    if 'response' not in data or 'venues' not in data['response']:
+    if data is None or 'response' not in data or 'venues' not in data['response']:
         return results
 
     for venue in data['response']['venues']:
@@ -209,6 +209,7 @@ def show_place_pi():
 
 @app.route('/searchplace')
 def search_place():
+
     query = request.args.get('query')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
@@ -268,13 +269,14 @@ def show_personal_information_privacy():
 @app.route('/end')
 def show_end():
     study.end_session(session['sid'])
+    print("End session %s" % session['sid'])
     return render_template('finish.html')
 
 
 # Logic to save the responses in the database
 @app.route('/saveresponse')
 def save_response():
-    print("Save Response in database - Session id: %s / %s" % (session['sid'], session['uid']))
+    print("Save Response in database - Session id: %s / %s" % (session.get('sid', 'no session sid'), session.get('uid', 'no session uid')))
     print("Request: %s" % request.args)
     t = request.args.get('type')  # rel (relevance), pri (privacy), q1 (how well), q2 (how private)
     rating = request.args.get('r')
@@ -442,4 +444,4 @@ def socket_on_room_auth():
 
 
 if __name__ == "__main__":
-    socketio.run(app, host='0.0.0.0', port=8000)
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True)

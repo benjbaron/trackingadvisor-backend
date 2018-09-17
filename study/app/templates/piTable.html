@@ -166,6 +166,7 @@
         var starrrLabelsImportance = ['Not important', 'Slightly important', 'Somewhat important', 'Important', 'Very important'];
 
         var selectedPlace = null;
+        var isUserInput = true;
 
         function sleep(ms) {
           return new Promise(resolve => setTimeout(resolve, ms));
@@ -302,7 +303,8 @@
         function placeDone(placeId) {
             var isPlaceDone = true;
             if (places[placeId].done === undefined) {
-                Object.keys(pis[placeId]).forEach(function(piId, index) {
+                var keys = Object.keys(pis[placeId]);
+                keys.slice(0, 15).forEach(function (piId, index) {
                     if (!pis[placeId][piId].done) {
                         isPlaceDone = false;
                     }
@@ -367,6 +369,11 @@
             starrr.starrr();
 
             starrr.on('starrr:change', function(e, value){
+              if (isUserInput) {
+                  console.log("User input");
+                  $(this).data('user', true);
+              }
+
               var type = $(this).data('type');
               $(this).data('rating', value);
 
@@ -375,12 +382,29 @@
 
               if (type === "rel") {
                   pis[selectedPlace][piId].ratingRel = value;
+              } else if (type === "imp") {
+                  pis[selectedPlace][piId].ratingImp = value;
               }
 
               $.getJSON("saveresponse", {type: type, piid: piId, pid: selectedPlace, r: value}, function (d) { });
 
               setRatingLabel($(this), type, value, true);
               setPersonalInformationDone(parent, piId);
+
+              if (type === "rel" && value === 1) {
+                  // the personal information is not sensitive, mark the importance as not important
+                  var e = parent.find('.starrr[data-type="imp"]');
+                  if (!e.data('user')) {
+                      isUserInput = false;
+                      e.starrr("setRating", value)
+                          .data('rating', value)
+                          .next('.starrr-label').text(starrrLabelsImportance[value-1]);
+
+                      pis[selectedPlace][piId].ratingImp = value;
+                  }
+              }
+
+              isUserInput = true;
             });
 
             starrr.on('starrr:hover', function(e, value) {

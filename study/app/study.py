@@ -7,7 +7,7 @@ def start_session(session_id, ip_address):
     connection, cursor = utils.connect_to_db("study")
 
     query_string = """INSERT INTO sessions 
-    (start, session_id, ip_address)
+    (session_start, session_id, ip_address)
     VALUES (%s, %s, %s)
     ON CONFLICT DO NOTHING;"""
     data = (utils.current_timestamp(), session_id, ip_address)
@@ -29,7 +29,7 @@ def add_trackingadvisor_id(session_id, user_id):
 def end_session(session_id):
     connection, cursor = utils.connect_to_db("study")
 
-    query_string = """UPDATE sessions SET end = %s WHERE session_id = %s;"""
+    query_string = """UPDATE sessions SET session_end = %s WHERE session_id = %s;"""
     data = (utils.current_timestamp(), session_id)
 
     cursor.execute(query_string, data)

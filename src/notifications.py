@@ -95,7 +95,85 @@ def send_push_notification(user_id, type, message, args='', use_sandbox=False):
         d['timestamp'] = args['timestamp']
         payload = Payload(alert={'title': "New message", 'body': args['message']}, sound="default", badge=1, custom=d)
 
+    if payload is not None:
+        apns.gateway_server.send_notification(token_hex, payload)
+
+
+def send_survey_notification_to_user(user_id, url, use_sandbox=False):
+    user = user_traces_db.load_user_info(user_id)
+    apns = APNs(use_sandbox=use_sandbox, cert_file='apns_trackingadvisor.pem')
+    token_hex = user['push_notification_id']
+
+    title = "Hey there 👋"
+    body = "Thank you for participating in the study! We have a survey for you to fill ... Tap to open it!"
+
+    alert = {
+        "title": title,
+        "body": body
+    }
+
+    d = {
+        "type": "web",
+        "url": url+"?user_id=%s" % user_id,
+        "title": title,
+        "message": body
+    }
+
+    payload = Payload(alert=alert, sound="default", badge=1, custom=d)
     apns.gateway_server.send_notification(token_hex, payload)
+
+
+def send_survey_notification_to_all_users(url):
+    import os
+    import math
+    import datetime
+    import calendar
+    import logging
+
+    os.chdir("/home/ucfabb0/code/semantica-docker/src/")
+    logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p', level=logging.INFO)
+
+    users = user_traces_db.get_all_users_push_ids()
+    count_users = 0
+
+    try:
+        utc_dt = datetime.datetime.utcnow()
+        utc_time = calendar.timegm(utc_dt.utctimetuple())
+
+        for user in users:
+            user_id = user['user_id']
+
+            # get the last update
+            last_user_update = user_traces_db.get_last_user_update(user_id)
+            if not last_user_update:
+                logging.warning("[%s] no traces available for user" % user_id)
+                continue
+
+            # get the user join date
+            user_join_date = user_traces_db.get_user_join_date(user_id)
+            if not user_join_date:
+                logging.warning("[%s] no join date available" % user_id)
+
+            last_update_within_48_hours = math.fabs(last_user_update - utc_time) <= 2 * 24 * 3600
+            has_join_for_more_than_one_week = math.fabs(user_join_date - utc_time) > 7 * 24 * 3600
+
+            if not last_update_within_48_hours:
+                logging.warning("[%s] not updated since 48 hours" % user_id)
+                continue
+
+            if not has_join_for_more_than_one_week:
+                logging.warning("[%s] not joined since one week" % user_id)
+                continue
+
+            count_users += 1
+            logging.info("[%s] Send notification - survey" % user_id)
+            send_survey_notification_to_user(user_id, url, use_sandbox=True)
+            send_survey_notification_to_user(user_id, url, use_sandbox=False)
+
+    except:
+        client.captureException()
+
+    logging.info("[Done] processed %s users out of %s total users" % (count_users, len(users)))
 
 
 def schedule_notifications():
@@ -119,7 +197,6 @@ def schedule_notifications():
         return pi['r'] > 0
 
     try:
-
         users = user_traces_db.get_all_users_push_ids()
 
         utc_dt = datetime.datetime.utcnow()
@@ -301,6 +378,25 @@ if __name__ == '__main__':
 
     elif arg == 'schedule':
         schedule_notifications()
+
+    elif arg == 'push-survey':
+        if len(sys.argv) != 3:
+            print("Error - you should provide a valid survey url (in quotes)")
+            sys.exit(0)
+
+        url = sys.argv[2]
+        send_survey_notification_to_all_users(url)
+
+    elif arg == 'push-survey-user':
+        if len(sys.argv) != 4:
+            print("Error - you should provide a valid survey url and user id (both in quotes)")
+            sys.exit(0)
+
+        url = sys.argv[2]
+        user_id = sys.argv[3]
+        send_survey_notification_to_user(user_id, url, use_sandbox=False)
+        send_survey_notification_to_user(user_id, url, use_sandbox=True)
+
     else:
         print("Error - specify an argument search")
         sys.exit(0)

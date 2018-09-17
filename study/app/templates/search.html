@@ -609,11 +609,8 @@
                 nelat: bounds.getNorthEast().lat,
                 nelon: bounds.getNorthEast().lng,
                 swlat: bounds.getSouthWest().lat,
-                swlon: bounds.getSouthWest().lng,
+                swlon: bounds.getSouthWest().lng
             }, function (d) {
-                mprogress.end();
-                isSearchingPlace = false;
-
                 // remove all markers
                 markers.forEach(function(marker) {
                     marker.remove();
@@ -672,6 +669,11 @@
                 map.fitBounds(bbox, {padding: 50});
                 triggeredBySearchPlaces = true;
                 data = places;
+            }).fail(function() {
+                alert("error");
+            }).always(function() {
+                mprogress.end();
+                isSearchingPlace = false;
             });
         }
 
