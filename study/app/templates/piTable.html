@@ -126,9 +126,9 @@
   </head>
 
   <body>
-    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
-      <span class="navbar-text col-3 mr-auto ml-3"><b>Your personal information</b></span>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <div class="navbar-brand col-2 mr-0 d-flex" ><span><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</span><a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a></div>
+      <span class="navbar-text col-3 mr-auto ml-3"><b>Places and their personal information</b></span>
       <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Continue</button>
     </nav>
 
@@ -152,6 +152,31 @@
 
           <div id="show-more" class="row justify-content-center align-items-center mb-4" style="display: none;"></div>
         </main>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="explanationModal" tabindex="-1" role="dialog" aria-labelledby="explanationModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="explanationModalTitle"><img src="static/img/location-arrow.svg" height="25" class="mr-1"/> Places and their personal information</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>In this second step, we have automatically extracted some personal information about the places you have selected.
+              We ask you to indicate whether you think that the personal information is (1) <b>relevant</b> to the place and (2) <b>important</b> for you when you go to the place.</p>
+            <p>To this end, you can rate the relevance and importance of each information item using the stars. Giving one star means that the item is not relevant or important
+              while giving five stars means that the item is very relevant or important. For instance the item <i>coffee</i> is very relevant to a <i>coffee shop</i> and less relevant for an <i>art gallery</i>.</p>
+            <p>We also want to understand how well you know the place and whether you find the place private.
+              Please do not forget to answer these two question at the top.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Got it!</button>
+          </div>
+        </div>
       </div>
     </div>
     <script>
@@ -180,6 +205,10 @@
         });
 
         $(function() {
+            // show the explanation modal.
+            $('#explanationModal').modal('show');
+
+            // show the places and associated personal information.
             showPlaces();
             $('#add-places').on('click', function() {
                 var placeString = JSON.stringify(places);
@@ -311,6 +340,10 @@
                 });
             } else {
                 isPlaceDone = places[placeId].done;
+            }
+
+            if (places[placeId].frequencyRating === 0 || places[placeId].privacyRating === 0) {
+                isPlaceDone = false;
             }
 
             if (isPlaceDone) {
@@ -479,6 +512,8 @@
 
                 $('#place-questions').find("[data-btn-type='" + type + "']").removeClass('active');
                 $(this).addClass('active');
+
+                placeDone(selectedPlace);
             });
 
             setupStarrr(0);

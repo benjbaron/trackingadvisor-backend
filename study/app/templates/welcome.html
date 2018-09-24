@@ -27,12 +27,65 @@
   <body>
     <div id="welcome" class="container d-flex h-100">
       <div class="row align-self-center w-100">
-        <div class="col-6 mx-auto">
+        <div class="col-9 mx-auto">
           <img height="100" width="100" class="image-center" src="static/img/location-arrow.svg">
           <h1 class="text-center mt-2">Semantica</h1>
-          <p class="text-center">The goal of this project is to learn more about the places you visit.<br/>We will ask for your location but we will not record it. You will remain anonymous throughout this study.</p>
-          <button onclick="window.location.href = 'search' " type="button" class="mt-5 image-center btn btn-primary btn-lg">Start</button>
+          <p class="text-center"><i>The goal of this study is to learn more about the places you visit.</i><br/>In this study, we will ask you the following:</p>
+          <div class="row">
+            <div class="col-sm">
+              <img width="100" src="static/img/places.svg" class="image-center">
+              <h1 class="text-center mb-0 font-weight-bold">1</h1>
+              <h4 class="text-center">Choose places that you know well.</h4>
+            </div>
+            <div class="col-sm">
+              <img width="100" src="static/img/information.svg" class="image-center">
+              <h1 class="text-center mb-0 font-weight-bold">2</h1>
+              <h4 class="text-center">Tell us whether the information about the places is correct.</h4>
+            </div>
+            <div class="col-sm">
+              <img width="100" src="static/img/privacy.svg" class="image-center">
+              <h1 class="text-center mb-0 font-weight-bold">3</h1>
+              <h4 class="text-center">Tell us whether you find the information sensitive.</h4>
+            </div>
+          </div>
+          <p class="text-center mt-5 mb-3">Read about our privacy policy <a href="#" data-toggle="modal" data-target="#privacyPolicyModal">here</a>.<br/>Thank you for participating in this study!</p>
+          <button onclick="window.location.href = 'search' " type="button" class="mt-2 image-center btn btn-primary btn-lg">Start</button>
           <button onclick="window.location.href = 'login' " type="button" class="mt-2 image-center btn btn-secondary btn-lg">TrackingAdvisor Login</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="privacyPolicyModal" tabindex="-1" role="dialog" aria-labelledby="privacyPolicyModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="privacyPolicyModalTitle"><img src="static/img/privacy.svg" height="30"/> Privacy Policy</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>Thank you for participating in this study! The main goal of this study is to assess the correctness of the
+              personal information that we have automatically extracted from places that you selected. We also want to use
+              this study to understand your privacy expectations associated to the places and the personal information.</p>
+
+              <h5>The information that we collect</h5>
+              <p>To this end, we collect a certain number of personal information:</p>
+              <ul>
+                <li>A unique session identifier that is created when you first visit this page.</li>
+                <li>Your current IP address.</li>
+                <li>The list of places that you have chosen associated to the unique identifier.</li>
+                <li>The information you have provided about the places and the personal information associated to the unique identifier.</li>
+              </ul>
+
+              <h5>Why we collect this information</h5>
+              <p>We need this information to successfully conduct our study and understand the different aspects mentioned in the introduction.<br/>
+                We also collect this information to monitor and protect this website.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          </div>
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@ import requests
 import random
 import pika
 import uuid
+import psycopg2
 
 import foursquare
 import keys
@@ -96,8 +97,34 @@ socketio = SocketIO(app, message_queue="amqp://colossus07/socketio")
 
 BASE_URL = "https://api.foursquare.com/v2/"
 
+# getting the database connection information
+connection = None
+cursor = None
+
+
+def get_ip_address(request):
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ',' in ip_address:
+        ip_address = ip_address.split(',')[0].strip()
+
+    return ip_address
+
+
+def get_db_connection():
+    global cursor, connection
+    if cursor is None or connection is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
+    # Test the liveliness of the connection.
+    try:
+        cursor.execute("SELECT 1")
+    except psycopg2.InterfaceError:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
 
 def get_places(query, location, bounds, limit=50):
+    get_db_connection()
+
     url = BASE_URL
     url += "venues/search"
     params = {
@@ -122,7 +149,7 @@ def get_places(query, location, bounds, limit=50):
         category = {}
         if len(categories) > 0:
             category = categories[0]
-            emoji, icon = foursquare.get_icon_for_venue(venue_id, {'categories': [category['id']]})
+            emoji, icon = foursquare.get_icon_for_venue(venue_id, {'categories': [category['id']]}, connection=connection, cursor=cursor)
         else:
             emoji, icon = '👣', 'map-marker'
 
@@ -186,7 +213,7 @@ def show_welcome():
         session_id = session['sid']
         print("using session-id: %s" % session_id)
 
-    study.start_session(session_id, request.remote_addr)
+    study.start_session(session_id, get_ip_address(request))
     return render_template('welcome.html')
 
 
@@ -226,7 +253,8 @@ def search_place():
 
 @app.route('/location')
 def get_location():
-    ip_address = request.remote_addr
+    ip_address = get_ip_address(request)
+
     key = random.choice(keys.IPSTACK_KEYS)
     send_url = 'http://api.ipstack.com/%s?access_key=%s' % (ip_address, key)
     r = requests.get(send_url).json()

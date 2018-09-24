@@ -188,8 +188,8 @@
 
   <body>
     <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-3 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
-      <span class="navbar-text col-3 mr-auto ml-3"><b>Your places</b></span>
+      <div class="navbar-brand col-3 mr-0 d-flex" ><span><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</span><a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a></div>
+      <span class="navbar-text col-3 mr-auto ml-3"><b>Select places that you know</b></span>
       <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Continue</button>
     </nav>
 
@@ -222,6 +222,31 @@
             <a class="btn btn-primary" href="#" role="button">Search again for this area</a>
           </div>
         </main>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="explanationModal" tabindex="-1" role="dialog" aria-labelledby="explanationModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="explanationModalTitle"><img src="static/img/location-arrow.svg" height="25" class="mr-1"/> Select places that you know</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>In this first step, we ask you to select <b>at least five places</b> that you know well. These places can be your workplace,
+            your favorite restaurant, café, bar, supermarket, store, etc.</p>
+            <p>To this end, you should use the <b>search bar</b> on the left side. Type the name of the place and it should appear on the map behind.
+            You can then select the place and it will be added to the queue on top.</p>
+            <p>Once you have five places, you can go to the next step by clicking on Continue.
+              <i>Feel free to add more places than the minimum!</i></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Got it!</button>
+          </div>
+        </div>
       </div>
     </div>
     <script>
@@ -262,7 +287,6 @@
         }
 
         function getIPLocation() {
-            console.log("getIPLocation");
             $.getJSON("location", {}, function (d) {
                 if (d.lat !== null && d.lon !== null) {
                   triggeredByUserPosition = true;
@@ -273,7 +297,7 @@
 
         function getLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(showPosition, errorPosition, {timeout:10000});
+                navigator.geolocation.getCurrentPosition(showPosition, errorPosition, {timeout:5000});
             } else {
                 getIPLocation();
             }
@@ -305,7 +329,11 @@
 
         // ON START
         $(function() {
-            let userPlaces = window.sessionStorage.getItem('userPlaces');
+            // show the explanation modal.
+            $('#explanationModal').modal('show');
+
+            // get the already-saved user places (if any).
+            var userPlaces = window.sessionStorage.getItem('userPlaces');
             if (userPlaces && userPlaces.length !== 0) {
                 var places = JSON.parse(userPlaces);
                 Object.keys(places).forEach(function(placeId, index) {
@@ -335,6 +363,11 @@
         });
 
         function toggleSearchRefreshButton() {
+            if (window.triggeredByUserPosition || window.isSelectingPlace || window.triggeredBySearchPlaces) {
+                $('#refresh-search').hide();
+                return;
+            }
+
             var zoomDiff = Math.abs(map.getZoom() - currentZoom);
             var coords = [map.getCenter().lng, map.getCenter().lat];
             var distanceDiff = distance(coords, currentCoordinates);
@@ -344,11 +377,11 @@
             let within = turf.booleanWithin(pt, currentSearchAreaBuffered);
 
             if (zoomDiff > 3 || (!within && distanceDiff >= 0.25)) {
-              // show the search new area button
-              $('#refresh-search').show();
-          } else {
-              $('#refresh-search').hide();
-          }
+                // show the search new area button
+                $('#refresh-search').show();
+            } else {
+                $('#refresh-search').hide();
+            }
         }
 
         map.on('zoom', function() {
@@ -503,7 +536,7 @@
         }
 
         function placeClick(place, listing) {
-            isSelectingPlace = true;
+            window.isSelectingPlace = true;
             // 1. Fly to the point associated with the clicked link
             flyToFeature(place);
             // 2. Close all other popups and display popup for clicked store
@@ -520,7 +553,6 @@
             if (!(id in selectedPlaces)) {
                 var btn = $('<button type="button" class="btn btn-secondary btn-sm mt-2" style="width: 120px;"><i class="fa fa-plus"></i> Add place</button>').appendTo(listing.find('.d-flex'));
                 btn.click(function(e) {
-                    console.log('clicked on button');
                     e.originalEvent.stopPropagation();
                     // remove the button
                     btn.remove();
@@ -663,14 +695,18 @@
                     // createMarker(feature);
                 });
 
-                createLayer(places);
+                if (places.features.length > 0) {
+                    createLayer(places);
 
-                var bbox = turf.bbox(places);
-                map.fitBounds(bbox, {padding: 50});
-                triggeredBySearchPlaces = true;
-                data = places;
+                    var bbox = turf.bbox(places);
+                    triggeredBySearchPlaces = true;
+                    map.fitBounds(bbox, {padding: 50});
+                    data = places;
+                } else {
+                    alert("No places have been found in this area. Please retry with a larger area or a different query.");
+                }
             }).fail(function() {
-                alert("error");
+                alert("There has been an error when searching for a place. Please retry.");
             }).always(function() {
                 mprogress.end();
                 isSearchingPlace = false;

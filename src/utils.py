@@ -63,7 +63,7 @@ def connect_to_db(database_name, cursor_type=None):
                 cursor = connection.cursor()
         except psycopg2.Error as e:
             nb_req += 1
-            time.sleep(random.uniform(0.1, 1.0))
+            time.sleep(random.uniform(0.01, 0.1))
         else:
             return connection, cursor
 

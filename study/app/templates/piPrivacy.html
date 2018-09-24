@@ -195,8 +195,8 @@
   </head>
 
   <body>
-    <nav class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#"><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</a>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <div class="navbar-brand col-2 mr-0 d-flex" ><span><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</span><a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a></div>
       <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Finish</button>
     </nav>
 
@@ -204,10 +204,33 @@
       <div class="row h-100">
         <main role="main" class="px-0 h-100">
           <div class="d-flex flex-row flex-md-nowrap align-items-center pt-3 pb-2 pl-4 mb-3 border-bottom"><h1 class="mr-auto">Personal information privacy</h1></div>
-            <div class="d-flex flex-column flex-md-nowrap pl-4 mb-3"><p>We have aggregated all the personal information that you rated relevant from the places you have selected.<br/>
+            <div class="d-flex flex-column flex-md-nowrap pl-4 mb-3"><p>This is the last step of this study. We have aggregated all the personal information that you rated relevant from the places you have selected.<br/>
                 Please let us know for each personal information item <b>how sensitive</b> you find it.</p></div>
           <div class="d-flex flex-row card-deck w-100" id="personal-information"></div>
         </main>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="explanationModal" tabindex="-1" role="dialog" aria-labelledby="explanationModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="explanationModalTitle"><img src="static/img/location-arrow.svg" height="25" class="mr-1"/> Privacy sensitivity of the personal information</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>In this last step, we have automatically aggregated the personal information associated to the places you have selected.
+              We ask you to indicate for each personal information whether you find it is <b>sensitive</b> in terms of privacy.</p>
+            <p>To this end, you can rate the sensitivity of each information item using the stars. Giving one star means that the item is not sensitive and can be shared with anyone
+              while giving five stars means that the item is very sensitive and should be shared with a small group of people.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Got it!</button>
+          </div>
+        </div>
       </div>
     </div>
     <script>
@@ -217,32 +240,46 @@
 
         // aggregate the unique personal information
         var uniquePis = {};
-        Object.keys(pis).forEach(function (pId, index) {
-            Object.keys(pis[pId]).forEach(function (piId, index) {
-                if (!(piId in uniquePis)) {
-                    uniquePis[piId] = {
-                        pi_id: piId,
-                        category_icon: pis[pId][piId]['category_icon'],
-                        pi_name: pis[pId][piId]['pi_name'],
-                        picid: pis[pId][piId]['picid'],
-                        ratings: [],
-                        places: []
-                    }
-                }
-                uniquePis[piId].ratings.push(pis[pId][piId].ratingRel);
-                uniquePis[piId].places.push(pId);
-            });
-        });
-
-        // filter the unique places that have a ratingRel > 1 (at least a little relevant)
         var uniquePisFiltered = {};
-        Object.keys(uniquePis).forEach(function (piId, index) {
-            var pi = uniquePis[piId];
-            var sumRatings = pi.ratings.reduce((a,b) => a+b, 0);
-            if (sumRatings > pi.ratings.length) { // all ones (i.e., "not relevant" ratings)
-                uniquePisFiltered[piId] = pi;
-            }
-        });
+        var pisKeys = Object.keys(pis);
+        if (pis != null && pisKeys.length > 0) {
+            pisKeys.forEach(function (pId, index) {
+                Object.keys(pis[pId]).forEach(function (piId, index) {
+                    if (!(piId in uniquePis)) {
+                        uniquePis[piId] = {
+                            pi_id: piId,
+                            category_icon: pis[pId][piId]['category_icon'],
+                            pi_name: pis[pId][piId]['pi_name'],
+                            picid: pis[pId][piId]['picid'],
+                            ratings: [],
+                            places: []
+                        }
+                    }
+
+                    if (pis[pId][piId].ratingRel !== undefined) {
+                        uniquePis[piId].ratings.push(pis[pId][piId].ratingRel);
+                        uniquePis[piId].places.push(pId);
+                    }
+                });
+            });
+
+            // filter the unique places that have a ratingRel > 1 (at least a little relevant)
+            Object.keys(uniquePis).forEach(function (piId, index) {
+                var pi = uniquePis[piId];
+                if (pi.ratings.length === 0) {
+                    return;
+                }
+                var sumRatings = pi.ratings.reduce(function (prev, cur) {
+                    if (cur !== 'undefined') {
+                        return prev;
+                    }
+                    return prev + cur;
+                });
+                if (sumRatings > pi.ratings.length) { // all ones (i.e., "not relevant" ratings)
+                    uniquePisFiltered[piId] = pi;
+                }
+            });
+        }
 
 
         var starerLabelsSensitivity = ['Not sensitive', 'Slightly sensitive', 'Somewhat sensitive', 'Sensitive', 'Very sensitive'];
@@ -255,6 +292,10 @@
         });
 
         $(function() {
+            // show the explanation modal.
+            $('#explanationModal').modal('show');
+
+            // Show the saved personal information.
             showPersonalInformation();
             $('#add-places').on('click', function() {
                 var placeString = JSON.stringify(places);
@@ -305,8 +346,8 @@
             var name = pi['pi_name'];
             var category = pi['picid'];
             var icon = "static/img/icons/" + pi['category_icon'] + "-white.svg";
-            var nbPlacesStr = (pi['ratings'].length === 1 ? "one place" : pi['ratings'].length+" places");
-            var el = $('<div class="card" data-id="'+piId+'"><div class="card-header d-flex flex-row"><img class="mr-2" src="'+icon+'" width="20px" height="20px" /><h5>'+name+'</h5></div><div class="card-body d-flex flex-column"><p class="card-text">A total of '+nbPlacesStr+' have this personal information.</p><p class="card-text">Do you find this information <b>sensitive</b>?</p><div class="d-flex flex-row"><p class="starrr" data-type="sens" data-rating="0"></p><p class="starrr-label ml-auto"></p></div></div></div>')
+            var nbPlacesStr = (pi['ratings'].length === 1 ? "one place has" : pi['ratings'].length+" places have");
+            var el = $('<div class="card" data-id="'+piId+'"><div class="card-header d-flex flex-row"><img class="mr-2" src="'+icon+'" width="20px" height="20px" /><h5>'+name+'</h5></div><div class="card-body d-flex flex-column"><p class="card-text">A total of '+nbPlacesStr+' this personal information.</p><p class="card-text">Do you find this information <b>sensitive</b>?</p><div class="d-flex flex-row"><p class="starrr" data-type="sens" data-rating="0"></p><p class="starrr-label ml-auto"></p></div></div></div>')
                 .hide()
                 .prependTo($('#personal-information'))
                 .fadeIn('slow');

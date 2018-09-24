@@ -117,32 +117,31 @@ def sort_place_score(places):
     return [e[1] for e in sorted(res, key=lambda x: x[0], reverse=True)]
 
 
-def get_place(venue_id):
-    print("venue: %s" % venue_id)
-    if not is_place_in_db(venue_id):
-        print("place not in DB")
+def get_place(venue_id, connection=None, cursor=None):
+
+    if not is_place_in_db(venue_id, connection=connection, cursor=cursor):
         get_complete_venue(venue_id)
 
-    return get_complete_venue_from_db(venue_id)
+    return get_complete_venue_from_db(venue_id, connection=connection, cursor=cursor)
 
 
-def get_places(location, distance=50, limit=5):
+def get_places(location, distance=50, limit=5, connection=None, cursor=None):
     # check whether the location is within a search area
     if not is_location_in_db(location, distance):
         get_all_places(location)
 
-    places = get_places_from_db(location, distance, limit)
+    places = get_places_from_db(location, distance, limit, connection=connection, cursor=cursor)
     return places
 
 
-def get_venue(t):
+def get_venue(t, connection=None, cursor=None):
     venue_id, d = t
     d[venue_id] = 'running'
-    if is_place_in_db(venue_id):
+    if is_place_in_db(venue_id, connection=connection, cursor=cursor):
         d[venue_id] = 'done'
         return venue_id
 
-    get_complete_venue(venue_id)
+    get_complete_venue(venue_id, connection=connection, cursor=cursor)
     d[venue_id] = 'done'
     return venue_id
 
@@ -281,8 +280,9 @@ def get_autocomplete_from_db(location, query, distance=250, limit=8, cursor=None
     return sorted_places
 
 
-def get_place_with_name(location, query, distance=200):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_place_with_name(location, query, distance=200, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     WITH place AS (
@@ -318,8 +318,9 @@ def get_place_with_name(location, query, distance=200):
     return loc
 
 
-def get_place_with_id(venue_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_place_with_id(venue_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     SELECT name, venue_id, parent_id, longitude, latitude, chains, description, phrases, nb_checkins, rating, price_tier
@@ -346,8 +347,10 @@ def get_place_with_id(venue_id):
     return loc
 
 
-def get_all_places_from_db(location, distance=150):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_all_places_from_db(location, distance=150, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """
         WITH place AS (
           SELECT ST_TRANSFORM(ST_SETSRID(ST_MAKEPOINT(%s, %s),4326),3857) as coords
@@ -371,8 +374,10 @@ def get_all_places_from_db(location, distance=150):
     return places
 
 
-def get_places_within_bounding_box(neLat, neLng, swLat, swLng, limit=25):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_places_within_bounding_box(neLat, neLng, swLat, swLng, limit=25, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """
     SELECT name, latitude, longitude, address, city
     FROM   venues
@@ -391,7 +396,7 @@ def get_places_within_bounding_box(neLat, neLng, swLat, swLng, limit=25):
     return places
 
 
-def get_all_places(location, distance=125):
+def get_all_places(location, distance=125, connection=None, cursor=None):
     boundary = utils.bounding_box(location["lat"], location["lon"], distance / 1000.0)
 
     def query_cell(cell):
@@ -426,7 +431,7 @@ def get_all_places(location, distance=125):
         venues_list.append(venue_id)
         d[venue_id] = 'none'
 
-    result = pool.map_async(get_venue, zip(venues_list, itertools.repeat(d)))
+    result = pool.map_async(get_venue, zip(venues_list, itertools.repeat(d), connection, cursor))
     utils.monitor_map_progress(result, d, len(venues_list))
 
     result.wait()
@@ -439,16 +444,19 @@ def get_all_places(location, distance=125):
     save_search_area_to_db(location, boundary, distance)
 
 
-def is_place_in_db(venue_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def is_place_in_db(venue_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """SELECT COUNT(1) FROM venues WHERE venue_id = %s;"""
     cursor.execute(query_string, (venue_id,))
     count = cursor.fetchone()[0]
     return count > 0
 
 
-def get_places_from_db(location, distance=50, limit=5):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_places_from_db(location, distance=50, limit=5, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     WITH place AS (
@@ -520,8 +528,9 @@ def is_location_in_db(location, distance=50, cursor=None):
     return res[0] > 0 if res else False
 
 
-def save_search_area_to_db(location, boundary, distance):
-    connection, cursor = utils.connect_to_db("foursquare")
+def save_search_area_to_db(location, boundary, distance, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare")
 
     location_point = "POINT({} {})".format(location['lon'], location['lat'])
     area_polygon = utils.boundary_to_wkt_polygon(boundary)
@@ -534,7 +543,7 @@ def save_search_area_to_db(location, boundary, distance):
     connection.commit()
 
 
-def get_complete_venue(venue_id):
+def get_complete_venue(venue_id, connection=None, cursor=None):
     url = BASE_URL + "venues/%s" % venue_id
     data = send_request(url)
     nb_req = 0
@@ -550,19 +559,20 @@ def get_complete_venue(venue_id):
         return None
 
     venue = data['response']['venue']
-    save_venue_to_db(venue)
+    save_venue_to_db(venue, connection=connection, cursor=cursor)
 
     nb_tips = venue['stats'].get('tipCount', 0)
     if nb_tips > 0:
         tips = get_all_tips_per_venue(venue_id)
         for tip in tips:
-            save_tip_to_db(tip, venue_id)
+            save_tip_to_db(tip, venue_id, connection=connection, cursor=cursor)
 
     return venue
 
 
-def get_complete_venue_from_db(venue_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_complete_venue_from_db(venue_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
         SELECT v.venue_id, v.name, v.nb_checkins, v.latitude, v.longitude, v.rating, v.price_tier, v.nb_likes, v.nb_tips,
@@ -615,8 +625,9 @@ def get_complete_venue_from_db(venue_id):
     return place
 
 
-def save_venue_to_db(venue):
-    connection, cursor = utils.connect_to_db("foursquare")
+def save_venue_to_db(venue, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare")
 
     venue_id = venue['id']
     name = venue['name']
@@ -671,12 +682,13 @@ def save_venue_to_db(venue):
     connection.commit()
 
     # get the parent
-    if parent_id != "" and not is_place_in_db(parent_id):
+    if parent_id != "" and not is_place_in_db(parent_id, connection=connection, cursor=cursor):
         get_complete_venue(parent_id)
 
 
-def save_chain_to_db(chain):
-    connection, cursor = utils.connect_to_db("foursquare")
+def save_chain_to_db(chain, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare")
 
     chain_id = chain['id']
     name = chain.get('bestName', {}).get('name', '')
@@ -698,9 +710,10 @@ def get_categories():
     return data['response']['categories']
 
 
-def save_categories_to_db():
-    def save_categories(categories, parent_id):
-        connection, cursor = utils.connect_to_db("foursquare")
+def save_categories_to_db(connection=None, cursor=None):
+    def save_categories(categories, parent_id, connection=None, cursor=None):
+        if connection is None and cursor is None:
+            connection, cursor = utils.connect_to_db("foursquare")
 
         for category in categories:
             query_string = """
@@ -725,7 +738,7 @@ def save_categories_to_db():
         connection.commit()
 
     categories = get_categories()
-    save_categories(categories, "")
+    save_categories(categories, "", connection=connection, cursor=cursor)
 
 
 def get_all_tips_per_venue(venue_id):
@@ -766,8 +779,9 @@ def get_all_tips_per_venue(venue_id):
     return tips
 
 
-def get_all_tips_per_venue_from_db(venue_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_all_tips_per_venue_from_db(venue_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
             SELECT t.tip_id, t.created_at, t.text, t.nb_likes, t.justification, t.justification_type, t.user_id, 
@@ -784,8 +798,9 @@ def get_all_tips_per_venue_from_db(venue_id):
     return [dict(rec) for rec in records]
 
 
-def save_tip_to_db(tip, venue_id):
-    connection, cursor = utils.connect_to_db("foursquare")
+def save_tip_to_db(tip, venue_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare")
 
     tip_id = tip['id']
     created_at = tip['createdAt']
@@ -809,8 +824,9 @@ def save_tip_to_db(tip, venue_id):
         save_user_to_db(tip['user'])
 
 
-def save_user_to_db(user):
-    connection, cursor = utils.connect_to_db("foursquare")
+def save_user_to_db(user, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare")
 
     user_id = user['id']
     gender = user.get('gender', '')
@@ -834,8 +850,9 @@ def get_all_checkins_per_venue(venue_id):
     return data['response']
 
 
-def dump_categories_list():
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def dump_categories_list(connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     SELECT c1.name, c1.category_id, c1.parent_id, c2.name as parent_name
@@ -850,8 +867,9 @@ def dump_categories_list():
     print("Done")
 
 
-def get_category(category_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_category(category_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     SELECT c1.name as name, c2.name as parent_name
@@ -863,8 +881,9 @@ def get_category(category_id):
     return cursor.fetchone()['name']
 
 
-def get_category_of_venue(venue_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_category_of_venue(venue_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     SELECT c.name as name, c.category_id as id
@@ -879,8 +898,10 @@ def get_category_of_venue(venue_id):
     return [dict(c) for c in cursor]
 
 
-def get_foursquare_categories():
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_foursquare_categories(connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """
     SELECT category_id, parent_id, name
     FROM categories;"""
@@ -888,8 +909,10 @@ def get_foursquare_categories():
     return [dict(res) for res in cursor]
 
 
-def get_all_categories():
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_all_categories(connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """
     WITH RECURSIVE t(category_id, parents, parents_name) AS (
         SELECT category_id, ARRAY[]::text[], ARRAY[]::text[] FROM categories WHERE parent_id = ''
@@ -906,8 +929,10 @@ def get_all_categories():
     return [dict(res) for res in cursor]
 
 
-def get_all_categories_with_personal_information():
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_all_categories_with_personal_information(connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """
     WITH RECURSIVE t(category_id, parents, parents_name) AS (
         SELECT category_id, ARRAY[]::text[], ARRAY[]::text[] FROM categories WHERE parent_id = ''
@@ -933,8 +958,10 @@ def get_all_categories_with_personal_information():
     return [dict(res) for res in cursor]
 
 
-def get_category_info_from_id(category_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_category_info_from_id(category_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """
     WITH RECURSIVE t(category_id, parents, parents_name) AS (
         SELECT category_id, ARRAY[]::text[], ARRAY[]::text[] FROM categories WHERE parent_id = ''
@@ -953,8 +980,10 @@ def get_category_info_from_id(category_id):
     return dict(res) if res else {}
 
 
-def get_all_personal_information():
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_all_personal_information(connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_sting = """
     SELECT pi_id, name, category_id, subcategory_icon, category_icon, subcategory_name
     FROM personal_information
@@ -970,8 +999,9 @@ def get_all_personal_information():
     return res
 
 
-def get_places_from_users():
-    connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
+def get_places_from_users(connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("users", cursor_type=psycopg2.extras.DictCursor)
     query_string = """
     SELECT name, type, category, venue_id, place_id
     FROM places;"""
@@ -979,20 +1009,25 @@ def get_places_from_users():
     return [dict(res) for res in cursor]
 
 
-def get_category_ids_for_venue(venue_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_category_ids_for_venue(venue_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """
     SELECT categories
     FROM venues
     WHERE venue_id = %s;"""
     data = (venue_id, )
+
     cursor.execute(query_string, data)
     cat_ids = [dict(record) for record in cursor]
+
     return cat_ids[0] if cat_ids else None
 
 
-def get_personal_information_of_venue(venue_id):
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def get_personal_information_of_venue(venue_id, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     SELECT unnest(c.personal_information) as personal_info
@@ -1018,15 +1053,15 @@ def get_personal_information_of_venue(venue_id):
     return dict((cat, list(keys)) for cat, keys in personal_information.items())
 
 
-def get_icon_for_venue(venue_id, categories=None):
+def get_icon_for_venue(venue_id, categories=None, connection=None, cursor=None):
     emoji = '👣'
     icon = 'map-marker'
 
     if not categories:
-        categories = get_category_ids_for_venue(venue_id)
+        categories = get_category_ids_for_venue(venue_id, connection=connection, cursor=cursor)
 
     if categories['categories']:
-        categories_res = get_icons_from_category_ids(categories['categories'])
+        categories_res = get_icons_from_category_ids(categories['categories'], connection=connection, cursor=cursor)
         cat_ids = [c for c in categories_res if categories_res[c]['leaf']]
         cat_id = list(categories_res.keys())[0] if not cat_ids else cat_ids[-1]
         emoji = categories_res[cat_id]['emoji']
@@ -1035,11 +1070,13 @@ def get_icon_for_venue(venue_id, categories=None):
     return emoji, icon
 
 
-def get_icons_from_category_ids(category_ids):
+def get_icons_from_category_ids(category_ids, connection=None, cursor=None):
     if not category_ids:
         return OrderedDict()
 
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """
     SELECT emoji, icon, category_id, leaf
     FROM categories
@@ -1064,9 +1101,10 @@ def get_icon_from_category_ids(category_ids):
     return None
 
 
-def autocomplete_location(location, query, distance=250, limit=10):
+def autocomplete_location(location, query, distance=250, limit=10, connection=None, cursor=None):
     print("foursquare location: %s, query: %s, distance: %s, limit: %s" % (location, query, distance, limit))
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     start_time = time.time()
     in_db = is_location_in_db(location, cursor=cursor)
@@ -1081,8 +1119,9 @@ def autocomplete_location(location, query, distance=250, limit=10):
         return get_autocomplete_from_db(location, query, distance, limit, cursor=cursor)
 
 
-def load_personal_information():
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+def load_personal_information(connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
     query_string = """
     SELECT pi_id, name, category_id, subcategory_name, tags, category_icon
     FROM personal_information
@@ -1120,9 +1159,10 @@ def save_place_personal_information_to_db(ppi, cursor=None):
         connection.commit()
 
 
-def get_place_personal_information_from_db(venue_id):
+def get_place_personal_information_from_db(venue_id, connection=None, cursor=None):
     """ Retrieves the place personal information (interests) ppi from the database """
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     SELECT id, pi_id, venue_id, feature_type, avg, phrase_modeler, score, rank, tags, model_type
@@ -1134,9 +1174,10 @@ def get_place_personal_information_from_db(venue_id):
     return [dict(res) for res in cursor]
 
 
-def get_place_personal_information_aggregated_from_db(venue_id):
+def get_place_personal_information_aggregated_from_db(venue_id, connection=None, cursor=None):
     """ Retrieves the place personal information (interests) ppi from the database """
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
     SELECT pi.pi_id, ppi.venue_id, pi.name, pi.category_id, pi.category_icon, AVG(ppi.rank) as rank_avg, COUNT(ppi.id) as nb, AVG(ppi.score) as score_avg
@@ -1150,10 +1191,12 @@ def get_place_personal_information_aggregated_from_db(venue_id):
     return [dict(res) for res in cursor]
 
 
-def has_place_personal_information_in_db(venue_id):
+def has_place_personal_information_in_db(venue_id, connection=None, cursor=None):
     """ Returns true if there are personal information (interests) associated to the venue_id in the database """
 
-    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     query_string = """SELECT COUNT(1) FROM place_personal_information WHERE venue_id = %s;"""
     cursor.execute(query_string, (venue_id,))
     count = cursor.fetchone()[0]
@@ -1161,6 +1204,7 @@ def has_place_personal_information_in_db(venue_id):
 
 
 def get_all_places_within_location(location='', args='location'):
+    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     def get_failed_urls():
         pattern = r"sw=([\+\-\d.]+),([\+\-\d.]+)\&ne=([\+\-\d.]+),([\+\-\d.]+)"
@@ -1259,7 +1303,7 @@ def get_all_places_within_location(location='', args='location'):
         def worker_is_venue_in_db(t):
             venue_id, d = t
             d[venue_id] = 'running'
-            res = is_place_in_db(venue_id)
+            res = is_place_in_db(venue_id, connection=connection, cursor=cursor)
             d[venue_id] = 'done'
             return venue_id, res
 

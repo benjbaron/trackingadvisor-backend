@@ -438,6 +438,7 @@ def personal_information_reviews():
 
 @app.route('/uploader', methods=['POST'])
 def upload_file():
+    print("files: %s" % request.files)
     try:
         # save the trace file
         if 'trace' in request.files:
