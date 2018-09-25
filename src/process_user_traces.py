@@ -447,7 +447,11 @@ def save_log_in_mongo(fname):
 
             args = line['Args']
             if args != '':
-                args = json.loads(args)
+                try:
+                    args = json.loads(args)
+                except:
+                    args = {}
+
             new_log = {
                 'user_id': line['User'],
                 'day': utils.timestamp_to_day_str(timestamp_local),

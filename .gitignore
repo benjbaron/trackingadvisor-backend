@@ -1,2 +1,3 @@
 src/keys.py
 src/scripts/gdoc_keys.json
+src/scripts/gmail_info.py

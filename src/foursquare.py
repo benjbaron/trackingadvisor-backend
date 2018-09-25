@@ -134,7 +134,11 @@ def get_places(location, distance=50, limit=5, connection=None, cursor=None):
     return places
 
 
-def get_venue(t, connection=None, cursor=None):
+def get_venue(t):
+    """ Get the venue from the tuple t: (venue_id, venue_data).
+        Creating thread-safe psycopg2 connection and cursor. """
+    connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
     venue_id, d = t
     d[venue_id] = 'running'
     if is_place_in_db(venue_id, connection=connection, cursor=cursor):
@@ -396,7 +400,7 @@ def get_places_within_bounding_box(neLat, neLng, swLat, swLng, limit=25, connect
     return places
 
 
-def get_all_places(location, distance=125, connection=None, cursor=None):
+def get_all_places(location, distance=125):
     boundary = utils.bounding_box(location["lat"], location["lon"], distance / 1000.0)
 
     def query_cell(cell):
@@ -431,7 +435,7 @@ def get_all_places(location, distance=125, connection=None, cursor=None):
         venues_list.append(venue_id)
         d[venue_id] = 'none'
 
-    result = pool.map_async(get_venue, zip(venues_list, itertools.repeat(d), connection, cursor))
+    result = pool.map_async(get_venue, zip(venues_list, itertools.repeat(d)))
     utils.monitor_map_progress(result, d, len(venues_list))
 
     result.wait()
@@ -744,7 +748,7 @@ def save_categories_to_db(connection=None, cursor=None):
 def get_all_tips_per_venue(venue_id):
     url = BASE_URL + "venues/%s/tips" % venue_id
     offset = 0
-    limit  = 150
+    limit = 150
     params = {
         "intent": "browse",
         "limit": str(limit),
@@ -1416,6 +1420,13 @@ if __name__ == '__main__':
             get_all_places_within_location(args=args)
         else:
             print('Error - Please give an additional argument (venues-done|venues-file|venues-cell|save-search-area)')
+    elif argument == 'get-tips':
+        if len(sys.argv) == 3:
+            venue_id = sys.argv[2]
+            venue_tips = get_all_tips_per_venue(venue_id)
+            print(venue_tips)
+        else:
+            print('Error - Please give lon lat arguments')
     elif argument == 'find':
         if len(sys.argv) == 4:
             lon = sys.argv[2]

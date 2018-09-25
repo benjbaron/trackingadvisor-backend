@@ -217,6 +217,11 @@ def show_welcome():
     return render_template('welcome.html')
 
 
+@app.route('/health', methods=['GET'])
+def check_health():
+    return json.dumps({'success': 'ok'})
+
+
 @app.route('/search')
 def show_search_places():
     return render_template('search.html')

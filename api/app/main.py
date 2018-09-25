@@ -41,6 +41,11 @@ client = Client('https://8f77b4f7e5a6410194f5826deaa3f9f4:74d1d77376ea4f7f8785cb
 sentry = Sentry(app, dsn='https://8f77b4f7e5a6410194f5826deaa3f9f4:74d1d77376ea4f7f8785cb192e62daeb@sentry.io/1207941')
 
 
+@app.route('/health', methods=['GET'])
+def check_health():
+    return json.dumps({'success': 'ok'})
+
+
 @app.route('/authclient', methods=['GET'])
 def auth_client():
     room = request.args.get('text')

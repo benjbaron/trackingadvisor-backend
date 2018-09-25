@@ -69,6 +69,11 @@ def login():
     return render_template('login.html', qrcode=session_id+".svg")
 
 
+@app.route('/health', methods=['GET'])
+def check_health():
+    return json.dumps({'success': 'ok'})
+
+
 @app.route('/qrcode', methods=['GET'])
 def generate_qrcode():
     text = request.args.get('text')
