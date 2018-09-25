@@ -4,16 +4,7 @@ import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-
-BEN_EMAIL = 'b.baron@ucl.ac.uk'
-VICTOR_EMAIL = 'victor.darvariu@gmail.com'
-TESTS = [
-    ('https://iss-lab.geog.ucl.ac.uk/semantica/health', 'Semantica API', BEN_EMAIL),
-    ('https://iss-lab.geog.ucl.ac.uk/semantica/study/health', 'Semantica STUDY', BEN_EMAIL),
-    ('http://trackingadvisor.geog.ucl.ac.uk/health', 'Trackingadvisor Admin', BEN_EMAIL),
-    ('https://iss-lab.geog.ucl.ac.uk/trackingadvisor', 'Trackingadvisor Web', BEN_EMAIL),
-    # ('http://iss-mymood.geog.ucl.ac.uk/health', 'MyMood API', VICTOR_EMAIL)
-]
+from gmail_info import fromaddr, username, password, SERVICES
 
 
 def now():
@@ -31,10 +22,6 @@ def send_email(subject, message, to):
     :param to: recipient of the message.
     :return: Nothing.
     """
-
-    from gmail_info import username, password
-
-    fromaddr = 'benjamin.baron@me.com'
 
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject
@@ -72,11 +59,11 @@ def send_email(subject, message, to):
     server.quit()
 
 
-for url, serv, to in TESTS:
-    print("test %s" % serv)
+for url, service, to in SERVICES:
+    print("test %s" % service)
     # check the health of the service
     r = requests.get(url, timeout=5)
     if r.status_code != requests.codes.ok:
         # there is a problem, send an email
-        send_email("Problem with %s" % serv, "There has been a problem with %s. You should check the service ASAP." % serv, to)
+        send_email("Problem with %s" % service, "There has been a problem with %s. You should check the service ASAP." % service, to)
 
