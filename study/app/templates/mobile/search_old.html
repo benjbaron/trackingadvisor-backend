@@ -2,12 +2,13 @@
 <html lang="en">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=no">
+
     <meta name="description" content="">
     <meta name="author" content="">
 
     <title>Semantica | Search places</title>
-    <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
+    <link rel="icon" href="favicon.ico" type="image/x-icon" />
 
     <!-- FontAwesome CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
@@ -19,8 +20,8 @@
     <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
 
     <!-- Custom styles for this template -->
-    <link href="static/css/dashboard.css" rel="stylesheet">
-    <link href="static/css/mprogress.min.css" rel="stylesheet">
+    <link href="../static/css/dashboard.css" rel="stylesheet">
+    <link href="../static/css/mprogress.min.css" rel="stylesheet">
 
     <!-- Bootstrap core JavaScript -->
     <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
@@ -28,18 +29,33 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
     <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
     <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
-    <script type="text/javascript" src="static/js/mprogress.min.js" charset="UTF-8"></script>
+    <script type="text/javascript" src="../static/js/mprogress.min.js" charset="UTF-8"></script>
 
     <!-- Icons -->
     <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
 
     <style>
         html, body {
+          width: 100%;
           height: 100%;
-          overflow: hidden;
+          margin: 0;
+          padding: 0;
         }
 
-        #content {
+        /*#content {*/
+          /*position: absolute;*/
+          /*top: 0;*/
+          /*bottom: 0;*/
+          /*left: 0;*/
+          /*right: 0;*/
+          /*overflow: auto;*/
+        /*}*/
+
+        #nav {
+            z-index: 2000;
+        }
+
+        #map {
           position: absolute;
           top: 0;
           bottom: 0;
@@ -48,19 +64,12 @@
           overflow: auto;
         }
 
-        #map {
-          top: 220px;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          position: absolute;
-          width: 100%;
-          height: auto;
-          border-top: 2px solid #b3b3b3;
+        #map .mapboxgl-ctrl-top-left, #map .mapboxgl-ctrl-top-right {
+          top: 220px!important;
         }
 
         #refresh-search {
-          top: 240px;
+          top: 220px;
           left: 0;
           right: 0;
           bottom: 0;
@@ -83,13 +92,9 @@
 
         #selected-places {
           overflow-y: hidden;
-          overflow-x: auto;
-          height: 150px;
-          margin-top: 20px;
-          margin-bottom: 20px;
-          margin-left: 0px;
-          padding-left: 15px;
-          padding-right: 15px;
+          overflow-x: scroll;
+          -webkit-overflow-scrolling: touch;
+          height: 95px;
           flex-wrap: initial!important;
         }
 
@@ -101,18 +106,18 @@
 
         #selected-places .card {
           font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
-          min-width: 200px;
-          max-width: 200px;
-          max-height: 130px;
-          min-height: 130px;
-          margin-left: 10px;
+          min-width: 47%;
+          max-width: 47%;
+          max-height: 80px;
+          min-height: 80px;
+          margin-left: 0.5rem;
+          margin-top: 10px;
           flex-wrap: initial!important;
           border-radius: 3px!important;
           border-width: 0px!important;
           box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+          z-index: 1000;
         }
-
-
 
         #selected-places .card-header {
           background: #500778;
@@ -129,11 +134,10 @@
           text-overflow: ellipsis;
           display: -webkit-box;
           -webkit-box-orient: vertical;
-          -webkit-line-clamp: 2;
+          -webkit-line-clamp: 1;
           line-height: 1.3rem;
-          max-height: 2.6rem;
+          max-height: 1.3rem;
           margin-bottom: 0px!important;
-          min-height: 40px;
         }
 
         #selected-places .card-body {
@@ -144,18 +148,24 @@
           font-size: 0.75rem!important;
           line-height: 1rem!important;
           margin-bottom: 0.25rem!important;
+          display: block;
+          text-overflow: ellipsis;
+          word-wrap: break-word;
+          overflow: hidden;
+          max-height: 3em;
         }
 
         #selected-places .card-link {
-          color: darkred;
+          color: white;
         }
 
         #selected-places .card.init {
           background-color: none!important;
-          border: 2px solid #500778!important;
           border-radius: 7px!important;
-          box-shadow: none!important;
-=         }
+          min-width: initial!important;
+          max-width: initial!important;
+          margin-right: .5rem!important;
+       }
 
         #selected-places .card.init .card-text {
           font-style: italic!important;
@@ -164,9 +174,15 @@
 
         #selected-places .card.init .card-title {
           font-weight: bold!important;
-          font-size: 1.5rem!important;
-          margin-top: 10px;
+          font-size: 1.2rem!important;
+          margin-bottom: 0.25rem!important;
           color: #500778;
+        }
+
+        #search-results .list-group-item {
+          border-radius: 3px!important;
+          margin-bottom: 0.5rem;
+          box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
         }
 
         #search-results .list-group-item.active {
@@ -183,46 +199,50 @@
         .navbar-text {
           font-size: 1rem!important;
         }
+
+        .top {
+          z-index: 1000;
+        }
+
+        .bottom {
+          z-index: 0;
+        }
     </style>
   </head>
 
   <body>
-    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
-      <div class="navbar-brand col-3 mr-0 d-flex" ><span><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</span><a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a></div>
-      <span class="navbar-text col-3 mr-auto ml-3"><b>Select places that you know</b></span>
-      <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Continue</button>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow p-1">
+      <div class="col mr-0 d-flex">
+        <span class="text-white font-weight-bold"><img height="25" width="25" class="mr-2" src="static/img/location-arrow.svg">Semantica</span>
+        <a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a>
+      </div>
+      <button id="next-step" class="btn btn-outline-secondary ml-3 mr-3" type="submit" disabled>Continue</button>
     </nav>
 
-    <div id="content" class="container-fluid h-100">
-      <div class="row h-100">
-        <nav class="col-3 d-none d-md-block bg-light sidebar">
-          <div class="sidebar-sticky d-flex flex-column">
-            <div class="col-auto mt-3 mb-3">
-              <form class="card card-sm">
-                  <div class="card-body row no-gutters align-items-center">
-                      <div class="ml-1 col-auto">
-                          <i class="fa fa-search"></i>
-                      </div>
-                      <div class="col">
-                          <input id="search-place" class="form-control border-0" type="search" placeholder="Search place...">
-                      </div>
-                  </div>
-              </form>
-            </div>
-            <div id="search-results">
-              <ul class="list-group list-group-flush"></ul>
-            </div>
+    <div id="map" class="bottom"></div>
+    <div id="content" class="p-0 h-100 fixed-top">
+        <div class="d-flex flex-row card-deck top m-0" id="selected-places"></div>
+        <form class="card card-sm m-2 top shadow">
+          <div class="card-body row no-gutters align-items-center">
+              <div class="ml-1 col-auto">
+                  <i class="fa fa-search"></i>
+              </div>
+              <div class="col">
+                  <input id="search-place" class="form-control border-0" type="search" placeholder="Search place...">
+              </div>
+          </div>
+        </form>
+
+        <div id="refresh-search" class="row justify-content-center align-items-center" style="display: none;">
+          <a class="btn btn-primary" href="#" role="button">Search again for this area</a>
+        </div>
+
+        <nav class="col-3 d-none d-md-block sidebar ml-2" style="padding-top: 210px; box-shadow: none;">
+          <div id="search-results">
+            <ul class="list-group list-group-flush"></ul>
           </div>
         </nav>
 
-        <main role="main" class="col-9 ml-sm-auto px-0 h-100">
-          <div class="d-flex flex-row card-deck w-100" id="selected-places"></div>
-          <div id="map"></div>
-          <div id="refresh-search" class="row justify-content-center align-items-center" style="display: none;">
-            <a class="btn btn-primary" href="#" role="button">Search again for this area</a>
-          </div>
-        </main>
-      </div>
     </div>
 
     <!-- Modal -->
@@ -230,7 +250,7 @@
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="explanationModalTitle"><img src="static/img/location-arrow.svg" height="25" class="mr-1"/> Select places that you know</h5>
+            <h5 class="modal-title" id="explanationModalTitle"><img src="../static/img/location-arrow.svg" height="25" class="mr-1"/> Select places that you know</h5>
             <button type="button" class="close" data-dismiss="modal" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
@@ -351,11 +371,12 @@
             container: 'map',
             style: 'mapbox://styles/benjbaron/cjiyeb3zs97f92rnvy6f5mk8d',
             center: currentCoordinates,
-            zoom: currentZoom
+            zoom: currentZoom,
+            scrollZoom: true
         });
 
         // Add zoom and rotation controls to the map.
-        map.addControl(new mapboxgl.NavigationControl());
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
         map.on('load', function() {
             getLocation();
@@ -512,7 +533,7 @@
                     setDisabledNextStepButton(true);
                 }
 
-                var el = $('<div class="card" data-id="'+id+'"><div class="card-header"><h5>'+place.properties.name+'</h5></div><div class="card-body d-flex flex-column"><p class="card-text">'+place.properties.fulladdress+'</p><a href="#" data-id="'+id+'" class="card-link mt-auto"><i class="fa fa-times"></i> Delete</a></div></div>')
+                var el = $('<div class="card" data-id="'+id+'"><div class="card-header d-flex flex-row"><h5>'+place.properties.name+'</h5><a href="#" data-id="'+id+'" class="card-link ml-auto mt-auto"><i class="fa fa-times"></i></a></div><div class="card-body d-flex flex-column"><p class="card-text">'+place.properties.fulladdress+'</p></div></div>')
                     .hide()
                     .prependTo($('#selected-places'))
                     .fadeIn('slow');
@@ -534,8 +555,8 @@
                 });
 
                 // zoom out and focus on the search
-                flyToLocation(map.getCenter().lng, map.getCenter().lat, 12);
-                
+                flyToLocation(map.getCenter().lng, map.getCenter().lat, 14);
+
                 // remove all popups
                 popups.forEach(function(popup) {
                     popup.remove();
@@ -669,7 +690,7 @@
                 };
 
                 $.each(d, function(index, value){
-                    var icon = "static/img/icons/"+value.icon+".svg";
+                    var icon = "../static/img/icons/"+value.icon+".svg";
                     var el = $('<li class="list-group-item d-flex flex-row" data-position="'+index+'"><div class="mr-2"><img width="25" height="25" src="'+icon+'"></div><div class="d-flex flex-column"><b>'+value.name+'</b><small>'+value.fulladdress+'</small></div></li>');
                     $('#search-results ul').append(el);
 

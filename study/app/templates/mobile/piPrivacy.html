@@ -1,0 +1,450 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <meta charset='utf-8' />
+    <title>Semantica Study</title>
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Mapbox -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.js'></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+    <!-- Flickity -->
+    <link rel="stylesheet" href="https://unpkg.com/flickity@2/dist/flickity.min.css">
+    <script src="https://unpkg.com/flickity@2/dist/flickity.pkgd.min.js"></script>
+
+    <!-- Starrr -->
+    <!-- <script src="starrr.js"></script> -->
+    <!-- nouislider -->
+    <link rel="stylesheet" href="static/css/nouislider.min.css">
+    <script src="static/js/nouislider.min.js"></script>
+
+    <!-- Bootstrap core CSS and JS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+
+    <meta name='twitter:site' content='@mapbox'>
+    <meta property='og:site_name' content='Semantica study' />
+    <meta name='twitter:url' content='https://iss-lab.geog.ucl.ac.uk/semantica/study/' />
+    <meta property='og:url' content='https://iss-lab.geog.ucl.ac.uk/semantica/study/'>
+    <meta name='twitter:title' content='Semantica study' />
+    <meta property='og:title' content='Semantica study' />
+    <meta name='twitter:description' content='Understand the personal information of places' />
+    <meta property='og:description' content='Understand the personal information of places' />
+        <meta name='twitter:image' content='https://api.mapbox.com/styles/v1/mapbox/streets-v9/static/0,0,2/435x375?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA' />
+        <meta property='og:image' content='https://api.mapbox.com/styles/v1/mapbox/streets-v9/static/0,0,2/435x375?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA' />
+    <meta name='twitter:image:width' content='435'>
+    <meta name='twitter:image:height' content='375'>
+    <meta property='og:image:width' content='435'>
+    <meta property='og:image:height' content='375'>
+    <meta name='twitter:card' content='summary_large_image'>
+    <meta property='og:type' content='website' />
+
+    <style>
+        html, body {
+          height: 100%;
+          overflow: hidden;
+        }
+
+        #content {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          overflow: auto;
+        }
+
+        [role="main"] {
+          padding-top: 48px; /* Space for fixed navbar */
+        }
+
+        #personal-information {
+          margin-top: 20px;
+          margin-bottom: 20px;
+          margin-left: 0px;
+          padding-left: 15px;
+          flex-wrap: wrap;
+        }
+
+        #personal-information .card {
+          font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
+          width: 75%;
+          height: 200px;
+          border-radius: 5px!important;
+          border-width: 0px!important;
+          margin-right: 10px;
+          margin-bottom: 10px;
+          box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+        }
+
+        #personal-information .card-header {
+          background: #500778;
+          padding: 10px!important;
+          border-bottom-width: 0px!important;
+          margin-bottom: 5px;
+        }
+
+        #personal-information .card.done .card-header,
+        #selected-places .card.done .card-header {
+          background: #c6b0bc;
+        }
+
+        #personal-information .card.done .starrr a,
+        #selected-places .card.done .starrr a,
+        .starrr a:hover {
+          color: #c6b0bc;
+        }
+
+        #personal-information .card.done .card-text,
+        #selected-places .card.done .card-text {
+          color: #8e8e8e;
+        }
+
+        #personal-information .card.done span,
+        #selected-places .card.done span {
+          color: #8e8e8e;
+        }
+
+        #personal-information .card.done .noUi-handle,
+        #place-question.done .noUi-handle {
+          background: #c6b0bc;
+        }
+
+        #personal-information .card-header h5 {
+          display: block;
+          color: #fff;
+          font-weight: 700;
+          font-size: 1rem!important;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          line-height: 1.3rem;
+          max-height: 2.6rem;
+          margin-bottom: 0px!important;
+          min-height: 40px;
+        }
+
+        #personal-information .card-body {
+          padding: 5px 10px!important;
+        }
+
+        #personal-information .card-text {
+          font-size: 0.95rem!important;
+          line-height: 1rem!important;
+          margin-bottom: 0.1rem!important;
+          font-style: italic;
+        }
+
+        #personal-information .card-link {
+          color: darkred;
+        }
+
+        #personal-information .card.init {
+          background-color: #c6b0bc;
+          border-color: #c6b0bc;
+          color: white;
+        }
+
+        #personal-information .card.init .card-text {
+          font-style: italic!important;
+          font-size: 0.9rem!important;
+        }
+
+        #personal-information .card.init .card-title {
+          font-weight: bold!important;
+          font-size: 1.5rem!important;
+          margin-top: 10px;
+          color: #500778;
+        }
+
+        #footer {
+          height: 50px;
+          z-index: 1200;
+          background-color: #f3f3f3;
+        }
+
+        #personal-information .flickity-page-dots {
+          position: relative!important;
+          bottom: 0!important;
+        }
+
+        .slider.noUi-target {
+          margin-top: 10px;
+          margin-bottom: 10px;
+          width: 40%;
+          background: transparent;
+          border: none;
+          box-shadow: none;
+          background: #cdcdcd;
+        }
+
+        .slider.slider.noUi-horizontal {
+          height: 10px;
+        }
+
+        .slider.noUi-horizontal .noUi-handle {
+          width: 28px;
+          height: 28px;
+          background: #500778;
+          border-radius: 28px;
+          border: none;
+          box-shadow: none;
+          cursor: pointer;
+          outline: none;
+          top: -9px;
+        }
+
+        .slider.noUi-horizontal .noUi-handle:before,
+        .slider.noUi-horizontal .noUi-handle:after {
+          content: '';
+          background: transparent;
+        }
+
+        .slider.noUi-base {
+          z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow p-1">
+      <div class="col mr-0 d-flex">
+        <span class="text-white font-weight-bold"><img height="25" width="25" class="mr-2" src="static/img/location-arrow.svg">Semantica</span>
+        <a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a>
+      </div>
+      <button id="next-step" class="btn btn-outline-secondary ml-3 mr-3" type="submit" disabled>Finish</button>
+    </nav>
+
+    <div id="content" class="container-fluid h-100">
+      <div class="row h-100">
+        <main role="main" class="px-0 h-100">
+
+        <div class="ml-2">
+          <h5>Personal information privacy</h5>
+          <p>This is the last step of this study! We have aggregated all the personal information that you rated relevant from the places you have selected. Please let us know for each personal information item <b>how sensitive</b> you find it in the specific context of sharing it to an advertiser.</p>
+        </div>
+        <div id="personal-information"></div>
+      </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="explanationModal" tabindex="-1" role="dialog" aria-labelledby="explanationModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="explanationModalTitle"><img src="static/img/location-arrow.svg" height="25" class="mr-1"/> Privacy sensitivity of the personal information items</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>In this last step, we have automatically aggregated the personal information associated to the places you have selected.
+              We ask you to indicate for each personal information whether you find it is <b>sensitive</b> in the specific context of sharing it with an advertiser.</p>
+            <p>To this end, you can rate the sensitivity of each information item using the stars. Giving one star means that the item is not sensitive and can be shared with anyone
+              while giving five stars means that the item is very sensitive and should be shared with a small group of people.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Got it!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+
+    var sliderOptions = {
+      start: [0],
+      range: {
+        'min': [0, 1],
+        '25%': [1,1],
+        '50%': [2,1],
+        '75%': [3,2],
+        'max': [4,3]
+      },
+      animate: false,
+      connect: false
+    };
+
+    $(function() {
+      window.pis = JSON.parse(window.sessionStorage.getItem('userPis'));
+      window.$carousel = null;
+      window.selectedPiId = null;
+
+      // aggregate the unique personal information
+      window.uniquePis = {};
+      window.uniquePisFiltered = {};
+      window.pisKeys = Object.keys(pis);
+      if (window.pis != null && window.pisKeys.length > 0) {
+          window.pisKeys.forEach(function (pId, index) {
+              Object.keys(window.pis[pId]).forEach(function (piId, index) {
+                  if (!(piId in window.uniquePis)) {
+                      window.uniquePis[piId] = {
+                          pi_id: piId,
+                          category_icon: window.pis[pId][piId]['category_icon'],
+                          pi_name: window.pis[pId][piId]['pi_name'],
+                          picid: window.pis[pId][piId]['picid'],
+                          ratings: [],
+                          places: []
+                      }
+                  }
+
+                  if (window.pis[pId][piId].ratingRel !== undefined) {
+                      window.uniquePis[piId].ratings.push(window.pis[pId][piId].ratingRel);
+                      window.uniquePis[piId].places.push(pId);
+                  }
+              });
+          });
+
+          // filter the unique places that have a ratingRel > 1 (at least a little relevant)
+          Object.keys(window.uniquePis).forEach(function (piId, index) {
+              var pi = window.uniquePis[piId];
+              if (pi.ratings.length === 0) {
+                  return;
+              }
+              var sumRatings = pi.ratings.reduce(function (prev, cur) {
+                  if (cur !== 'undefined') {
+                      return prev;
+                  }
+                  return prev + cur;
+              });
+              if (sumRatings > pi.ratings.length) { // all ones (i.e., "not relevant" ratings)
+                  window.uniquePisFiltered[piId] = pi;
+              }
+          });
+      }
+      window.uniquePisFilteredIds = Object.keys(window.uniquePisFiltered);
+
+      showPersonalInformation();
+
+      // show the explanation modal.
+      $('#explanationModal').modal('show');
+    });
+
+
+    function showPersonalInformation() {
+        // add the personal information.
+        window.$carousel = $('#personal-information');
+        window.uniquePisFilteredIds.forEach(function(piId, index) {
+            var pi = window.uniquePisFiltered[piId];
+            addPersonalInformation(pi);
+        });
+
+        window.selectedPiId = window.uniquePisFilteredIds[0];
+
+        // configure the flickity carousel.
+        window.$carousel.flickity({
+          prevNextButtons: true,
+          draggable: false,
+          pageDots: false
+        });
+
+        // register the "change" event
+        window.$carousel.on( 'change.flickity', function( event, index ) {
+          setPersonalInformationDone(window.selectedPiId);
+          var rating = $('#personal-information').find("[data-id='" + window.selectedPiId + "']").data('sens');
+          if (rating === undefined) {
+              rating = 0;
+          }
+          $.getJSON("saveresponse", {type: 'pri', piid: window.selectedPiId, r: rating+1}, function (d) { });
+          window.selectedPiId = window.uniquePisFilteredIds[index];
+        });
+    }
+
+    function addPersonalInformation(pi) {
+        var piId = pi['pi_id'];
+        var name = pi['pi_name'];
+        var icon = "static/img/icons/" + pi['category_icon'] + "-white.svg";
+        var nbPlacesStr = (pi['ratings'].length === 1 ? "one place has" : pi['ratings'].length+" places have");
+
+        var el = $('<div class="card" data-id="'+piId+'">' +
+            '<div class="card-header d-flex flex-row">' +
+              '<img class="mr-2" src="'+icon+'" width="20px" height="20px" />' +
+              '<h5>'+name+'</h5>' +
+            '</div>' +
+            '<div class="card-body d-flex flex-column">' +
+              '<p class="card-text">A total of '+nbPlacesStr+' this personal information.</p>' +
+              '<p class="card-text">Do you find this information <b>sensitive</b>?</p>' +
+              '<div class="d-flex flex-row mt-1">' +
+                '<span class="mr-4 ml-auto">Not at all</span>' +
+                '<div class="slider" data-type="sens" data-rating="0"></div>' +
+                '<span class="ml-4 mr-auto">Very</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>')
+        .appendTo(window.$carousel);
+
+        el.find('.slider').each(function(id, slider) {
+          // instantiate the slider.
+          noUiSlider.create(slider, sliderOptions);
+
+          // set previous ratings.
+          if (id === 0 && 'ratingSens' in pi) {
+            slider.noUiSlider.set(pi.ratingSens);
+          }
+
+          // listen to the change event.
+          slider.noUiSlider.on('change', function(values) {
+            var value = Math.floor(values[0]);
+            if (id === 0) {
+              pi.ratingSens = value;
+            }
+            setPersonalInformationDone(piId);
+            $('#personal-information').find("[data-id='" + piId + "']").data('sens', value);
+          });
+        });
+
+        if (pi.done) {
+            el.addClass('done');
+        }
+    }
+
+    function setPersonalInformationDone(piId) {
+        console.log("setPersonalInformationDone");
+        window.uniquePisFiltered[piId].done = true;
+        $('#personal-information').find("[data-id='" + piId + "']").addClass('done');
+
+        allPersonalInformationDone();
+    }
+
+    function allPersonalInformationDone() {
+        var areAllPersonalInformationDone = true;
+        window.uniquePisFilteredIds.forEach(function (piId, index) {
+          var pi = window.uniquePisFiltered[piId];
+            if (pi.done === undefined || !pi.done) {
+                areAllPersonalInformationDone = false;
+            }
+        });
+
+        if (areAllPersonalInformationDone) {
+          $('#next-place').hide();
+          $('#next-step').removeClass('btn-outline-secondary')
+              .addClass('btn-primary')
+              .prop("disabled", false)
+              .on('click', function() {
+                  // send the last rating.
+                  var rating = $('#personal-information').find("[data-id='" + window.selectedPiId + "']").data('sens');
+                  if (rating === undefined) {
+                      rating = 0;
+                  }
+                  $.getJSON("saveresponse", {type: 'pri', piid: window.selectedPiId, r: rating+1}, function (d) { });
+
+                  // go to the next page.
+                  window.location.href = 'end';
+              });
+        }
+    }
+    </script>
+</body>
+
+</html>

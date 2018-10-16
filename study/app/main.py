@@ -1,10 +1,14 @@
 import eventlet
 eventlet.monkey_patch()
 
-from flask import Flask, render_template, request, session, send_file, url_for
+from functools import wraps
+from flask import Flask, render_template, request, session, send_file, url_for, redirect
+from flask_basicauth import BasicAuth
 from flask_socketio import SocketIO, emit, send, join_room
+from flask import _request_ctx_stack as stack
 
 import os
+import re
 import json
 import requests
 import random
@@ -22,6 +26,32 @@ import study
 
 RABBITMQ_HOST = 'colossus07'
 RABBITMQ_QUEUE = 'rpc_study_queue'
+MOBILE_DEVICES = 'iPhone|iPod|Android.*Mobile|Windows.*Phone|dream|blackberry|CUPCAKE|webOS|incognito|webmate'
+MOBILE_DEVICES_PATTERN = re.compile(MOBILE_DEVICES.lower())
+
+
+def mobile_template(template=None):
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            ctx = stack.top
+            if ctx is not None and hasattr(ctx, 'request'):
+                request = ctx.request
+
+                user_agent = request.user_agent.string.lower()
+                match = MOBILE_DEVICES_PATTERN.search(user_agent)
+                is_mobile = match is not None
+                kwargs['template'] = re.sub(r'{(.+?)}',
+                                            r'\1' if is_mobile else '',
+                                            template)
+                if is_mobile:
+                    print("Mobile device")
+                else:
+                    print("Not mobile device")
+
+                return f(*args, **kwargs)
+        return wrapper
+    return decorator
 
 
 # http://flask.pocoo.org/snippets/35/
@@ -41,22 +71,28 @@ class ReverseProxied(object):
         }
 
     :param app: the WSGI application """
-    def __init__(self, app):
+
+    def __init__(self, app, script_name=None, scheme=None, server=None):
         self.app = app
+        self.script_name = script_name
+        self.scheme = scheme
+        self.server = server
 
     def __call__(self, environ, start_response):
-        script_name = environ.get('HTTP_X_SCRIPT_NAME', '')
+        script_name = environ.get('HTTP_X_SCRIPT_NAME', '') or self.script_name
         if script_name:
             environ['SCRIPT_NAME'] = script_name
             path_info = environ['PATH_INFO']
             if path_info.startswith(script_name):
                 environ['PATH_INFO'] = path_info[len(script_name):]
-
-        scheme = environ.get('HTTP_X_SCHEME', '')
+        scheme = environ.get('HTTP_X_SCHEME', '') or self.scheme
         if scheme:
             environ['wsgi.url_scheme'] = scheme
+        server = environ.get('HTTP_X_FORWARDED_SERVER', '') or self.server
+        if server:
+            environ['HTTP_HOST'] = server
         return self.app(environ, start_response)
-  
+
     
 # https://www.rabbitmq.com/tutorials/tutorial-six-python.html
 class WorkerRpcClient(object):
@@ -92,118 +128,28 @@ class WorkerRpcClient(object):
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'seManTiCa'
-app.wsgi_app = ReverseProxied(app.wsgi_app)
+
+
+app.config['SECRET_KEY'] = 'SeMaNtiCa'
+app.config['BASIC_AUTH_USERNAME'] = 'semantica'
+app.config['BASIC_AUTH_PASSWORD'] = 'semantica-isslab'
+
+app.wsgi_app = ReverseProxied(app.wsgi_app, script_name='/semantica')
+basic_auth = BasicAuth(app)
+
 socketio = SocketIO(app, message_queue="amqp://colossus07/socketio")
-
-BASE_URL = "https://api.foursquare.com/v2/"
-
-# getting the database connection information
-connection = None
-cursor = None
 
 
 def get_ip_address(request):
     ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    print("IP address = %s" % ip_address)
     if ',' in ip_address:
         ip_address = ip_address.split(',')[0].strip()
 
     return ip_address
 
 
-def get_db_connection():
-    global cursor, connection
-    if cursor is None or connection is None:
-        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
-
-    # Test the liveliness of the connection.
-    try:
-        cursor.execute("SELECT 1")
-    except psycopg2.InterfaceError:
-        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
-
-
-def get_places(query, location, bounds, limit=50):
-    get_db_connection()
-
-    url = BASE_URL
-    url += "venues/search"
-    params = {
-        "ne": "%s,%s" % (bounds['ne']['lat'], bounds['ne']['lon']),
-        "sw": "%s,%s" % (bounds['sw']['lat'], bounds['sw']['lon']),
-        "limit": str(limit),
-        "query": query,
-        "intent": "browse"
-    }
-
-    data = foursquare.send_request(url, params)
-    results = []
-
-    if data is None or 'response' not in data or 'venues' not in data['response']:
-        return results
-
-    for venue in data['response']['venues']:
-        venue_id = venue['id']
-        address = "%s, " % venue['location']['address'] if 'address' in venue['location'] else ''
-        address += venue['location']['city'] if 'city' in venue['location'] else ''
-        categories = [c for c in venue['categories'] if c['primary']]
-        category = {}
-        if len(categories) > 0:
-            category = categories[0]
-            emoji, icon = foursquare.get_icon_for_venue(venue_id, {'categories': [category['id']]}, connection=connection, cursor=cursor)
-        else:
-            emoji, icon = '👣', 'map-marker'
-
-        res = {
-            'address': address,
-            'category': category.get('name', ''),
-            'lat': venue['location']['lat'],
-            'lon': venue['location']['lng'],
-            'name': venue['name'],
-            'id': venue_id,
-            'icon': icon
-        }
-
-        results.append(res)
-
-    return results
-
-
-def geocode_autocomplete(query):
-    url = BASE_URL
-    url += "geo/geocode"
-    params = {
-        "autocomplete": "true",
-        "allowCountry": "false",
-        "maxInterpretations": "10",
-        "locale": "en",
-        "explicit-lang": "true",
-        "query": query
-    }
-
-    data = foursquare.send_request(url, params)
-    results = []
-
-    if 'response' not in data or 'geocode' not in data['response']:
-        return results
-
-    if 'interpretations' not in data['response']['geocode']:
-        return results
-
-    if 'items' not in data['response']['geocode']['interpretations']:
-        return results
-
-    for geo in data['response']['geocode']['interpretations']['items']:
-        results.append({
-            "name": geo['feature']['displayName'],
-            "id": geo['feature']['id'],
-            "geometry": geo['feature']['geometry']
-        })
-
-    return results
-
-
-@app.route('/', methods=['GET', 'POST'])
-def show_welcome():
+def start_session():
     # create a new session
     if 'sid' not in session:
         session_id = "SemanticaStudy-" + utils.id_generator()
@@ -214,7 +160,13 @@ def show_welcome():
         print("using session-id: %s" % session_id)
 
     study.start_session(session_id, get_ip_address(request))
-    return render_template('welcome.html')
+
+
+@app.route('/')
+@mobile_template('{mobile/}welcome.html')
+def show_welcome(template):
+    start_session()
+    return render_template(template)
 
 
 @app.route('/health', methods=['GET'])
@@ -223,22 +175,68 @@ def check_health():
 
 
 @app.route('/search')
-def show_search_places():
-    return render_template('search.html')
+@mobile_template('{mobile/}search.html')
+def show_search_places(template):
+    return render_template(template)
 
 
-@app.route('/placesearch')
-def show_place_search():
-    return render_template('placeSearch.html')
+@app.route('/stats/')
+@basic_auth.required
+def show_study_stats():
+    stats = study.get_stats()
+    return render_template('stats/stats.html', stats=stats)
 
 
-@app.route('/placepi')
+@app.route('/stats/update')
+@basic_auth.required
+def study_stats_update():
+    study.update_place_records()
+    return json.dumps({"success": "ok"})
+
+
+@app.route('/stats/users')
+@basic_auth.required
+def show_stats_users():
+    stats = study.get_stats()
+    return render_template('stats/users.html', page='users', stats=stats)
+
+
+@app.route('/stats/pi')
+@basic_auth.required
+def show_stats_pi():
+    return render_template('stats/pi.html', page='pi')
+
+
+@app.route('/stats/models')
+@basic_auth.required
+def show_stats_models():
+    models = study.get_model_stats()
+    return render_template('stats/models.html', page='models', models=models)
+
+
+@app.route('/stats/place')
+@basic_auth.required
+def show_stats_place():
+    return render_template('stats/placeSearch.html', page='place')
+
+
+@app.route('/stats/places')
+@basic_auth.required
+def show_stats_places():
+    places = study.get_all_distinct_selected_places()
+    return render_template('stats/places.html', page='places', places=places)
+
+
+@app.route('/stats/placepi')
+@basic_auth.required
 def show_place_pi():
     place_id = request.args.get('place_id')
     place = foursquare.get_place(place_id)
-    return render_template('placePi.html', place=place)
+    return render_template('stats/placePi.html', place=place)
 
 
+@app.route('/stats/searchplace')
+@app.route('/mobile/searchplace')
 @app.route('/searchplace')
 def search_place():
 
@@ -253,7 +251,7 @@ def search_place():
     location = {"lon": lon, "lat": lat}
     bounds = {"ne": {"lat": ne_lat, "lon": ne_lon}, "sw": {"lat": sw_lat, "lon": sw_lon}}
 
-    return json.dumps(get_places(query, location, bounds))
+    return json.dumps(study.get_places(query, location, bounds))
 
 
 @app.route('/location')
@@ -268,14 +266,16 @@ def get_location():
 
 
 @app.route('/loadpi')
-def show_load_personal_information():
-    return render_template('loadPi.html')
+@mobile_template('{mobile/}loadPi.html')
+def show_load_personal_information(template):
+    return render_template(template)
 
 
+@app.route('/stats/geocode')
 @app.route('/geocode')
 def search_geocode():
     query = request.args.get('query')
-    return json.dumps(geocode_autocomplete(query))
+    return json.dumps(study.geocode_autocomplete(query))
 
 
 @app.route('/getplacedetails')
@@ -284,9 +284,10 @@ def get_place_details():
     return json.dumps(foursquare.get_place(place_id))
 
 
-@app.route('/pi')
-def show_personal_information():
-    return render_template('piCards.html')
+@app.route('/piPlaces')
+@mobile_template('{mobile/}piPlaces.html')
+def show_personal_information(template):
+    return render_template(template)
 
 
 @app.route('/piTable')
@@ -295,15 +296,17 @@ def show_personal_information_table():
 
 
 @app.route('/piPrivacy')
-def show_personal_information_privacy():
-    return render_template('piPrivacy.html')
+@mobile_template('{mobile/}piPrivacy.html')
+def show_personal_information_privacy(template):
+    return render_template(template)
 
 
 @app.route('/end')
-def show_end():
+@mobile_template('{mobile/}finish.html')
+def show_end(template):
     study.end_session(session['sid'])
     print("End session %s" % session['sid'])
-    return render_template('finish.html')
+    return render_template(template)
 
 
 # Logic to save the responses in the database
@@ -409,6 +412,7 @@ def get_personal_information_list():
     return json.dumps(res)
 
 
+@app.route('/stats/computeplacepi')
 @app.route('/computeplacepi')
 def compute_place_personal_information():
     place_id = request.args.get('id')
@@ -423,6 +427,16 @@ def compute_place_personal_information():
     return json.dumps(response)
 
 
+@app.route('/stats/getplaceratings')
+@basic_auth.required
+def get_place_ratings():
+    place_id = request.args.get('id')
+    print(place_id, request.args)
+    ratings = study.get_relevance_ratings(place_id)
+    print(ratings)
+    return json.dumps(ratings)
+
+
 def compute_place_interests(room, places):
     print(" [x] Instantiating a RPC client")
     worker_rpc = WorkerRpcClient()
@@ -433,7 +447,7 @@ def compute_place_interests(room, places):
     i = 1
     nb_places = len(places)
     for place_id, place in places.items():
-        study.save_place(room, place_id, place['name'])
+        study.save_place(room, place)
         print(" [x] Requesting interests for place \"%s\" (%s)" % (place['name'], place_id))
         response = worker_rpc.call(place_id)
         print(" [x] Got %s interests" % len(response))
@@ -453,6 +467,7 @@ def socket_connect_auth():
 
 # SocketIO for the personal information loading screen
 
+@socketio.on('mobile/update', namespace='/load')
 @socketio.on('update', namespace='/load')
 def socket_handle_update(data):
     room = str(session['sid'])

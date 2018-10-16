@@ -2,6 +2,7 @@ raven
 pymongo
 flask
 flask_mail
+Flask-BasicAuth
 flask_socketio
 gevent==1.2.2
 kombu

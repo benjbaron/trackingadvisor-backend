@@ -1,0 +1,778 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <meta charset='utf-8' />
+    <title>Semantica Study</title>
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Mapbox -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.js'></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+    <!-- mprogress -->
+    <script type="text/javascript" src="static/js/mprogress.min.js" charset="UTF-8"></script>
+    <link href="static/css/mprogress.min.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS and JS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+
+    <meta name='twitter:site' content='@mapbox'>
+    <meta property='og:site_name' content='Semantica study' />
+    <meta name='twitter:url' content='https://iss-lab.geog.ucl.ac.uk/semantica/study/' />
+    <meta property='og:url' content='https://iss-lab.geog.ucl.ac.uk/semantica/study/'>
+    <meta name='twitter:title' content='Semantica study' />
+    <meta property='og:title' content='Semantica study' />
+    <meta name='twitter:description' content='Understand the personal information of places' />
+    <meta property='og:description' content='Understand the personal information of places' />
+        <meta name='twitter:image' content='https://api.mapbox.com/styles/v1/mapbox/streets-v9/static/0,0,2/435x375?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA' />
+        <meta property='og:image' content='https://api.mapbox.com/styles/v1/mapbox/streets-v9/static/0,0,2/435x375?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA' />
+    <meta name='twitter:image:width' content='435'>
+    <meta name='twitter:image:height' content='375'>
+    <meta property='og:image:width' content='435'>
+    <meta property='og:image:height' content='375'>
+    <meta name='twitter:card' content='summary_large_image'>
+    <meta property='og:type' content='website' />
+
+    <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            overflow: auto!important;
+        }
+        .mapboxgl-ctrl-nav > a {
+            border-color: rgba(0,0,0,.1);
+        }
+        @media only screen and (max-width:640px) {
+            .leaflet-left .leaflet-control,
+            .mapboxgl-ctrl-top-left .mapboxgl-ctrl {
+                margin-top: 70px;
+            }
+        }
+
+        .form-control:focus {
+          border-color: rgba(0, 0, 0, 0);
+          box-shadow: none;
+        }
+
+        #refresh-search {
+          width: 100%;
+          top: 220px;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          position: absolute;
+          height: 40px;
+        }
+
+        #refresh-search .btn {
+          border-radius: 20px!important;
+          border-color: #500778;
+          background-color: #500778;
+          box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+        }
+
+        #refresh-search .btn:active {
+          border-color: #7c05ae;
+          background-color: #7c05ae;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.40)!important;
+        }
+
+        #selected-places {
+          overflow-y: hidden;
+          overflow-x: scroll;
+          -webkit-overflow-scrolling: touch;
+          height: 141px;
+          padding-top: 46px;
+          flex-wrap: initial!important;
+        }
+
+        #selected-places::after {
+          content: ''; /* Insert space before the first item and after the last one */
+          min-width: 1px;
+          min-height: 100%;
+        }
+
+        #selected-places .card {
+          font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
+          min-width: 47%;
+          max-width: 47%;
+          max-height: 80px;
+          min-height: 80px;
+          margin-left: 0.5rem;
+          margin-top: 10px;
+          flex-wrap: initial!important;
+          border-radius: 3px!important;
+          border-width: 0px!important;
+          box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+          z-index: 1000;
+        }
+
+        #selected-places .card-header {
+          background: #500778;
+          padding: 10px!important;
+          border-bottom-width: 0px!important;
+        }
+
+        #selected-places .card-header h5 {
+          display: block;
+          color: #fff;
+          font-weight: 700;
+          font-size: 1rem!important;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 1;
+          line-height: 1.3rem;
+          max-height: 1.3rem;
+          margin-bottom: 0px!important;
+        }
+
+        #selected-places .card-body {
+          padding: 5px 10px!important;
+        }
+
+        #selected-places .card-text {
+          font-size: 0.75rem!important;
+          line-height: 1rem!important;
+          margin-bottom: 0.25rem!important;
+          display: block;
+          text-overflow: ellipsis;
+          word-wrap: break-word;
+          overflow: hidden;
+          max-height: 3em;
+        }
+
+        #selected-places .card-link {
+          color: white;
+        }
+
+        #selected-places .card.init {
+          background-color: white!important;
+          border-radius: 7px!important;
+          min-width: initial!important;
+          max-width: initial!important;
+          margin-right: .5rem!important;
+       }
+
+        #selected-places .card.init .card-text {
+          font-style: italic!important;
+          font-size: 0.9rem!important;
+        }
+
+        #selected-places .card.init .card-title {
+          font-weight: bold!important;
+          font-size: 1.2rem!important;
+          margin-bottom: 0.25rem!important;
+          color: #500778;
+        }
+
+        #map .mapboxgl-ctrl-top-left, #map .mapboxgl-ctrl-top-right {
+          top: 220px!important;
+        }
+
+        #footer {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 50px;
+          z-index: 1200;
+          background-color: #f3f3f3;
+        }
+
+        #search-results {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 50px;
+          height: calc(100% - 250px);
+          background-color: white;
+          z-index: 1000;
+          -webkit-overflow-scrolling: touch;
+          flex-wrap: initial!important;
+          overflow-x: hidden;
+          overflow-y: scroll;
+        }
+    </style>
+</head>
+
+<body>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow p-1">
+      <div class="col mr-0 d-flex">
+        <span class="text-white font-weight-bold"><img height="25" width="25" class="mr-2" src="static/img/location-arrow.svg">Semantica</span>
+        <a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a>
+      </div>
+      <button id="next-step" class="btn btn-outline-secondary ml-3 mr-3" type="submit" disabled>Continue</button>
+    </nav>
+    <div id='map'></div>
+
+    <div class="d-flex flex-row card-deck top" id="selected-places"></div>
+    <form class="card card-sm m-2 top shadow">
+      <div class="card-body row no-gutters align-items-center p-1">
+          <div class="ml-1 col-auto">
+              <i class="fa fa-search"></i>
+          </div>
+          <div class="col">
+              <input id="search-place" class="form-control border-0" type="search" placeholder="Search place...">
+          </div>
+      </div>
+    </form>
+    <div id="refresh-search" class="row justify-content-center align-items-center" style="display: none;">
+      <a class="btn btn-primary" href="#" role="button">Search again for this area</a>
+    </div>
+
+    <div id="footer" style="display: none;"></div>
+    <div id="search-results" style="display: none;">
+      <ul class="list-group list-group-flush"></ul>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="explanationModal" tabindex="-1" role="dialog" aria-labelledby="explanationModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="explanationModalTitle"><img src="static/img/location-arrow.svg" height="25" class="mr-1"/> Select places that you know</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>In this first step, we ask you to select <b>at least five places</b> that you know well. These places can be your workplace,
+            your favorite restaurant, café, bar, supermarket, store, etc.</p>
+            <p>To this end, you should use the <b>search bar</b> on the left side. Type the name of the place and it should appear on the map behind.
+            You can then select the place and it will be added to the queue on top.</p>
+            <p>Once you have five places, you can go to the next step by clicking on Continue.
+              <i>Feel free to add more places than the minimum!</i></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Got it!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    var isSearchingPlace = false;
+    var isSelectingPlace = false;
+    var delayTimer;
+    var placeLayer = false;
+    var popups = [];
+    var placeholderTypes = ["place", "restaurant", "hotel", "work", "bar", "pub", "supermarket", "tourist attraction", "museum"];
+    var placeholderIndex = 0;
+    var selectedPlaces = {};
+    var currentCoordinates = [-0.134548, 51.524526];
+    var currentSearchArea = turf.buffer(turf.point(currentCoordinates), 0.3, {units: 'kilometers'});
+    var currentZoom = 8;
+    var triggeredBySearchPlaces = false;
+    var triggeredByUserPosition = false;
+
+    (function() {
+        'use strict';
+
+        renderMapboxGL();
+
+        // show the explanation modal.
+        $('#explanationModal').modal('show');
+
+        // get the already-saved user places (if any).
+        var userPlaces = window.sessionStorage.getItem('userPlaces');
+        if (userPlaces && userPlaces.length !== 0) {
+            var places = JSON.parse(userPlaces);
+            Object.keys(places).forEach(function(placeId, index) {
+                addPlace(places[placeId].place);
+            });
+        } else {
+            showInitialCard();
+        }
+        searchPlaceholderTimeout();
+
+        function renderMapboxGL() {
+            mapboxgl.accessToken = 'pk.eyJ1IjoiYmVuamJhcm9uIiwiYSI6InItaHotTkkifQ.Im25SdEu7d8FNUSXKq8orA';
+
+            window.map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/benjbaron/cjiyeb3zs97f92rnvy6f5mk8d',
+                hash: true,
+                scrollZoom: true
+            }).addControl(new mapboxgl.NavigationControl(), 'top-right');
+        }
+
+    })();
+     // https://www.mapbox.com/help/building-a-store-locator/#finished-product
+    // This will let you use the .remove() function later on
+    if (!('remove' in Element.prototype)) {
+      Element.prototype.remove = function() {
+        if (this.parentNode) {
+          this.parentNode.removeChild(this);
+        }
+      };
+    }
+
+    var mprogress = new Mprogress({
+        template: 3,
+        parent: '#nav'
+    });
+
+    function distance(coords1, coords2) {
+        var from = turf.point(coords1);
+        var to = turf.point(coords2);
+        return turf.distance(from, to);
+    }
+
+    function getIPLocation() {
+        $.getJSON("location", {}, function (d) {
+            if (d.lat !== null && d.lon !== null) {
+              triggeredByUserPosition = true;
+              flyToLocation(d.lon, d.lat, 14);
+            }
+        });
+    }
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, errorPosition, {timeout:5000});
+        } else {
+            getIPLocation();
+        }
+    }
+
+    function showPosition(position) {
+        triggeredByUserPosition = true;
+        flyToLocation(position.coords.longitude, position.coords.latitude, 14);
+    }
+
+    function errorPosition(error) {
+        console.log("errorPosition: (" + error.code + "): " + error.message);
+        getIPLocation();
+    }
+
+    function searchPlaceholderTimeout() {
+        setTimeout(function() {
+            $('#search-place').attr("placeholder", "Search "+placeholderTypes[placeholderIndex]+"...");
+            placeholderIndex = (placeholderIndex + 1) % placeholderTypes.length;
+            searchPlaceholderTimeout();
+        }, 1500)
+    }
+
+    function showInitialCard() {
+        $('<div class="card init"><div class="card-body d-flex flex-column"><h5 class="card-title">Select places</h5><p class="card-text">Use the search bar on the left to select at least <b>5 places</b> that you know well.</p></div></div>')
+            .appendTo($('#selected-places'))
+            .fadeIn('slow');
+    }
+
+    window.map.on('load', function() {
+        getLocation();
+        $('#refresh-search').click(function(e) {
+            var query = $("#search-place").val();
+            searchPlaces(query);
+        });
+    });
+
+    function toggleSearchRefreshButton() {
+        if (window.triggeredByUserPosition || window.isSelectingPlace || window.triggeredBySearchPlaces) {
+            $('#refresh-search').hide();
+            return;
+        }
+
+        var zoomDiff = Math.abs(map.getZoom() - currentZoom);
+        var coords = [map.getCenter().lng, map.getCenter().lat];
+        var distanceDiff = distance(coords, currentCoordinates);
+        // TODO: currentSearchArea
+        var pt = turf.point(coords);
+        let currentSearchAreaBuffered = turf.buffer(currentSearchArea, 0.3, {units: 'kilometers'});
+        let within = turf.booleanWithin(pt, currentSearchAreaBuffered);
+
+        if (zoomDiff > 3 || (!within && distanceDiff >= 0.25)) {
+            // show the search new area button
+            $('#refresh-search').show();
+        } else {
+            $('#refresh-search').hide();
+        }
+    }
+
+    map.on('zoom', function() {
+      toggleSearchRefreshButton();
+    });
+
+    map.on('drag', function() {
+      toggleSearchRefreshButton();
+    });
+
+    function flyToLocation(lon, lat, zoom) {
+      map.flyTo({
+        center: [lon, lat],
+        zoom: zoom
+      });
+    }
+
+    function flyToFeature(currentFeature) {
+      map.flyTo({
+        center: currentFeature.geometry.coordinates,
+        zoom: 18
+      });
+    }
+
+    function deletePlace(place) {
+        var id = place.properties.id;
+        $('#selected-places *[data-id="'+id+'"]').remove();
+        delete selectedPlaces[id];
+        var len = Object.keys(selectedPlaces).length;
+        if (len === 0) {
+            showInitialCard();
+        }
+
+        if (len >= 5) {
+            setDisabledNextStepButton(false);
+        } else {
+            setDisabledNextStepButton(true);
+        }
+    }
+
+    function setDisabledNextStepButton(disabled) {
+        if (disabled) {
+            $('#next-step').addClass('btn-outline-secondary')
+                .removeClass('btn-primary')
+                .prop("disabled", true)
+                .off('click');
+        } else {
+            $('#next-step').removeClass('btn-outline-secondary')
+                .addClass('btn-primary')
+                .prop("disabled", false)
+                .on('click', function() {
+                // save the selected places and show the next step
+                var places = {};
+                Object.keys(selectedPlaces).forEach(function(placeId) {
+                   places[placeId] = {
+                       id: placeId,
+                       name: selectedPlaces[placeId].properties.name,
+                       fulladdress: selectedPlaces[placeId].properties.fulladdress,
+                       address: selectedPlaces[placeId].properties.address,
+                       city: selectedPlaces[placeId].properties.city,
+                       lon: selectedPlaces[placeId].properties.lon,
+                       lat: selectedPlaces[placeId].properties.lat,
+                       category: selectedPlaces[placeId].properties.category,
+                       icon: selectedPlaces[placeId].properties.icon,
+                       "icon-name": selectedPlaces[placeId].properties['icon-name'],
+                       position: selectedPlaces[placeId].properties.position,
+                       privacyRating: selectedPlaces[placeId].properties.privacyRating,
+                       frequencyRating: selectedPlaces[placeId].properties.frequencyRating,
+                       place: selectedPlaces[placeId]
+                   };
+                });
+
+                var placesString = JSON.stringify(places);
+                window.sessionStorage.setItem('userPlaces', placesString);
+                window.location.href = 'loadpi';
+            });
+        }
+    }
+
+    function addPlace(place) {
+        var id = place.properties.id;
+        if (!(id in selectedPlaces)) {
+            // Remove the init card.
+            $('#selected-places .card.init').remove();
+
+            // Add the place.
+            selectedPlaces[id] = place;
+            if (Object.keys(selectedPlaces).length >= 5) {
+                setDisabledNextStepButton(false);
+            } else {
+                setDisabledNextStepButton(true);
+            }
+
+            var el = $('<div class="card" data-id="'+id+'"><div class="card-header d-flex flex-row"><h5>'+place.properties.name+'</h5><a href="#" data-id="'+id+'" class="card-link ml-auto mt-auto"><i class="fa fa-times"></i></a></div><div class="card-body d-flex flex-column"><p class="card-text">'+place.properties.fulladdress+'</p></div></div>')
+                .hide()
+                .prependTo($('#selected-places'))
+                .fadeIn('slow');
+            el.find('.card-link').click(function (e) {
+                e.originalEvent.stopPropagation();
+                var id = $(this).data('id');
+                deletePlace(selectedPlaces[id]);
+            });
+
+            el.click(function (e) {
+                e.originalEvent.stopPropagation();
+
+                var id = $(this).data('id');
+                var place = selectedPlaces[id];
+                var i = place.properties.position;
+                var listing = $("#search-results ul").find("[data-position='" + i + "']");
+
+                placeClick(place, listing);
+            });
+
+            // zoom out and focus on the search
+            flyToLocation(map.getCenter().lng, map.getCenter().lat, 14);
+
+            // remove all popups
+            popups.forEach(function(popup) {
+                popup.remove();
+            });
+        }
+    }
+
+    function showPlaceList() {
+        $('#search-results').show();
+        hideListPlaceFooter();
+    }
+
+    function hidePlaceList() {
+        $('#search-results').hide();
+        resetPlaceFooter();
+    }
+
+    function hideListPlaceFooter() {
+        var el = $('#footer').show().html('<div class="d-flex flex-row h-100">' +
+            '<a href="#" data-type="show" class="align-self-center mr-2 ml-2 mt-1"><i class="fa fa-times" style="font-size:25px;color:black;"></i></a>' +
+            '<b class="align-self-center mr-2 ml-2">Hide the list</b></div>');
+
+        el.find('[data-type="show"]').click(function(e) {
+            e.originalEvent.stopPropagation();
+            hidePlaceList();
+        });
+    }
+
+    function resetPlaceFooter() {
+        var el = $('#footer').show().html('<div class="d-flex flex-row h-100">' +
+            '<a href="#" data-type="show" class="align-self-center mr-2 ml-2 mt-1"><i class="fa fa-bars" style="font-size:25px;color:black;"></i></a>' +
+            '<b class="align-self-center mr-2 ml-2">Show the list</b></div>');
+
+        el.find('[data-type="show"]').click(function(e) {
+            e.originalEvent.stopPropagation();
+            showPlaceList();
+        });
+    }
+
+    function showPlaceFooter(place) {
+        var el = $('#footer').show().html('<div class="d-flex flex-row h-100">' +
+            '<a href="#" data-type="add" class="align-self-center mr-2 ml-2 mt-1"><i class="fa fa-plus" style="font-size:25px;color:black;"></i></a>' +
+            '<div class="d-flex flex-column"><b>'+place.properties.name+'</b><span>'+place.properties.fulladdress+'</span></div>' +
+            '<a href="#" data-type="del" class="align-self-center mr-3 ml-auto"><i class="fa fa-times" style="font-size:25px;color:black;"></i></a></div>');
+
+        el.find('[data-type="add"]').click(function(e) {
+            e.originalEvent.stopPropagation();
+            addPlace(place);
+            resetPlaceFooter();
+        });
+
+        el.find('[data-type="del"]').click(function(e) {
+            e.originalEvent.stopPropagation();
+            // reset the place footer.
+            resetPlaceFooter();
+        });
+    }
+
+    function placeClick(place, listing) {
+        window.isSelectingPlace = true;
+        // 1. Fly to the point associated with the clicked link
+        flyToFeature(place);
+
+        // 2. Add the place to the footer
+        showPlaceFooter(place);
+    }
+
+    function createLayer(features) {
+        if (placeLayer) {
+            map.getSource('search-result').setData(features);
+            map.removeLayer('search-result');
+        } else {
+            map.addSource('search-result', {
+                type: "geojson",
+                data: features
+            });
+        }
+
+        map.addLayer({
+            id: "search-result",
+            source: "search-result",
+            type: "symbol",
+            "layout": {
+                "icon-image": "{icon-name}-15",
+                "icon-allow-overlap": true,
+                "text-allow-overlap": true,
+                "text-field": "{name}",
+                "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+                "text-size": 11,
+                "text-transform": "uppercase",
+                "text-letter-spacing": 0.05,
+                "text-max-width": 15,
+                "text-anchor": "top",
+                "text-offset": [0, 1]
+            },
+            "paint": {
+                "text-color": "#000",
+                "text-halo-color": "#fff",
+                "text-halo-width": 2
+            }
+        });
+
+        // Center the map on the coordinates of any clicked symbol from the 'symbols' layer.
+        map.on('click', 'search-result', function (e) {
+            var place = e.features[0];
+            var i = e.features[0].properties.position;
+            var listing = $("#search-results ul").find("[data-position='" + i + "']");
+
+            placeClick(place, listing);
+        });
+
+        // Change the cursor to a pointer when the it enters a feature in the 'symbols' layer.
+        map.on('mouseenter', 'search-result', function () {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        // Change it back to a pointer when it leaves.
+        map.on('mouseleave', 'search-result', function () {
+            map.getCanvas().style.cursor = '';
+        });
+
+        placeLayer = true;
+    }
+
+    function searchPlaces(query) {
+        mprogress.start();
+        var bounds = map.getBounds();
+        var center = map.getCenter();
+
+        isSearchingPlace = true;
+        $.getJSON("searchplace", {
+            query: query,
+            lat: center.lat,
+            lon: center.lng,
+            nelat: bounds.getNorthEast().lat,
+            nelon: bounds.getNorthEast().lng,
+            swlat: bounds.getSouthWest().lat,
+            swlon: bounds.getSouthWest().lng
+        }, function (d) {
+            // add the items to the list and to the map
+            $('#search-results ul').empty();
+            var places = {
+                "type": "FeatureCollection",
+                "features": []
+            };
+
+            $.each(d, function(index, value){
+                var icon = "static/img/icons/"+value.icon+".svg";
+                var el = $('<li class="list-group-item d-flex flex-row" data-position="'+index+'"><div class="mr-2"><img width="25" height="25" src="'+icon+'"></div><div class="d-flex flex-column"><b>'+value.name+'</b><small>'+value.fulladdress+'</small></div></li>');
+                $('#search-results ul').append(el);
+
+                // Add an event listener for the links in the sidebar listing
+                el.click(function(e) {
+                  // Update the currentFeature to the store associated with the clicked link
+                  var place = data.features[$(this).data("position")];
+                  hidePlaceList();
+                  placeClick(place, $(this));
+                });
+
+                // add the feature to the places.
+                var feature = {
+                    "type": "Feature",
+                    "properties": {
+                        "id": value.id,
+                        "icon": icon,
+                        "icon-name": value.icon,
+                        "name": value.name,
+                        "lon": value.lon,
+                        "lat": value.lat,
+                        "address": value.address,
+                        "city": value.city,
+                        "category": value.category,
+                        "fulladdress": value.fulladdress,
+                        "position": index,
+                        "frequencyRating": 0,
+                        "privacyRating": 0
+                    },
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [value.lon, value.lat]
+                    }
+                };
+                places.features.push(feature);
+
+                // createMarker(feature);
+            });
+
+            if (places.features.length > 0) {
+                createLayer(places);
+                resetPlaceFooter();
+
+                var bbox = turf.bbox(places);
+                triggeredBySearchPlaces = true;
+                map.fitBounds(bbox, {padding: 50});
+                data = places;
+            } else {
+                alert("No places have been found in this area. Please retry with a larger area or a different query.");
+            }
+        }).fail(function() {
+            alert("There has been an error when searching for a place. Please retry.");
+        }).always(function() {
+            mprogress.end();
+            isSearchingPlace = false;
+        });
+    }
+
+    map.on('moveend', function(){
+        if (triggeredBySearchPlaces) {
+            currentCoordinates = [map.getCenter().lng, map.getCenter().lat];
+            var bounds = map.getBounds();
+            var bbox = [bounds.getSouthWest().lng, bounds.getSouthWest().lat, bounds.getNorthEast().lng, bounds.getNorthEast().lat];
+            currentSearchArea = turf.bboxPolygon(bbox);
+            currentZoom = map.getZoom();
+            triggeredBySearchPlaces = false;
+            toggleSearchRefreshButton();
+        } else if (triggeredByUserPosition) {
+            // ip or gps-based location
+            var query = $("#search-place").val();
+            searchPlaces(query);
+            triggeredByUserPosition = false;
+        } else if (isSelectingPlace) {
+            // do not show the place refresh
+            $('#refresh-search').hide();
+            isSelectingPlace = false;
+        }
+    });
+
+    function searchWithThrottle(query) {
+        if (!isSearchingPlace) {
+            clearTimeout(delayTimer);
+            delayTimer = setTimeout(function() {
+              searchPlaces(query);
+            }, 1000);
+        }
+    }
+
+    $("#search-place").on("paste keyup", function(e) {
+        e.preventDefault();
+        searchWithThrottle($(this).val());
+    }).on("keypress", function (e) {
+        if (e.keyCode === 13) {
+            // Cancel the default action on keypress event
+            e.preventDefault();
+            searchWithThrottle($(this).val());
+        }
+    });
+
+    </script>
+
+</body>
+
+</html>

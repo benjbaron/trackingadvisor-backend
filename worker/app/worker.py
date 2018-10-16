@@ -23,8 +23,8 @@ def callback(ch, method, properties, body):
     start_ts = int(time.time())
     try:
         process_user_traces.process_all_tmp_user_traces(logging)
-    except:
-        print("error")
+    except Exception as e:
+        print("error", e)
         client.captureException()
         sys.exit()
 

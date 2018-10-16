@@ -1,0 +1,73 @@
+{% include 'stats/navbar-top.html' %}
+
+<div id="content" class="container-fluid">
+  <div class="row">
+
+    {% include 'stats/navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Study Statistics</h1>
+      </div>
+
+       <section class="row text-center placeholders">
+        <div class="col-6 col-sm-3">
+          <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+              <h3 class="card-title">{{ stats['nb_total_users'] }} total users</h3>
+              <p class="card-text">As of now, {{ stats['nb_total_users'] }} users have participated in the study.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-warning mb-3">
+            <div class="card-body">
+              <h3 class="card-title">{{ stats['nb_finished_sessions'] }} full sessions</h3>
+              <p class="card-text">There has been {{ stats['nb_finished_sessions'] }} finished sessions so far.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+              <h3 class="card-title">{{ '%0.2f'| format(stats['avg_completion_time']|float) }} minutes<br /> completion time</h3>
+              <p class="card-text">The average duration to complete the survey is {{ '%0.2f'| format(stats['avg_completion_time']|float) }} minutes.</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-sm-3 placeholder">
+          <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+              <h3 class="card-title">{{ stats['nb_total_places'] }} places</h3>
+              <p class="card-text">Together, the participants have chosen a total of {{ stats['nb_total_places'] }} places.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <h2>Participants</h2>
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>IP Address</th>
+              <th>Number of places</th>
+              <th>Start</th>
+              <th>End</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for d in stats['users'] %}
+              <tr>
+                  <td>{{ d['ip_address'] }}</td>
+                  <td>{{ d['nb_places'] }}</td>
+                  <td>{{ d['start'] }}</td>
+                  <td>{{ d['end'] }}</td>
+              </tr>
+           {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+</div>

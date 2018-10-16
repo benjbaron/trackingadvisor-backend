@@ -193,10 +193,6 @@
         var selectedPlace = null;
         var isUserInput = true;
 
-        function sleep(ms) {
-          return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
         $(document).on("mousewheel",function(event,delta){
           // prevent horizontal scrolling
           if (event.originalEvent.wheelDeltaX !== 0) {
@@ -221,7 +217,7 @@
             });
 
             $('#show-more').click(function(e) {
-                // show the rest of the personal information
+                // show the rest of the personal information.
                 var keys = Object.keys(pis[selectedPlace]);
                 keys.slice(15, keys.length).forEach(function (piId, index) {
                     var pi = pis[selectedPlace][piId];
@@ -471,14 +467,14 @@
             $('#place-questions').append('<div class="d-flex flex-row align-items-center mb-2"><div class="mr-3">How <b>private</b> do you consider this place?</div><div><button data-btn-type="2" data-btn-rating="1" class="btn btn-outline-secondary btn-sm mr-3">Not private at all</button><button data-btn-type="2" data-btn-rating="2" class="btn btn-outline-secondary btn-sm mr-3">A little private</button><button data-btn-type="2" data-btn-rating="3" class="btn btn-outline-secondary btn-sm mr-3">Somewhat private</button><button data-btn-type="2" data-btn-rating="4" class="btn btn-outline-secondary btn-sm mr-3">Quite private</button><button data-btn-type="2" data-btn-rating="5" class="btn btn-outline-secondary btn-sm mr-3">Very private</button></div></div>');
             $('#personal-information').append('<table class="table mr-2" id="personal-information-table"><thead class="thead-light"><th scope="col" style="width: 5%"></th><th scope="col" style="width: 35%">Name</th><th scope="col" style="width: 25%">How relevant is it to the place?</th><th scope="col" style="width: 25%">How important is it you?</th></thead><tbody></tbody></table>');
 
-            // limit to the 15 top
+            // limit to the 15 top personal information.
             var keys = Object.keys(pis[place.id]);
             keys.slice(0, 15).forEach(function (piId, index) {
                 var pi = pis[place.id][piId];
                 addPersonalInformation(pi);
             });
 
-            // Add a "show more" button if there are more personal information to show
+            // Add a "show more" button if there are more personal information to show.
             if (keys.length > 15) {
                 var showMoreEl = $('#show-more');
                 showMoreEl.show();

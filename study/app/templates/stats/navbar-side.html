@@ -1,0 +1,55 @@
+<nav class="col-md-2 d-none d-md-block bg-light sidebar">
+  <div class="sidebar-sticky">
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'users' }}" data-page="users" href="#">
+          <span data-feather="home"></span>
+          Users
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'pi' }}" data-page="pi" href="#">
+          <span data-feather="heart"></span>
+          Personal information
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'models' }}" data-page="models" href="#">
+          <span data-feather="target"></span>
+          Models
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'places' }}" data-page="places" href="#">
+          <span data-feather="map-pin"></span>
+          Places
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link{{ ' active' if page == 'place' }}" data-page="place" href="#">
+          <span data-feather="search"></span>
+          Search for a place
+        </a>
+      </li>
+    </ul>
+  </div>
+</nav>
+<script>
+  feather.replace();
+  $(".sidebar .nav-link").off('click').on("click", function(e) {
+    $(".sidebar .nav-link.active").removeClass("active");
+    $(this).addClass("active");
+    var loadingURL = "../static/img/loading-circle.svg";
+    $(this).append('<img class="loading" src="'+loadingURL+'" width="20" height="20">');
+    if ($(this).data("page") === "place") {
+        window.location.href = "place";
+    } else {
+      $.get($(this).data("page"), function (data) {
+          $("body").empty();
+          $("body").append(data);
+          $(this).find('img.loading').remove();
+      });
+    }
+  });
+
+</script>

@@ -8,6 +8,7 @@ import math
 import itertools
 import re
 import sys
+import pprint
 from collections import OrderedDict
 from multiprocessing.dummy import Pool as ThreadPool, Manager as ThreadManager
 import psycopg2.extras
@@ -120,8 +121,10 @@ def sort_place_score(places):
 def get_place(venue_id, connection=None, cursor=None):
 
     if not is_place_in_db(venue_id, connection=connection, cursor=cursor):
+        print("venue not in DB (%s), fetching..." % venue_id)
         get_complete_venue(venue_id)
 
+    print("venue in DB (%s)" % venue_id)
     return get_complete_venue_from_db(venue_id, connection=connection, cursor=cursor)
 
 
@@ -560,10 +563,15 @@ def get_complete_venue(venue_id, connection=None, cursor=None):
         return {}
 
     if data is None or 'response' not in data or 'venue' not in data['response']:
+        print("no response from the venue")
         return None
 
     venue = data['response']['venue']
-    save_venue_to_db(venue, connection=connection, cursor=cursor)
+    if ('venueRatingBlacklisted' in venue and venue['venueRatingBlacklisted']) or ('deleted' in venue and venue['deleted']):
+        print("venue is deleted or blacklisted - skip venue")
+        return {}
+
+    save_venue_to_db(venue, redirect_venue_id=venue_id, connection=connection, cursor=cursor)
 
     nb_tips = venue['stats'].get('tipCount', 0)
     if nb_tips > 0:
@@ -580,24 +588,32 @@ def get_complete_venue_from_db(venue_id, connection=None, cursor=None):
 
     query_string = """
         SELECT v.venue_id, v.name, v.nb_checkins, v.latitude, v.longitude, v.rating, v.price_tier, v.nb_likes, v.nb_tips,
-        v.city, v.address, v.phrases, t.chains, t.categories, v.emoji, v.icon
+        v.city, v.address, v.phrases, t1.categories, t2.chains, v.emoji, v.icon
         FROM (
-            SELECT v1.venue_id, array_agg(DISTINCT c.name ORDER BY c.name) as categories, 
-                   array_agg(DISTINCT ch.name ORDER BY ch.name) as chains
+            SELECT v1.venue_id, array_agg(DISTINCT c.name ORDER BY c.name) as categories
             FROM (
                 SELECT venue_id,
-                unnest(coalesce(nullif(v1.categories,'{}'),array[null::text])) as category_id,
-		        unnest(coalesce(nullif(v1.chains,'{}'),array[null::text])) as chain_id
+                unnest(coalesce(nullif(v1.categories,'{}'), array[null::text])) as category_id
                 FROM venues v1
                 WHERE venue_id = %s
-            ) v1 LEFT OUTER JOIN categories c ON c.category_id = v1.category_id
-                 LEFT OUTER JOIN chains ch ON ch.chain_id = v1.chain_id
+            ) v1 JOIN categories c ON c.category_id = v1.category_id
             GROUP BY v1.venue_id
-        ) t JOIN venues v ON v.venue_id = t.venue_id
+        ) t1, 
+        (
+            SELECT v2.venue_id, array_agg(DISTINCT ch.name ORDER BY ch.name) as chains
+            FROM (
+                SELECT venue_id,
+                unnest(coalesce(nullif(v2.chains,'{}'),array[null::text])) as chain_id
+                FROM venues v2
+                WHERE venue_id = %s
+            ) v2 LEFT OUTER JOIN chains ch ON ch.chain_id = v2.chain_id
+            GROUP BY v2.venue_id
+        ) t2
+        JOIN venues v ON v.venue_id = t2.venue_id
         ORDER BY v.nb_checkins DESC
         LIMIT 1;"""
 
-    data = (venue_id,)
+    data = (venue_id, venue_id,)
 
     cursor.execute(query_string, data)
     rec = cursor.fetchone()
@@ -629,7 +645,7 @@ def get_complete_venue_from_db(venue_id, connection=None, cursor=None):
     return place
 
 
-def save_venue_to_db(venue, connection=None, cursor=None):
+def save_venue_to_db(venue, redirect_venue_id=None, connection=None, cursor=None):
     if connection is None and cursor is None:
         connection, cursor = utils.connect_to_db("foursquare")
 
@@ -663,6 +679,8 @@ def save_venue_to_db(venue, connection=None, cursor=None):
     description = venue.get('description', "")
     geom = "POINT({} {})".format(longitude, latitude)
 
+    print("venue: %s (%s / %s)" % (name, venue_id, redirect_venue_id))
+
     c = {'categories': categories}
     emoji, icon = get_icon_for_venue(venue_id, c)
 
@@ -672,17 +690,25 @@ def save_venue_to_db(venue, connection=None, cursor=None):
             save_chain_to_db(chain)
 
     query_string = """INSERT INTO venues 
-    (venue_id, categories, chains, phrases, postcode, address, city, rating, nb_checkins, nb_tips, 
+    (venue_id, categories, chains, phrases, postcode, address, city, rating, nb_checkins, nb_tips, redirect_venue_id,
     nb_likes, longitude, latitude, country, country_code, name, instagram, twitter, phone, facebook, icon, emoji,
     facebook_id, facebook_name, price_tier, price_message, price_currency, date_added, parent_id, description, geom) 
-    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
             %s, %s, %s, %s, %s, ST_GeomFromText(%s, 4326))
     ON CONFLICT DO NOTHING;"""
-    data = (venue_id, categories, chains, phrases, postcode, address, city, rating, nb_checkins, nb_tips,
+    data = (venue_id, categories, chains, phrases, postcode, address, city, rating, nb_checkins, nb_tips, None,
             nb_likes, longitude, latitude, country, country_code, name, instagram, twitter, phone, facebook, icon, emoji,
             facebook_id, facebook_name, price_tier, price_message, price_currency, date_added, parent_id, description, geom)
-
     cursor.execute(query_string, data)
+
+    if redirect_venue_id != venue_id:
+        # Save a new venue with the same attributes except for the venue_id
+        data = (redirect_venue_id, categories, chains, phrases, postcode, address, city, rating, nb_checkins, nb_tips, venue_id,
+                nb_likes, longitude, latitude, country, country_code, name, instagram, twitter, phone, facebook, icon,
+                emoji, facebook_id, facebook_name, price_tier, price_message, price_currency, date_added, parent_id,
+                description, geom)
+        cursor.execute(query_string, data)
+
     connection.commit()
 
     # get the parent
@@ -764,6 +790,8 @@ def get_all_tips_per_venue(venue_id):
     if nb_req == NB_MAX_REQ:
         print('Could not retrieve tips from venue {}'.format(venue_id))
         return {}
+
+    print(data)
 
     tips = data['response']['tips']['items']
     nb_tips = len(tips)
@@ -1064,8 +1092,11 @@ def get_icon_for_venue(venue_id, categories=None, connection=None, cursor=None):
     if not categories:
         categories = get_category_ids_for_venue(venue_id, connection=connection, cursor=cursor)
 
+    print(categories)
+
     if categories['categories']:
         categories_res = get_icons_from_category_ids(categories['categories'], connection=connection, cursor=cursor)
+        print(categories_res)
         cat_ids = [c for c in categories_res if categories_res[c]['leaf']]
         cat_id = list(categories_res.keys())[0] if not cat_ids else cat_ids[-1]
         emoji = categories_res[cat_id]['emoji']
@@ -1169,10 +1200,12 @@ def get_place_personal_information_from_db(venue_id, connection=None, cursor=Non
         connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
-    SELECT id, pi_id, venue_id, feature_type, avg, phrase_modeler, score, rank, tags, model_type
-    FROM place_personal_information
-    WHERE venue_id = %s
-    ORDER BY rank;"""
+    SELECT ppi.pi_id, ppi.venue_id, ppi.feature_type, pi.name, pi.category_id, pi.category_icon, ppi.avg, 
+           ppi.phrase_modeler, ppi.score, ppi.rank, ppi.tags, ppi.model_type
+    FROM place_personal_information ppi
+    JOIN personal_information pi on pi.pi_id = ppi.pi_id
+    WHERE ppi.venue_id = %s
+    ORDER BY ppi.rank;"""
     cursor.execute(query_string, (venue_id,))
 
     return [dict(res) for res in cursor]
@@ -1184,19 +1217,21 @@ def get_place_personal_information_aggregated_from_db(venue_id, connection=None,
         connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     query_string = """
-    SELECT pi.pi_id, ppi.venue_id, pi.name, pi.category_id, pi.category_icon, AVG(ppi.rank) as rank_avg, COUNT(ppi.id) as nb, AVG(ppi.score) as score_avg
+    SELECT pi.pi_id, ppi.venue_id, pi.name, pi.category_id, pi.category_icon, 
+    AVG(ppi.rank) as rank_avg, COUNT(ppi.id) as nb, AVG(ppi.score) as score_avg, 
+    COUNT(ppi.id) * AVG(ppi.score) / (AVG(ppi.rank)+1) as res
     FROM place_personal_information ppi
     JOIN personal_information pi on pi.pi_id = ppi.pi_id
     WHERE venue_id = %s
     GROUP BY pi.pi_id, ppi.venue_id
-    ORDER BY rank_avg;"""
+    ORDER BY res DESC;"""
     cursor.execute(query_string, (venue_id,))
 
     return [dict(res) for res in cursor]
 
 
 def has_place_personal_information_in_db(venue_id, connection=None, cursor=None):
-    """ Returns true if there are personal information (interests) associated to the venue_id in the database """
+    """ Returns true if there are personal information (interests) associated to the venue_id in the database. """
 
     if connection is None and cursor is None:
         connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
@@ -1205,6 +1240,16 @@ def has_place_personal_information_in_db(venue_id, connection=None, cursor=None)
     cursor.execute(query_string, (venue_id,))
     count = cursor.fetchone()[0]
     return count > 0
+
+
+def get_all_place_ids_from_place_personal_information_in_db(connection=None, cursor=None):
+    """ Returns the list of the place ids of the places that are in the place_personal_information table. """
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """SELECT venue_id FROM place_personal_information GROUP BY venue_id;"""
+    cursor.execute(query_string)
+    return [record['venue_id'] for record in cursor]
 
 
 def get_all_places_within_location(location='', args='location'):
@@ -1457,6 +1502,15 @@ if __name__ == '__main__':
             print("Location (%s, %s) in db: %s" % (lon, lat, res))
         else:
             print('Error - Please give lon lat arguments')
+    elif argument == 'venue':
+        if len(sys.argv) == 3:
+            venue_id = sys.argv[2]
+            place = get_place(venue_id)
+            if 'tips' in place:
+                del place['tips']
+            pprint.pprint(place)
+        else:
+            print('Error - Please give venue_id argument')
     else:
         print('Error - unknown argument provided ({})'.format(argument))
         sys.exit(0)

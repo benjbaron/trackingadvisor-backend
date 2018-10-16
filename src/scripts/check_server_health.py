@@ -59,11 +59,11 @@ def send_email(subject, message, to):
     server.quit()
 
 
-for url, service, to in SERVICES:
-    print("test %s" % service)
-    # check the health of the service
-    r = requests.get(url, timeout=5)
-    if r.status_code != requests.codes.ok:
-        # there is a problem, send an email
-        send_email("Problem with %s" % service, "There has been a problem with %s. You should check the service ASAP." % service, to)
+if __name__ == '__main__':
+    for url, service, to in SERVICES:
+        # check the health of the service
+        r = requests.get(url, timeout=5)
+        if r.status_code != requests.codes.ok:
+            # there is a problem, send an email
+            send_email("Problem with %s" % service, "There has been a problem with %s. You should check the service ASAP." % service, to)
 

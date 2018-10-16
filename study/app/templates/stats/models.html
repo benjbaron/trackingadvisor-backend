@@ -1,0 +1,73 @@
+{% include 'stats/navbar-top.html' %}
+
+<div id="content" class="container-fluid">
+  <div class="row">
+
+    {% include 'stats/navbar-side.html' %}
+
+    <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Models</h1>
+      </div>
+
+      {% for model in models %}
+        <div class="d-flex flex-column">
+            <h5>Model #{{ loop.index }}</h5>
+            <div class="d-flex flex-row no-wrap">
+                <div class="pl-0 col-6 mr-auto">
+                    <ul class="list-group">
+                        <li class="list-group-item p-2">Word embedding: <span class="badge badge-pill badge-primary">{{ model[0] }}</span></li>
+                        <li class="list-group-item p-2">Features: <span class="badge badge-pill badge-success">{{ model[1] }}</span></li>
+                        <li class="list-group-item p-2">Mean: <span class="badge badge-pill badge-info">{{ model[2] }}</span></li>
+                        <li class="list-group-item p-2">Phraser: <span class="badge badge-pill badge-danger">{{ model[3] }}</span></li>
+                    </ul>
+                </div>
+                <div id="chart-{{ loop.index }}" data-ratings="{{ models[model] }}" class="ct-chart ct-perfect-fourth" style="margin-top:-20px; height: 200px!important;"></div>
+            </div>
+        </div>
+      {% endfor %}
+
+    </main>
+  </div>
+</div>
+<script>
+
+var labels = ['Rank 1', 'Rank 2', 'Rank 3', 'Rank 4', 'Rank 5'];
+var options = {
+    height: 200,
+    width: 400,
+    stackBars: true,
+    reverseData: false,
+    horizontalBars: true,
+    axisY: {
+        showLabel: true,
+        offset: 50,
+       	seriesBarDistance: 20,
+        scaleMinSpace: 50
+    },
+    axisX: {
+        scaleMinSpace: 40,
+        seriesBarDistance: 40
+    }
+};
+
+$('.ct-chart').each(function(i) {
+    var id = $(this).attr('id');
+    console.log(id);
+    var r = $(this).data('ratings').slice(0, 5);
+    r = r[0].map((col, i) => r.map(row => row[i]));
+    console.log(r);
+    new Chartist.Bar("#" + id, {
+        labels: labels,
+        series: r
+    }, options).on('draw', function (data) {
+        if (data.type === 'bar') {
+            data.element.attr({
+                style: 'stroke-width: 20px'
+            });
+        }
+    });
+});
+
+
+</script>

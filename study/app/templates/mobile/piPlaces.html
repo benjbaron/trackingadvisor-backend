@@ -1,0 +1,678 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <meta charset='utf-8' />
+    <title>Semantica Study</title>
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Mapbox -->
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.48.0/mapbox-gl.js'></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+    <!-- Flickity -->
+    <link rel="stylesheet" href="https://unpkg.com/flickity@2/dist/flickity.min.css">
+    <script src="https://unpkg.com/flickity@2/dist/flickity.pkgd.min.js"></script>
+
+    <!-- Starrr -->
+    <!-- <script src="starrr.js"></script> -->
+    <!-- nouislider -->
+    <link rel="stylesheet" href="static/css/nouislider.min.css">
+    <script src="static/js/nouislider.min.js"></script>
+
+    <!-- Bootstrap core CSS and JS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+
+    <meta name='twitter:site' content='@mapbox'>
+    <meta property='og:site_name' content='Semantica study' />
+    <meta name='twitter:url' content='https://iss-lab.geog.ucl.ac.uk/semantica/study/' />
+    <meta property='og:url' content='https://iss-lab.geog.ucl.ac.uk/semantica/study/'>
+    <meta name='twitter:title' content='Semantica study' />
+    <meta property='og:title' content='Semantica study' />
+    <meta name='twitter:description' content='Understand the personal information of places' />
+    <meta property='og:description' content='Understand the personal information of places' />
+        <meta name='twitter:image' content='https://api.mapbox.com/styles/v1/mapbox/streets-v9/static/0,0,2/435x375?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA' />
+        <meta property='og:image' content='https://api.mapbox.com/styles/v1/mapbox/streets-v9/static/0,0,2/435x375?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4M29iazA2Z2gycXA4N2pmbDZmangifQ.-g_vE53SD2WrJ6tFX7QHmA' />
+    <meta name='twitter:image:width' content='435'>
+    <meta name='twitter:image:height' content='375'>
+    <meta property='og:image:width' content='435'>
+    <meta property='og:image:height' content='375'>
+    <meta name='twitter:card' content='summary_large_image'>
+    <meta property='og:type' content='website' />
+
+    <style>
+        html, body {
+          height: 100%;
+          overflow: hidden;
+        }
+
+        #content {
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          overflow: auto;
+        }
+
+        [role="main"] {
+          padding-top: 48px; /* Space for fixed navbar */
+          padding-bottom: 50px; /* Space for fixed footer */
+        }
+
+        #personal-information {
+          margin-top: 20px;
+          margin-bottom: 20px;
+          margin-left: 0;
+          padding-left: 15px;
+          flex-wrap: wrap;
+        }
+
+        #personal-information .card {
+          font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
+          width: 75%;
+          height: 230px;
+          border-radius: 5px!important;
+          border-width: 0!important;
+          margin-right: 10px;
+          margin-bottom: 10px;
+          box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+        }
+
+        #personal-information .card-header {
+          background: #500778;
+          padding: 10px!important;
+          border-bottom-width: 0!important;
+          margin-bottom: 5px;
+        }
+
+        #personal-information .card.done .card-header,
+        #selected-places .card.done .card-header {
+          background: #c6b0bc;
+        }
+
+        #personal-information .card.done .starrr a,
+        #selected-places .card.done .starrr a,
+        .starrr a:hover {
+          color: #c6b0bc;
+        }
+
+        #personal-information .card.done .card-text,
+        #selected-places .card.done .card-text {
+          color: #8e8e8e;
+        }
+
+        #personal-information .card.done span,
+        #selected-places .card.done span {
+          color: #8e8e8e;
+        }
+
+        #personal-information .card.done .noUi-handle,
+        #place-question.done .noUi-handle {
+          background: #c6b0bc;
+        }
+
+        #personal-information .card-header h5 {
+          display: block;
+          color: #fff;
+          font-weight: 700;
+          font-size: 1rem!important;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          line-height: 1.3rem;
+          max-height: 2.6rem;
+          margin-bottom: 0px!important;
+          min-height: 40px;
+        }
+
+        #personal-information .card-body {
+          padding: 5px 10px!important;
+        }
+
+        #personal-information .card-text {
+          font-size: 0.95rem!important;
+          line-height: 1rem!important;
+          margin-bottom: 0.1rem!important;
+          font-style: italic;
+        }
+
+        #personal-information .card-link {
+          color: darkred;
+        }
+
+        #personal-information .card.init {
+          background-color: #c6b0bc;
+          border-color: #c6b0bc;
+          color: white;
+        }
+
+        #personal-information .card.init .card-text {
+          font-style: italic!important;
+          font-size: 0.9rem!important;
+        }
+
+        #personal-information .card.init .card-title {
+          font-weight: bold!important;
+          font-size: 1.5rem!important;
+          margin-top: 10px;
+          color: #500778;
+        }
+
+        #selected-places {
+          overflow-y: hidden;
+          overflow-x: scroll;
+          -webkit-overflow-scrolling: touch;
+          height: 105px;
+          flex-wrap: initial!important;
+        }
+
+        #selected-places::after {
+          content: ''; /* Insert space before the first item and after the last one */
+          min-width: 1px;
+          min-height: 100%;
+        }
+
+        #selected-places .card {
+          font: 400 15px/22px 'Source Sans Pro', 'Helvetica Neue', Sans-serif !important;
+          width: 75%;
+          height: 80px;
+          margin-left: 0.5rem;
+          margin-top: 10px;
+          margin-bottom: 10px;
+          flex-wrap: initial!important;
+          border-radius: 3px!important;
+          border-width: 0!important;
+          box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+          z-index: 1000;
+        }
+
+        #selected-places .card-header {
+          background: #500778;
+          padding: 10px!important;
+          border-bottom-width: 0!important;
+        }
+
+        #selected-places .card-header h5 {
+          display: block;
+          color: #fff;
+          font-weight: 700;
+          font-size: 1rem!important;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 1;
+          line-height: 1.3rem;
+          max-height: 1.3rem;
+          margin-bottom: 0px!important;
+        }
+
+        #selected-places .card-body {
+          padding: 5px 10px!important;
+        }
+
+        #selected-places .card-text {
+          font-size: 0.75rem!important;
+          line-height: 1rem!important;
+          margin-bottom: 0.25rem!important;
+          display: block;
+          text-overflow: ellipsis;
+          word-wrap: break-word;
+          overflow: hidden;
+          max-height: 3em;
+        }
+
+        #selected-places .card-link {
+          color: white;
+        }
+
+        #selected-places .card.init {
+          background-color: white!important;
+          border-radius: 7px!important;
+          min-width: initial!important;
+          max-width: initial!important;
+          margin-right: .5rem!important;
+       }
+
+        #selected-places .card.init .card-text {
+          font-style: italic!important;
+          font-size: 0.9rem!important;
+        }
+
+        #selected-places .card.init .card-title {
+          font-weight: bold!important;
+          font-size: 1.2rem!important;
+          margin-bottom: 0.25rem!important;
+          color: #500778;
+        }
+
+        #footer {
+          height: 50px;
+          background-color: #f3f3f3;
+        }
+
+        #personal-information .flickity-page-dots {
+          position: relative!important;
+          bottom: 0!important;
+        }
+
+        .slider.noUi-target {
+          margin-top: 10px;
+          margin-bottom: 10px;
+          width: 40%;
+          border: none;
+          box-shadow: none;
+          background: #cdcdcd;
+        }
+
+        .slider.slider.noUi-horizontal {
+          height: 10px;
+        }
+
+        .slider.noUi-horizontal .noUi-handle {
+          width: 28px;
+          height: 28px;
+          background: #500778;
+          border-radius: 28px;
+          border: none;
+          box-shadow: none;
+          cursor: pointer;
+          outline: none;
+          top: -9px;
+        }
+
+        .slider.noUi-horizontal .noUi-handle:before,
+        .slider.noUi-horizontal .noUi-handle:after {
+          content: '';
+          background: transparent;
+        }
+
+        .slider.noUi-base {
+          z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow p-1">
+      <div class="col mr-0 d-flex">
+        <span class="text-white font-weight-bold"><img height="25" width="25" class="mr-2" src="static/img/location-arrow.svg">Semantica</span>
+        <a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a>
+      </div>
+      <button id="next-step" class="btn btn-outline-secondary ml-3 mr-3" type="submit" disabled>Continue</button>
+    </nav>
+
+    <div id="content" class="container-fluid h-100">
+      <div class="row">
+        <main role="main" class="px-0 h-100">
+
+          <div class="top" id="selected-places"></div>
+
+          <div class="m-2" id="place-question">
+            <h5>How <b>well</b> do you know this place?</h5>
+            <div class="d-flex flex-row">
+              <span class="mr-4 ml-auto">Not at all</span>
+              <div class="slider" data-type="question-1" data-rating="0"></div>
+              <span class="ml-4 mr-auto">Very</span>
+            </div>
+
+            <h5>How <b>sensitive</b> do is this place for you?</h5>
+            <div class="d-flex flex-row">
+              <span class="mr-4 ml-auto">Not at all</span>
+              <div class="slider" data-type="question-2" data-rating="0"></div>
+              <span class="ml-4 mr-auto">Very</span>
+            </div>
+          </div>
+
+          <div class="ml-2">
+            <h5>Personal information</h5>
+            <p>Tell us whether the personal information (e.g., <span id="personal-information-example">University</span>) is relevant to the place and important to you.</p>
+          </div>
+          <div id="personal-information"></div>
+        </main>
+      </div>
+    </div>
+
+    <div id="footer" class="fixed-bottom d-flex justify-content-center">
+        <button id="next-place" class="btn btn-outline-secondary m-1" type="submit" disabled>Next place</button>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="explanationModal" tabindex="-1" role="dialog" aria-labelledby="explanationModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="explanationModalTitle"><img src="static/img/location-arrow.svg" height="25" class="mr-1"/> Places and their personal information</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>In this second step, we have automatically extracted some personal information about the places you have selected.
+              We ask you to indicate whether you think that the personal information is (1) <b>relevant</b> to the place and (2) <b>important</b> for you when you go to the place.</p>
+            <p>To this end, you can rate the relevance and importance of each information item using the stars. Giving one star means that the item is not relevant or important
+              while giving five stars means that the item is very relevant or important. For instance the item <i>coffee</i> is very relevant to a <i>coffee shop</i> and less relevant for an <i>art gallery</i>.</p>
+            <p>We also want to understand how well you know the place and whether you find the place private.
+              Please do not forget to answer these two question at the top.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Got it!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+
+
+    var sliderOptions = {
+      start: [0],
+      range: {
+        'min': [0, 1],
+        '25%': [1,1],
+        '50%': [2,1],
+        '75%': [3,2],
+        'max': [4,3]
+      },
+      animate: false,
+      connect: false
+    };
+
+    $(function() {
+      window.places = JSON.parse(window.sessionStorage.getItem('userPlaces'));
+      window.pis = JSON.parse(window.sessionStorage.getItem('userPis'));
+      window.placeIds = Object.keys(window.places);
+      window.pisIds = null;
+      window.selectedPlaceId = null;
+      window.selectedPiId = null;
+      window.$carousel = null;
+      window.$piCarousel = null;
+
+      showPlaces();
+
+      // show the explanation modal.
+      $('#explanationModal').modal('show');
+
+      // set upt the place question sliders
+      $('#place-question .slider').each(function(id, slider) {
+        noUiSlider.create(slider, sliderOptions);
+        slider.noUiSlider.on('change', function(values) {
+          var rating = Math.floor(values[0]);
+          if (id === 0) {
+            window.places[window.selectedPlaceId].frequencyRating = rating;
+            $.getJSON("saveresponse", {type: 'q1', pid: window.selectedPlaceId, r: rating+1}, function (d) { });
+          } else if (id === 1) {
+            window.places[window.selectedPlaceId].privacyRating = rating;
+            $.getJSON("saveresponse", {type: 'q2', pid: window.selectedPlaceId, r: rating+1}, function (d) { });
+          }
+        });
+      });
+
+      // select the first place.
+      var placeId = window.placeIds[0];
+      window.selectedPlaceId = placeId;
+      window.pisIds = Object.keys(window.pis[window.selectedPlaceId]);
+      placeChange(window.places[placeId]);
+    });
+
+
+    function showPlaces() {
+        // add the places.
+        window.placeIds.forEach(function (placeId, index) {
+            addPlace(window.places[placeId]);
+        });
+
+        // configure the flickity carousel.
+        window.$carousel = $('#selected-places');
+        window.$carousel.flickity({
+          pageDots: false
+        });
+
+        // register the "change" event
+        window.$carousel.on( 'change.flickity', function( event, index ) {
+          console.log( 'Slide changed to ' + index, window.placeIds[index]);
+          sendRatings(window.selectedPlaceId, window.selectedPiId);
+
+          var placeId = window.placeIds[index];
+          window.pisIds = Object.keys(window.pis[placeId]);
+          window.selectedPlaceId = placeId;
+          placeChange(window.places[placeId]);
+        });
+    }
+
+    function addPlace(place) {
+        var el = $('<div class="card" data-id="'+place.id+'"><div class="card-header d-flex flex-row"><h5>'+place.name+'</h5></div><div class="card-body d-flex flex-column"><p class="card-text">'+place.fulladdress+'</p></div></div>');
+        $('#selected-places').append(el);
+    }
+
+    function sendRatings(placeId, piId) {
+        var el = $piCarousel.find("[data-id='" + piId + "']");
+
+        var ratingRel = el.data('rel');
+        if (ratingRel === undefined) {
+            ratingRel = 0;
+        }
+        $.getJSON("saveresponse", {type: 'rel', piid: piId, pid: placeId, r: ratingRel+1}, function (d) { });
+
+        var ratingImp = el.data('imp');
+        if (ratingImp === undefined) {
+            ratingImp = 0;
+        }
+        $.getJSON("saveresponse", {type: 'imp', piid: piId, pid: placeId, r: ratingImp+1}, function (d) { });
+        console.log("sendRatings", placeId, piId, ratingRel, ratingImp);
+    }
+
+    function placeChange(place) {
+      console.log("placeChange", window.pisIds.length);
+        // limit to the 15 top personal information.
+        if (window.$piCarousel !== null) {
+          // remove listener for the sliders
+          window.$piCarousel.find('.slider').each(function(id, slider) {
+            slider.noUiSlider.off();
+          });
+          window.$piCarousel.off('change.flickity');
+          window.$piCarousel.flickity('destroy');
+          window.$piCarousel.empty();
+        } else {
+          window.$piCarousel = $('#personal-information');
+        }
+
+        // change the #place-questions.
+        if (!'frequencyRating' in place && !'privacyRating' in place) {
+          place.frequencyRating = 0;
+          place.privacyRating = 0;
+          $('#place-question .slider').each(function(id, slider) {
+            slider.noUiSlider.set(0);
+          });
+
+        } else {
+          // Previously selected, set to the set values.
+          $('#place-question .slider').each(function(id, slider) {
+            if (id === 0) {
+              slider.noUiSlider.set(place.frequencyRating);
+            } else if (id === 1) {
+              slider.noUiSlider.set(place.privacyRating);
+            }
+          });
+        }
+
+        window.pisIds.slice(0, 15).forEach(function (piId, index) {
+            var pi = pis[place.id][piId];
+            addPersonalInformation(pi);
+        });
+        $('#personal-information-example').text(window.pis[window.selectedPlaceId][window.pisIds[0]]['pi_name']);
+        window.pis[window.selectedPlaceId][window.pisIds[0]].done = true;
+        window.selectedPiId = window.pisIds[0];
+
+        window.$piCarousel.flickity({
+          // options
+          prevNextButtons: true,
+          draggable: false,
+          pageDots: false
+        });
+
+        // adapt the numbering of the cells.
+        window.$piCarousel.append($('<p class="text-center"><span id="personal-information-number">1</span> out of '+Math.min(window.pisIds.length, 15)+'</p>'));
+        // register the "change" event
+        window.$piCarousel.on('change.flickity', function( event, index ) {
+          $('#personal-information-number').text(index+1);
+          var piId = window.pisIds[index];
+          window.pis[window.selectedPlaceId][piId].done = true;
+          $piCarousel.find("[data-id='" + window.selectedPiId + "']").addClass('done');
+          placeDone(window.selectedPlaceId);
+          sendRatings(window.selectedPlaceId, window.selectedPiId);
+
+          window.selectedPiId = piId;
+        });
+
+        // update the done classes
+        if (place.done) {
+          $('#place-question').addClass('done');
+        } else {
+          $('#place-question').removeClass('done');
+        }
+    }
+
+    function addPersonalInformation(pi) {
+        var piId = pi['pi_id'];
+        var name = pi['pi_name'];
+        var icon = "static/img/icons/" + pi['category_icon'] + "-white.svg";
+
+        var el = $('<div class="card" data-id="'+piId+'">' +
+            '<div class="card-header d-flex flex-row">' +
+              '<img class="mr-2" src="'+icon+'" width="20px" height="20px" />' +
+              '<h5>'+name+'</h5>' +
+            '</div>' +
+            '<div class="card-body d-flex flex-column">' +
+              '<p class="card-text">Is this information <b>relevant</b> to the place?</p>' +
+              '<div class="d-flex flex-row mt-1">' +
+                '<span class="mr-4 ml-auto">Not at all</span>' +
+                '<div class="slider" data-type="rel" data-rating="0"></div>' +
+                '<span class="ml-4 mr-auto">Very</span>' +
+              '</div>' +
+              '<p class="card-text mt-2">Is this information <b>important</b> to you?</p>' +
+              '<div class="d-flex flex-row mt-1">' +
+                '<span class="mr-4 ml-auto">Not at all</span>' +
+                '<div class="slider" data-type="imp" data-rating="0"></div>' +
+                '<span class="ml-4 mr-auto">Very</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>')
+        .appendTo(window.$piCarousel);
+
+        el.find('.slider').each(function(id, slider) {
+          // instantiate the slider.
+          noUiSlider.create(slider, sliderOptions);
+
+          // set previous ratings.
+          if (id === 0 && 'ratingRel' in pi) {
+            console.log('instantiate - pi', id, window.selectedPlaceId, piId)
+            slider.noUiSlider.set(pi.ratingRel);
+          } else if (id === 1 && 'ratingImp' in pi) {
+            console.log('instantiate - pi', id, window.selectedPlaceId, piId)
+            slider.noUiSlider.set(pi.ratingImp);
+          }
+
+          // listen to the change event.
+          slider.noUiSlider.on('change', function(values) {
+            var value = Math.floor(values[0]);
+            if (id === 0) {
+              pi.ratingRel = value;
+              $('#personal-information').find("[data-id='" + piId + "']").data('rel', value);
+            } else if (id === 1) {
+              pi.ratingImp = value;
+              $('#personal-information').find("[data-id='" + piId + "']").data('imp', value);
+            }
+            el.addClass('done');
+            placeDone(window.selectedPlaceId);
+          });
+        });
+
+        if (pi.done) {
+            el.addClass('done');
+        }
+    }
+
+    function placeDone(placeId) {
+        console.log("placeDone");
+        var isPlaceDone = true;
+        if (window.places[placeId].done === undefined) {
+            window.pisIds.slice(0, 15).forEach(function (piId, index) {
+                if (!window.pis[placeId][piId].done) {
+                    isPlaceDone = false;
+                }
+            });
+        } else {
+            isPlaceDone = window.places[placeId].done;
+        }
+
+        if (isPlaceDone) {
+          $('#selected-places').find("[data-id='" + placeId + "']").addClass('done');
+          $('#place-question').addClass('done');
+
+          $('#next-place').removeClass('btn-outline-secondary')
+              .addClass('btn-primary')
+              .prop('disabled', false)
+              .off('click')
+              .on('click', function() {
+                  // go to the next place.
+                  window.$carousel.flickity( 'next' );
+              });
+
+          window.places[placeId].done = true;
+          allPlacesDone();
+        } else {
+             $('#next-place').removeClass('btn-primary')
+                  .addClass('btn-outline-secondary')
+                  .prop('disabled', true)
+                  .off('click');
+        }
+    }
+
+    function allPlacesDone() {
+        var areAllPlacesDone = true;
+        window.placeIds.forEach(function(placeId, index) {
+            var place = window.places[placeId];
+            if (place.done === undefined || !place.done) {
+                areAllPlacesDone = false;
+            }
+        });
+
+        if (areAllPlacesDone) {
+          console.log("All places are done");
+          $('#next-place').hide();
+          $('#next-step').removeClass('btn-outline-secondary')
+              .addClass('btn-primary')
+              .prop("disabled", false)
+              .on('click', function() {
+                  // send the last rating.
+                  sendRatings(window.selectedPlaceId, window.selectedPiId);
+
+                  // save the relevance results in the session variable
+                  var pisString = JSON.stringify(pis);
+                  window.sessionStorage.setItem('userPis', pisString);
+
+                  var placeString = JSON.stringify(places);
+                  window.sessionStorage.setItem('userPlaces', placeString);
+
+                  // Go to the next screen.
+                  window.location.href = 'piPrivacy';
+              });
+        }
+    }
+    </script>
+
+</body>
+
+</html>

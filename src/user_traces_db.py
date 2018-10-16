@@ -58,8 +58,6 @@ def save_user_info_to_db(user):
 def update_user_info_in_db(user):
     connection, cursor = utils.connect_to_db("users")
 
-    print("user update: %s" % user)
-
     query_string = """
     UPDATE users SET
       ios_id = COALESCE(%s, ios_id),
