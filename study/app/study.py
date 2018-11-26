@@ -76,23 +76,36 @@ def get_fq_place(venue_id):
 def get_places(query, location, bounds, limit=50):
     get_db_connection()
 
-    url = BASE_URL + "venues/search"
+    url = BASE_URL + "search/recommendations"
+    # else:
+    #     url = BASE_URL + "venues/explore"
+
     params = {
         "ne": "%s,%s" % (bounds['ne']['lat'], bounds['ne']['lon']),
         "sw": "%s,%s" % (bounds['sw']['lat'], bounds['sw']['lon']),
         "limit": str(limit),
-        "query": query,
-        "intent": "browse"
+        "intent": 'bestnearby'
     }
+
+    if query != '':
+        params["query"] = query
+
+    # params = {
+    #     "ne": "%s,%s" % (bounds['ne']['lat'], bounds['ne']['lon']),
+    #     "sw": "%s,%s" % (bounds['sw']['lat'], bounds['sw']['lon']),
+    #     "limit": str(limit),
+    # }
 
     data = foursquare.send_request(url, params)
     results = []
 
-    if data is None or 'response' not in data or 'venues' not in data['response']:
+    if data is None or 'response' not in data or 'group' not in data['response'] or 'results' not in data['response']['group']:
         return results
 
-    for venue in data['response']['venues']:
-        results.append(format_fq_venue(venue))
+    for venue in data['response']['group']['results']:
+        if 'venue' not in venue:
+            continue
+        results.append(format_fq_venue(venue['venue']))
 
     return results
 
@@ -400,6 +413,35 @@ def get_relevance_ratings(place_id, connection=None, cursor=None):
     query = sql.SQL("""SELECT pi_id, array_agg(rating) as ratings
                FROM place_personal_information_relevance
                WHERE place_id = %s
+               GROUP BY pi_id;""")
+
+    data = (place_id,)
+    cursor.execute(query, data)
+    res = {}
+    for record in cursor:
+        pi_id = record['pi_id']
+        ratings = record['ratings']
+        avg_rating = sum(r for r in ratings) / len(ratings)
+        res[pi_id] = {
+            "pi_id": pi_id,
+            "ratings": ratings,
+            "name": pis[pi_id]['name'],
+            "avg_rating": avg_rating,
+            "category_id": pis[pi_id]['category_id'],
+            "subcategory_name": pis[pi_id]['subcategory_name'],
+            "category_icon": pis[pi_id]['category_icon'],
+            "tags": pis[pi_id]['tags']
+        }
+    return res
+
+
+def get_relevance_ratings_admin(place_id, connection=None, cursor=None):
+    if connection is None or cursor is None:
+        connection, cursor = utils.connect_to_db("study", cursor_type=psycopg2.extras.DictCursor)
+
+    query = sql.SQL("""SELECT pi_id, array_agg(rating) as ratings
+               FROM place_personal_information_relevance
+               WHERE place_id = %s AND session_id = 'admin'
                GROUP BY pi_id;""")
 
     data = (place_id,)

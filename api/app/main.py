@@ -268,9 +268,10 @@ def autocomplete_place():
     user_id = request.args.get('userid')
     lon = float(request.args.get('lon'))
     lat = float(request.args.get('lat'))
-    query = request.args.get('query')
+    query = request.args.get('query', '').lower()
+    req_type = request.args.get('type', 'es')
     location = {"lon": lon, "lat": lat}
-    return json.dumps(db.autocomplete_location(user_id, location, query))
+    return json.dumps(db.autocomplete_location(user_id, location, query, req_type))
 
 
 @app.route('/autocompletepi', methods=['GET'])

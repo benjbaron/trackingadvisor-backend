@@ -1,7 +1,7 @@
 <style>
-    #sidebar {
-        overflow-y: auto;
-    }
+  #place-listing {
+      overflow-y: auto;
+  }
   #place-info {
     height: 200px;
     overflow-y: hidden;
@@ -32,10 +32,8 @@
         <div class="nav"></div>
       </div>
       <div class="row h-100">
-          <div id="sidebar" class="col-3 pr-0">
-            <div id="place-listing">
-              <ul class="list-group list-group-flush"></ul>
-            </div>
+          <div id="place-listing" class="col-3 pr-0">
+            <ul class="list-group list-group-flush"></ul>
           </div>
           <div id="map" class="col-9 ml-sm-auto pl-0"></div>
       </div>
@@ -127,7 +125,7 @@
         }
         listing.addClass('active');
 
-        // scroll the places to the selected item
+        // scroll the places to the selected item.
         var offset = $('#place-listing ul li.active').offset().top + $('#place-listing ul li.active').height() - $('#place-listing').offset().top;
         if (offset < 0 || offset > $('#place-listing').height()) {
           $('#place-listing').animate({
@@ -137,11 +135,11 @@
 
         selectedPlace = place.properties.id;
 
-        // populate the place information div
+        // populate the place information div.
         $.getJSON("getplaceratings", {id: selectedPlace}, function (d) {
             $("#place-info .nav").empty();
             // sort by average rating.
-            var sortedKeys = Object.keys(temp1).sort((a, b) => parseFloat(d[b]['avg_rating']) - parseFloat(d[a]['avg_rating']));
+            var sortedKeys = Object.keys(d).sort((a, b) => parseFloat(d[b]['avg_rating']) - parseFloat(d[a]['avg_rating']));
             // display the elements.
             sortedKeys.forEach(function (i) {
                 var e = d[i];

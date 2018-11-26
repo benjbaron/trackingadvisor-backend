@@ -180,63 +180,6 @@ def show_search_places(template):
     return render_template(template)
 
 
-@app.route('/stats/')
-@basic_auth.required
-def show_study_stats():
-    stats = study.get_stats()
-    return render_template('stats/stats.html', stats=stats)
-
-
-@app.route('/stats/update')
-@basic_auth.required
-def study_stats_update():
-    study.update_place_records()
-    return json.dumps({"success": "ok"})
-
-
-@app.route('/stats/users')
-@basic_auth.required
-def show_stats_users():
-    stats = study.get_stats()
-    return render_template('stats/users.html', page='users', stats=stats)
-
-
-@app.route('/stats/pi')
-@basic_auth.required
-def show_stats_pi():
-    return render_template('stats/pi.html', page='pi')
-
-
-@app.route('/stats/models')
-@basic_auth.required
-def show_stats_models():
-    models = study.get_model_stats()
-    return render_template('stats/models.html', page='models', models=models)
-
-
-@app.route('/stats/place')
-@basic_auth.required
-def show_stats_place():
-    return render_template('stats/placeSearch.html', page='place')
-
-
-@app.route('/stats/places')
-@basic_auth.required
-def show_stats_places():
-    places = study.get_all_distinct_selected_places()
-    return render_template('stats/places.html', page='places', places=places)
-
-
-@app.route('/stats/placepi')
-@basic_auth.required
-def show_place_pi():
-    place_id = request.args.get('place_id')
-    place = foursquare.get_place(place_id)
-    return render_template('stats/placePi.html', place=place)
-
-
-@app.route('/stats/searchplace')
-@app.route('/mobile/searchplace')
 @app.route('/searchplace')
 def search_place():
 
@@ -271,7 +214,6 @@ def show_load_personal_information(template):
     return render_template(template)
 
 
-@app.route('/stats/geocode')
 @app.route('/geocode')
 def search_geocode():
     query = request.args.get('query')
@@ -288,6 +230,11 @@ def get_place_details():
 @mobile_template('{mobile/}piPlaces.html')
 def show_personal_information(template):
     return render_template(template)
+
+
+@app.route('/piBoxes')
+def show_personal_information_boxes():
+    return render_template('piBoxes.html')
 
 
 @app.route('/piTable')
@@ -412,7 +359,6 @@ def get_personal_information_list():
     return json.dumps(res)
 
 
-@app.route('/stats/computeplacepi')
 @app.route('/computeplacepi')
 def compute_place_personal_information():
     place_id = request.args.get('id')
@@ -425,16 +371,6 @@ def compute_place_personal_information():
     print(" [x] Got %s interests" % len(response))
 
     return json.dumps(response)
-
-
-@app.route('/stats/getplaceratings')
-@basic_auth.required
-def get_place_ratings():
-    place_id = request.args.get('id')
-    print(place_id, request.args)
-    ratings = study.get_relevance_ratings(place_id)
-    print(ratings)
-    return json.dumps(ratings)
 
 
 def compute_place_interests(room, places):

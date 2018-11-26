@@ -80,7 +80,8 @@ def export_user_data(user_id):
     return zipfname
 
 
-def autocomplete_location(user_id, location, query):    
+def autocomplete_location(user_id, location, query, type="es"):
+    start_time = time.time()
     p = ThreadPool(3)
 
     # get the current address
@@ -88,7 +89,7 @@ def autocomplete_location(user_id, location, query):
     # get the user locations
     res_user_places = p.apply_async(user_traces_db.autocomplete_location, args=(user_id, location, query, 250, 5))
     # get the foursquare places
-    res_foursquare_places = p.apply_async(foursquare.autocomplete_location, args=(location, query, 500, 10))
+    res_foursquare_places = p.apply_async(foursquare.autocomplete_location, args=(location, query, 500, 10, type))
 
     p.close()
     p.join()
@@ -96,6 +97,7 @@ def autocomplete_location(user_id, location, query):
     street, city = res_address.get()
     user_places = res_user_places.get()
     foursquare_places = res_foursquare_places.get()
+    print("elapsed (autocomplete_location): %.5f" % (time.time() - start_time))
 
     res = {
         'street': street,

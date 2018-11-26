@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Semantica | Personal information</title>
+    <link rel="icon" href="static/img/favicon.ico" type="image/x-icon" />
+
+    <!-- FontAwesome CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
+
+    <!-- Bootstrap core CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" integrity="sha384-WskhaSGFgHYWDcbwN70/dfYBj47jz9qbsMId/iRN3ewGhXQFZCSftd1LZCfmhktB" crossorigin="anonymous">
+
+      <!-- Mapbox CSS -->
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
+
+    <!-- Custom styles for this template -->
+    <link href="static/css/dashboard.css" rel="stylesheet">
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js" integrity="sha384-smHYKdLADwkXOn1EmN1qk/HfnUcbVRZyYmZ4qpPea6sjB/pTJ0euyQp0Mk8ck+5T" crossorigin="anonymous"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/feather-icons/dist/feather.min.js"></script>
+
+    <!-- Starrr -->
+    <script src="static/js/starrr.js"></script>
+
+    <style>
+      html, body {
+          height: 100%;
+          overflow: hidden;
+      }
+
+      #content {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        overflow: auto;
+      }
+
+      #place-listing {
+        overflow: hidden;
+        overflow-y: scroll;
+        height: 100%;
+      }
+
+      #place-listing .list-group-item.active {
+        background-color: #c6b0bc;
+        border-color: #c6b0bc;
+        color: black;
+      }
+
+      #place-listing .list-group-item.done {
+        opacity: 0.5;
+      }
+
+      #place-listing .list-group-item.active .btn {
+        background-color: #500778;
+        border-color: #500778;
+      }
+
+      .navbar-text {
+        font-size: 1rem!important;
+      }
+
+      .btn-feedback {
+          width: 90px;
+      }
+
+      .btn-yes {
+          color: #343a40;
+          background-color: #b6e6c1;
+          border-color: #b6e6c1;
+      }
+
+      .btn-yes:not(:disabled):not(.disabled).active {
+          color: #fff;
+          background-color: #1e7e34;
+          border-color: #1e7e34;
+      }
+
+      .btn-meh {
+          color: #343a40;
+          background-color: #f9edca;
+          border-color: #f9edca;
+      }
+
+      .btn-meh:not(:disabled):not(.disabled).active {
+          color: #fff;
+          background-color: #d39e00;
+          border-color: #d39e00;
+      }
+
+      .btn-no {
+          color: #343a40;
+          background-color: #f5c4c7;
+          border-color: #f5c4c7;
+      }
+
+      .btn-no:not(:disabled):not(.disabled).active {
+          color: #fff;
+          background-color: #bd2130;
+          border-color: #b21f2d;
+      }
+
+      #add-places {
+        background-color: #500778!important;
+        border-color: #500778!important;
+      }
+      #add-places:focus {
+        outline: none!important;
+        box-shadow: none;
+        border-color: rgba(0, 0, 0, 0);
+      }
+
+      #show-more {
+        position: relative;
+        height: 40px;
+      }
+
+      #show-more .btn {
+        border-radius: 20px!important;
+        border: 2px #500778;
+        color: #000000;
+        background-color: #f3f3f3;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.20)!important;
+      }
+
+      #show-more .btn:active {
+        border-color: #500778;
+        background-color: #500778;
+        color: #f3f3f3;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.40)!important;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <nav id="nav" class="navbar navbar-dark fixed-top bg-dark flex-md-nowrap p-0 shadow">
+      <div class="navbar-brand col-2 mr-0 d-flex" ><span><img height="25" width="25" style="margin-right:10px" src="static/img/location-arrow.svg">Semantica</span><a href="#" class="ml-auto" data-toggle="modal" data-target="#explanationModal"><i class="fa fa-info" style="font-size:25px;color:white"></i></a></div>
+      <span class="navbar-text col-3 mr-auto ml-3"><b>Places and their personal information</b></span>
+      <button id="next-step" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" type="submit" disabled>Continue</button>
+    </nav>
+
+    <div id="content" class="container-fluid h-100">
+      <div class="row h-100">
+        <nav class="col-md-2 d-none d-md-block bg-light sidebar">
+          <div class="sidebar-sticky d-flex flex-column">
+            <div class="col-auto mt-3 mb-3">
+              <button type="button" id="add-places" class="btn btn-primary btn-sm w-100">Add more places</button>
+            </div>
+            <div id="place-listing">
+              <ul class="list-group list-group-flush"></ul>
+            </div>
+          </div>
+        </nav>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-0 h-100">
+          <div id="place-title" class="d-flex flex-row flex-md-nowrap align-items-center pt-3 pb-2 pl-4 mb-3 border-bottom"></div>
+          <div id="place-questions" class="d-flex flex-column flex-md-nowrap pl-4 mb-3"></div>
+          <div class="d-flex flex-column flex-md-nowrap pl-3 pr-3 mb-3" id="personal-information"></div>
+
+          <div id="show-more" class="row justify-content-center align-items-center mb-4" style="display: none;"></div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal fade" id="explanationModal" tabindex="-1" role="dialog" aria-labelledby="explanationModalTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="explanationModalTitle"><img src="static/img/location-arrow.svg" height="25" class="mr-1"/> Places and their personal information</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <p>In this second step, we have automatically extracted some personal information about the places you have selected.
+              We ask you to indicate whether you think that the personal information is (1) <b>relevant</b> to the place and (2) <b>important</b> for you when you go to the place.</p>
+            <p>To this end, you can rate the relevance and importance of each information item using the stars. Giving one star means that the item is not relevant or important
+              while giving five stars means that the item is very relevant or important. For instance the item <i>coffee</i> is very relevant to a <i>coffee shop</i> and less relevant for an <i>art gallery</i>.</p>
+            <p>We also want to understand how well you know the place and whether you find the place private.
+              Please do not forget to answer these two question at the top.</p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary" data-dismiss="modal">Got it!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script>
+        // ON START
+        var userPlaces = window.sessionStorage.getItem('userPlaces');
+        var places = JSON.parse(userPlaces);
+
+        var userPis = window.sessionStorage.getItem('userPis');
+        var pis = JSON.parse(userPis);
+
+        var selectedPlace = null;
+        var isUserInput = true;
+
+        $(document).on("mousewheel",function(event,delta){
+          // prevent horizontal scrolling
+          if (event.originalEvent.wheelDeltaX !== 0) {
+            event.preventDefault();
+          }
+        });
+
+        $(function() {
+            // show the explanation modal.
+            $('#explanationModal').modal('show');
+
+            // show the places and associated personal information.
+            showPlaces();
+            $('#add-places').on('click', function() {
+                var placeString = JSON.stringify(places);
+                window.sessionStorage.setItem('userPlaces', placeString);
+
+                var pisString = JSON.stringify(pis);
+                window.sessionStorage.setItem('userPis', pisString);
+
+                window.location.href = 'search';
+            });
+
+            $('#show-more').click(function(e) {
+                // show the rest of the personal information.
+                var keys = Object.keys(pis[selectedPlace]);
+                keys.slice(15, keys.length).forEach(function (piId, index) {
+                    var pi = pis[selectedPlace][piId];
+                    addPersonalInformation(pi);
+                });
+
+                // hide the "show more" button
+                $('#show-more').hide();
+            });
+
+            window.setTimeout(function () {
+                var el = $('#place-listing li').first();
+                placeClick(places[el.data('id')], el);
+            }, 500);
+        });
+
+        function showPlaces() {
+            Object.keys(places).forEach(function (placeId, index) {
+                addPlace(places[placeId]);
+            });
+        }
+
+        function addPlace(place) {
+            var el = $('<li class="list-group-item d-flex flex-row" data-id="'+place.id+'"><div class="mr-3"><img width="25" height="25" src="'+place.icon+'"></div><div class="d-flex flex-column"><b>'+place.name+'</b><small>'+place.address+'</small></div></li>');
+            $('#place-listing ul').append(el);
+
+            placeDone(place.id);
+
+            // Add an event listener for the links in the sidebar listing
+            el.click(function(e) {
+              // Update the currentFeature to the store associated with the clicked link
+              var place = places[$(this).data("id")];
+              placeClick(place, $(this));
+            });
+        }
+
+        function addPersonalInformation(pi) {
+            var piId = pi['pi_id'];
+            var name = pi['pi_name'];
+            var icon = "static/img/icons/" + pi['category_icon'] + ".svg";
+
+            var el = $('<tr  data-id="'+piId+'">' +
+                '<td><img src="'+icon+'" width="25px" height="25px"/></td>' +
+                '<td><b>'+name+'</b></td>' +
+                '<td><div class="ml-auto btn-group btn-group-toggle" data-toggle="buttons">' +
+                  '<label class="btn btn-yes btn-feedback"><input type="radio" name="options" id="option1-'+piId+'" autocomplete="off" data-rating="5" data-id="'+piId+'">Very</label>' +
+                  '<label class="btn btn-meh btn-feedback"><input type="radio" name="options" id="option2-'+piId+'" autocomplete="off" data-rating="3" data-id="'+piId+'">Maybe</label>' +
+                  '<label class="btn btn-no btn-feedback"><input type="radio" name="options" id="option3-'+piId+'" autocomplete="off" data-rating="1" data-id="'+piId+'">Not at all</label></td></tr>')
+                .hide()
+                .appendTo($('#personal-information-table tbody'))
+                .fadeIn('slow');
+
+            el.find('.btn-group .btn').on('click', function(e) {
+                var el = $(this).find('input');
+                var piId = el.data('id');
+                var rating = el.data('rating');
+                console.log("Clicked", piId, rating);
+                pi.rating = rating;
+                pi.done = true;
+                placeDone(selectedPlace);
+                $.getJSON("saveresponse", {piid: piId, pid: selectedPlace, r: rating, type: 'rel'}, function (d) { }).fail(function(){ alert("Error when saving the rating."); });
+            });
+
+            if ('rating' in pi) {
+                el.find('input[data-rating='+pi.rating+']').parent().addClass('active');
+            }
+        }
+
+
+        function allPlacesDone() {
+            var areAllPlacesDone = true;
+            Object.keys(places).forEach(function(placeId, index) {
+                var place = places[placeId];
+                if (place.done === undefined || !place.done) {
+                    areAllPlacesDone = false;
+                }
+            });
+
+            if (areAllPlacesDone) {
+                $('#next-place').hide();
+                $('#next-step').removeClass('btn-outline-secondary')
+                    .addClass('btn-primary')
+                    .prop("disabled", false)
+                    .on('click', function() {
+                        // save the relevance results in the session variable
+                        var pisString = JSON.stringify(pis);
+                        window.sessionStorage.setItem('userPis', pisString);
+
+                        var placeString = JSON.stringify(places);
+                        window.sessionStorage.setItem('userPlaces', placeString);
+
+                        // Go to the next screen
+                        window.location.href = 'piPrivacy';
+                    });
+            }
+        }
+
+        function placeDone(placeId) {
+            var isPlaceDone = true;
+            if (places[placeId].done === undefined) {
+                var keys = Object.keys(pis[placeId]);
+                keys.slice(0, 15).forEach(function (piId, index) {
+                    if (!pis[placeId][piId].done) {
+                        isPlaceDone = false;
+                    }
+                });
+            } else {
+                isPlaceDone = places[placeId].done;
+            }
+
+            if (places[placeId].frequencyRating === 0 || places[placeId].privacyRating === 0) {
+                isPlaceDone = false;
+            }
+
+            if (isPlaceDone) {
+              $('#place-listing').find("[data-id='" + placeId + "']").addClass('done');
+              $('#next-place').removeClass('btn-outline-secondary')
+                  .addClass('btn-primary')
+                  .prop("disabled", false)
+                  .off('click')
+                  .on('click', function() {
+                      goToNextPlace(placeId);
+                  });
+
+              places[placeId].done = true;
+              allPlacesDone();
+            }
+        }
+
+        function goToNextPlace(placeId) {
+            let total = $('#place-listing li').length;
+            var current = $('#place-listing').find('[data-id="'+placeId+'"]');
+            while (current.hasClass('done')) {
+                if (current.index() === total-1) {
+                    current = $('#place-listing li').first();
+                } else {
+                    current = current.next();
+                }
+                if (current.data('id') === placeId) {
+                    return null;
+                }
+            }
+            placeClick(places[current.data('id')], current);
+        }
+
+
+        function placeClick(place, listing) {
+            var activeItem = $('#place-listing ul li.active');
+            if (activeItem) {
+              activeItem.removeClass('active');
+              activeItem.find('button').remove();
+            }
+            listing.addClass('active');
+
+            // scroll the places to the selected item
+            var offset = $('#place-listing ul li.active').offset().top + $('#place-listing ul li.active').height() - $('#place-listing').offset().top;
+            if (offset < 0 || offset > $('#place-listing').height()) {
+              $('#place-listing').animate({
+                scrollTop: $('#place-listing').scrollTop() + $('#place-listing ul li.active').offset().top - $('#place-listing').offset().top},
+                'slow');
+            }
+
+            selectedPlace = place.id;
+
+            // show the personal information associated to the selected place
+            $('main div').empty();
+            $('#place-title').append('<img class="mr-3 mb-1" src="'+place.icon+'" width="35px" height="35px" /><h1 class="mr-auto">'+place.name+'</h1><button id="next-place" class="btn btn-outline-secondary my-2 my-sm-0 mr-3" disabled>Next place</button>');
+            $('#place-questions').append('<div class="d-flex flex-row align-items-center mb-2"><div class="mr-3">How <b>well</b> do you know this place?</div><div><button data-btn-type="1" data-btn-rating="1" class="btn btn-outline-secondary btn-sm mr-3">Not at all</button><button data-btn-type="1" data-btn-rating="2" class="btn btn-outline-secondary btn-sm mr-3">Just a little</button><button data-btn-type="1" data-btn-rating="3" class="btn btn-outline-secondary btn-sm mr-3">Somewhat well</button><button data-btn-type="1" data-btn-rating="4" class="btn btn-outline-secondary btn-sm mr-3">Quite well</button><button data-btn-type="1" data-btn-rating="5" class="btn btn-outline-secondary btn-sm mr-3">Very well</button></div></div>');
+            $('#place-questions').append('<div class="d-flex flex-row align-items-center mb-2"><div class="mr-3">How <b>private</b> do you consider this place?</div><div><button data-btn-type="2" data-btn-rating="1" class="btn btn-outline-secondary btn-sm mr-3">Not private at all</button><button data-btn-type="2" data-btn-rating="2" class="btn btn-outline-secondary btn-sm mr-3">A little private</button><button data-btn-type="2" data-btn-rating="3" class="btn btn-outline-secondary btn-sm mr-3">Somewhat private</button><button data-btn-type="2" data-btn-rating="4" class="btn btn-outline-secondary btn-sm mr-3">Quite private</button><button data-btn-type="2" data-btn-rating="5" class="btn btn-outline-secondary btn-sm mr-3">Very private</button></div></div>');
+            $('#personal-information').append('<table class="table mr-2" id="personal-information-table"><thead class="thead-light"><th scope="col" style="width:5%"></th><th scope="col" style="width:40%">Name</th><th scope="col" style="width:55%">How relevant is it to the place?</th></thead><tbody></tbody></table>');
+
+            // limit to the 15 top personal information.
+            var keys = Object.keys(pis[place.id]);
+            keys.slice(0, 15).forEach(function (piId, index) {
+                var pi = pis[place.id][piId];
+                addPersonalInformation(pi);
+            });
+
+            // Add a "show more" button if there are more personal information to show.
+            if (keys.length > 15) {
+                var showMoreEl = $('#show-more');
+                showMoreEl.show();
+                showMoreEl.append('<a class="btn btn-primary" href="#" role="button">Show more</a>');
+            }
+
+            var frequencyRating = places[selectedPlace].frequencyRating;
+            if (frequencyRating !== 0) {
+                $('#place-questions').find("[data-btn-type='1'][data-btn-rating='"+frequencyRating+"']").addClass('active');
+            }
+
+            var privacyRating = places[selectedPlace].privacyRating;
+            if (privacyRating !== 0) {
+                $('#place-questions').find("[data-btn-type='2'][data-btn-rating='"+privacyRating+"']").addClass('active');
+            }
+
+            $('#place-questions button').on('click', function() {
+                var type = parseInt($(this).data('btn-type'));
+                var rating = parseInt($(this).data('btn-rating'));
+                console.log("Type: " + type + ", Rating: " + rating);
+
+                if (type === 1) {
+                    places[selectedPlace].frequencyRating = rating;
+                    places[selectedPlace].place.properties.frequencyRating = rating;
+                    $.getJSON("saveresponse", {type: 'q1', pid: selectedPlace, r: rating}, function (d) { });
+                } else if (type === 2) {
+                    places[selectedPlace].privacyRating = rating;
+                    places[selectedPlace].place.properties.privacyRating = rating;
+                    $.getJSON("saveresponse", {type: 'q2', pid: selectedPlace, r: rating}, function (d) { });
+                }
+
+                $('#place-questions').find("[data-btn-type='" + type + "']").removeClass('active');
+                $(this).addClass('active');
+
+                placeDone(selectedPlace);
+            });
+        }
+
+    </script>
+  </body>
+</html>

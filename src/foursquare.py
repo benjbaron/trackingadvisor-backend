@@ -2,9 +2,11 @@ import os
 import sys
 import random
 import time
+import pika
 import json
 import requests
 import math
+import uuid
 import itertools
 import re
 import sys
@@ -12,6 +14,7 @@ import pprint
 from collections import OrderedDict
 from multiprocessing.dummy import Pool as ThreadPool, Manager as ThreadManager
 import psycopg2.extras
+from elasticsearch import Elasticsearch
 
 from keys import *
 
@@ -26,11 +29,48 @@ BASE_URL = "https://api.foursquare.com/v2/"
 NB_MAX_REQ = (len(TOKENS) + len(KEY_LIST)) * 2  # max number of requests that we allow the session to do in a row
 QUOTA_EXCEEDED = set()
 
+# Setup the RabbitMQ queue
+RABBITMQ_HOST = "colossus07"
+RABBITMQ_QUEUE = "rpc_fsq_tips_queue"
+
+es = Elasticsearch([{'host': 'colossus07', 'port': 9200}])
+
+
+class FSQTipsWorkerRpcClient(object):
+    def __init__(self):
+        self.connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+
+        self.channel = self.connection.channel()
+
+        result = self.channel.queue_declare(exclusive=True)
+        self.callback_queue = result.method.queue
+
+        self.channel.basic_consume(self.on_response, no_ack=True,
+                                   queue=self.callback_queue)
+
+    def on_response(self, ch, method, props, body):
+        if self.corr_id == props.correlation_id:
+            self.response = body
+
+    def call(self, s):
+        self.response = None
+        self.corr_id = str(uuid.uuid4())
+        self.channel.basic_publish(exchange='',
+                                   routing_key=RABBITMQ_QUEUE,
+                                   properties=pika.BasicProperties(
+                                       reply_to=self.callback_queue,
+                                       correlation_id=self.corr_id,
+                                   ),
+                                   body=str(s))
+        while self.response is None:
+            self.connection.process_data_events()
+        return json.loads(self.response.decode('utf-8'))
+
 
 def get_client():
     # user-less access
     key_list = [KEY_LIST[i] for i in range(len(KEY_LIST)) if i not in QUOTA_EXCEEDED]
-    idx = random.randint(0, len(key_list)-1)
+    idx = random.randint(0, len(key_list) - 1)
     return idx, "client_id=%s&client_secret=%s" % (KEY_LIST[idx][0], KEY_LIST[idx][1])
 
 
@@ -55,19 +95,19 @@ def send_request(base, params={}):
             full_url += "&" + client
         else:
             full_url += client
-        full_url += "&v=20150906&m=foursquare&locale=en"
+        full_url += "&v=20181107&m=foursquare&locale=en"
         try:
             data = requests.get(full_url).json()  # json.load(urllib2.urlopen(full_url))
         except Exception as e:
             print("Failed getting the response")
             print(e.__doc__)
             nb_req += 1
-            time.sleep(min(1, nb_req/10))
+            time.sleep(min(1, nb_req / 10))
             continue
 
         if 'error' in data or 'response' not in data or not data['response']:
             nb_req += 1
-            time.sleep(min(1, nb_req/10))
+            time.sleep(min(1, nb_req / 10))
             continue
         else:
             if 'meta' in data and 'errorType' in data['meta'] and data['meta']['errorType'] == 'quota_exceeded':
@@ -79,13 +119,20 @@ def send_request(base, params={}):
 def test_api_keys(base, params={}):
     base_url = base + "?" + "&".join(["%s=%s" % (k, v.replace(' ', '+')) for (k, v) in params.items()])
     count = 0
+    premium_keys = []
     for client_id, secret_id in KEY_LIST:
         full_url = base_url + "&" + "client_id=%s&client_secret=%s" % (client_id, secret_id)
         full_url += "&v=20150906&m=foursquare&locale=en"
         try:
             data = requests.get(full_url).json()
+            tips = data['response']['tips']['items']
+            nb_tips = len(tips)
+            print("..number of tips: %s" % len(tips))
+            if nb_tips != 1:
+                premium_keys.append((client_id, secret_id, nb_tips))
         except:
-            print("Exception: Failed getting the response\n..Client ID: {}\n..Secret ID: {}".format(client_id, secret_id))
+            print(
+                "Exception: Failed getting the response\n..Client ID: {}\n..Secret ID: {}".format(client_id, secret_id))
             continue
 
         if 'error' in data or 'response' not in data or not data['response']:
@@ -94,8 +141,11 @@ def test_api_keys(base, params={}):
                 print("..Error: {} ({})".format(data['meta']['errorType'], data['meta']['code']))
             continue
 
-        print("Done for key #{}".format(count))
+        print("[x] Done for key #{}".format(count))
         count += 1
+
+    print("[x] We have %s premium keys" % len(premium_keys))
+    pprint.pprint(premium_keys)
 
 
 def sort_place_score(places):
@@ -119,12 +169,11 @@ def sort_place_score(places):
 
 
 def get_place(venue_id, connection=None, cursor=None):
-
     if not is_place_in_db(venue_id, connection=connection, cursor=cursor):
-        print("venue not in DB (%s), fetching..." % venue_id)
+        # print("venue not in DB (%s), fetching..." % venue_id)
         get_complete_venue(venue_id)
 
-    print("venue in DB (%s)" % venue_id)
+    # print("venue in DB (%s)" % venue_id)
     return get_complete_venue_from_db(venue_id, connection=connection, cursor=cursor)
 
 
@@ -168,7 +217,7 @@ def get_autocomplete(location, query, distance=250, limit=8):
     else:
         url += "venues/suggestcompletion"
         params['query'] = query
-        params['radius'] = str(10*distance)
+        params['radius'] = str(10 * distance)
         venue_key_string = "minivenues"
 
     data = send_request(url, params)
@@ -202,10 +251,105 @@ def get_autocomplete(location, query, distance=250, limit=8):
     return results
 
 
+def get_autocomplete_from_es(location, query, distance=250, limit=8):
+    global es
+
+    try:
+        h = es.cluster.health(wait_for_status='yellow', request_timeout=1)
+        if h['status'] is not 'yellow':
+            es = Elasticsearch([{'host': 'colossus07', 'port': 9200}])
+    except elasticsearch.exceptions.ConnectionTimeout as e:
+        es = Elasticsearch([{'host': 'colossus07', 'port': 9200}])
+
+    lon = location['lon']
+    lat = location['lat']
+
+    es_query = {
+        "size": limit,
+        "query": {
+            "function_score": {
+                "query": {
+                    "bool": {
+                        "must": {
+                            "prefix": {
+                                "name": query
+                            }
+                        },
+                        "filter": {
+                            "geo_distance": {
+                                "distance": str(distance) + "m",
+                                "location": {
+                                    "lat": lat,
+                                    "lon": lon
+                                }
+                            }
+                        }
+                    }
+                },
+                "functions": [
+                    {
+                        "gauss": {
+                            "location": {
+                                "origin": {"lat": lat, "lon": lon},
+                                "offset": "0m",
+                                "scale": "100m"
+                            }
+                        },
+                        "weight": 50
+                    },
+                    {
+                        "field_value_factor": {
+                            "field": "nb_checkins",
+                            "factor": 2,
+                            "modifier": "log1p",
+                            "missing": 1
+                        },
+                        "weight": 15
+                    }
+                ],
+                "score_mode": "sum",
+                "boost_mode": "avg"
+            }
+        },
+        "stored_fields": ["_source"],
+        "script_fields": {
+            "distance": {
+                "script": "doc['location'].planeDistance(" + str(lat) + "," + str(lon) + ")"
+            }
+        }
+    }
+
+    start_time = time.time()
+    res = es.search(index="foursquare", doc_type="places", body=es_query)
+    end_time = time.time()
+    print("elapsed (es.search): %.5f with %s results" % ((end_time - start_time), len(res)))
+    max_score = res['hits']['max_score']
+    results = []
+    for doc in res['hits']['hits']:
+        results.append({
+            "name": doc['_source']['name'],
+            "venueid": doc['_source']['venue_id'],
+            "placeid": "",
+            "category": doc['_source']['category'],
+            "city": doc['_source']['city'],
+            "address": doc['_source']['address'],
+            "latitude": doc['_source']['location'][1],
+            "longitude": doc['_source']['location'][0],
+            "checkins": doc['_source']['nb_checkins'],
+            "distance": doc['fields']['distance'][0],
+            "origin": "foursquare-cache",
+            "icon": doc['_source']['icon'],
+            "emoji": doc['_source']['emoji'],
+            "score": doc['_score'] / max_score
+        })
+
+    return results
+
+
 def get_autocomplete_from_db(location, query, distance=250, limit=8, cursor=None):
     if cursor is None:
         connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
-    
+
     query_string = ""
     data = None
 
@@ -250,7 +394,7 @@ def get_autocomplete_from_db(location, query, distance=250, limit=8, cursor=None
         ) v2 JOIN venues v3  ON v2.venue_id = v3.venue_id, place p
         ORDER BY sml DESC, distance ASC, v3.nb_checkins DESC
         LIMIT %s;"""
-        data = (location['lon'], location['lat'], query, 10*distance, limit)
+        data = (location['lon'], location['lat'], query, 10 * distance, limit)
 
     start_time = time.time()
     cursor.execute(query_string, data)
@@ -319,7 +463,7 @@ def get_place_with_name(location, query, distance=200, connection=None, cursor=N
            "location": {
                "lon": rec['longitude'],
                "lat": rec['latitude']
-             }
+           }
            }
 
     return loc
@@ -348,10 +492,28 @@ def get_place_with_id(venue_id, connection=None, cursor=None):
            "location": {
                "lon": rec['longitude'],
                "lat": rec['latitude']
-             }
+           }
            }
 
     return loc
+
+
+def get_all_venues_with_n_tips(n, connection=None, cursor=None):
+    if connection is None and cursor is None:
+        connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
+
+    query_string = """
+    SELECT v1.name, v1.venue_id
+    FROM (SELECT v.venue_id, COUNT(t.tip_id)::int as count
+    FROM venues v
+    JOIN tips t ON t.venue_id = v.venue_id
+    GROUP BY v.venue_id) v2
+    JOIN venues v1 ON v1.venue_id = v2.venue_id
+    WHERE v2.count = 1;"""
+    data = (n,)
+
+    cursor.execute(query_string, data)
+    return [dict(r) for r in cursor]
 
 
 def get_all_places_from_db(location, distance=150, connection=None, cursor=None):
@@ -505,13 +667,13 @@ def get_places_from_db(location, distance=50, limit=5, connection=None, cursor=N
                "price": rec['price_tier'],
                "category_id": rec['category_ids'],
                "location": {
-                  "lon": rec['longitude'],
-                  "lat": rec['latitude'],
-                  "city": rec['city'],
-                  "address": rec['address']
+                   "lon": rec['longitude'],
+                   "lat": rec['latitude'],
+                   "city": rec['city'],
+                   "address": rec['address']
                },
                "tips": rec['nb_tips']
-        }
+               }
         places.append(loc)
 
     return sort_place_score(places)
@@ -533,6 +695,50 @@ def is_location_in_db(location, distance=50, cursor=None):
     cursor.execute(query_string, data)
     res = cursor.fetchone()
     return res[0] > 0 if res else False
+
+
+def is_location_in_es(location, distance=50):
+    global es
+
+    try:
+        h = es.cluster.health(wait_for_status='yellow', request_timeout=1)
+        if h['status'] is not 'yellow':
+            es = Elasticsearch([{'host': 'colossus07', 'port': 9200}])
+    except elasticsearch.exceptions.ConnectionTimeout as e:
+        es = Elasticsearch([{'host': 'colossus07', 'port': 9200}])
+
+    # generate a random collection of points
+    lon = location['lon']
+    lat = location['lat']
+
+    points = [[lon, lat]] + [utils.create_random_point(lon, lat, distance) for _ in range(10)]
+
+    query = {
+        "query": {
+            "bool": {
+                "must": {
+                    "match_all": {}
+                },
+                "filter": {
+                    "geo_shape": {
+                        "area": {
+                            "shape": {
+                                "type": "multipoint",
+                                "coordinates": points
+                            },
+                            "relation": "contains"
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    start_time = time.time()
+    res = es.search(index="search_areas", doc_type="search_areas", body=query)
+    end_time = time.time()
+    print("elapsed (es.search): %.5f with %s results" % ((end_time - start_time), res['hits']['total']))
+    return res['hits']['total'] > 0 if res else False
 
 
 def save_search_area_to_db(location, boundary, distance, connection=None, cursor=None):
@@ -567,17 +773,15 @@ def get_complete_venue(venue_id, connection=None, cursor=None):
         return None
 
     venue = data['response']['venue']
-    if ('venueRatingBlacklisted' in venue and venue['venueRatingBlacklisted']) or ('deleted' in venue and venue['deleted']):
-        print("venue is deleted or blacklisted - skip venue")
+    if 'deleted' in venue and venue['deleted']:
+        print("venue is deleted  - skip venue")
         return {}
 
     save_venue_to_db(venue, redirect_venue_id=venue_id, connection=connection, cursor=cursor)
 
-    nb_tips = venue['stats'].get('tipCount', 0)
-    if nb_tips > 0:
-        tips = get_all_tips_per_venue(venue_id)
-        for tip in tips:
-            save_tip_to_db(tip, venue_id, connection=connection, cursor=cursor)
+    # get the tips from RPC and save them in the database
+    worker = FSQTipsWorkerRpcClient()
+    tips = worker.call(venue_id)
 
     return venue
 
@@ -679,8 +883,6 @@ def save_venue_to_db(venue, redirect_venue_id=None, connection=None, cursor=None
     description = venue.get('description', "")
     geom = "POINT({} {})".format(longitude, latitude)
 
-    print("venue: %s (%s / %s)" % (name, venue_id, redirect_venue_id))
-
     c = {'categories': categories}
     emoji, icon = get_icon_for_venue(venue_id, c)
 
@@ -697,16 +899,19 @@ def save_venue_to_db(venue, redirect_venue_id=None, connection=None, cursor=None
             %s, %s, %s, %s, %s, ST_GeomFromText(%s, 4326))
     ON CONFLICT DO NOTHING;"""
     data = (venue_id, categories, chains, phrases, postcode, address, city, rating, nb_checkins, nb_tips, None,
-            nb_likes, longitude, latitude, country, country_code, name, instagram, twitter, phone, facebook, icon, emoji,
-            facebook_id, facebook_name, price_tier, price_message, price_currency, date_added, parent_id, description, geom)
+            nb_likes, longitude, latitude, country, country_code, name, instagram, twitter, phone, facebook, icon,
+            emoji,
+            facebook_id, facebook_name, price_tier, price_message, price_currency, date_added, parent_id, description,
+            geom)
     cursor.execute(query_string, data)
 
     if redirect_venue_id != venue_id:
         # Save a new venue with the same attributes except for the venue_id
-        data = (redirect_venue_id, categories, chains, phrases, postcode, address, city, rating, nb_checkins, nb_tips, venue_id,
-                nb_likes, longitude, latitude, country, country_code, name, instagram, twitter, phone, facebook, icon,
-                emoji, facebook_id, facebook_name, price_tier, price_message, price_currency, date_added, parent_id,
-                description, geom)
+        data = (
+        redirect_venue_id, categories, chains, phrases, postcode, address, city, rating, nb_checkins, nb_tips, venue_id,
+        nb_likes, longitude, latitude, country, country_code, name, instagram, twitter, phone, facebook, icon,
+        emoji, facebook_id, facebook_name, price_tier, price_message, price_currency, date_added, parent_id,
+        description, geom)
         cursor.execute(query_string, data)
 
     connection.commit()
@@ -790,8 +995,6 @@ def get_all_tips_per_venue(venue_id):
     if nb_req == NB_MAX_REQ:
         print('Could not retrieve tips from venue {}'.format(venue_id))
         return {}
-
-    print(data)
 
     tips = data['response']['tips']['items']
     nb_tips = len(tips)
@@ -1049,7 +1252,7 @@ def get_category_ids_for_venue(venue_id, connection=None, cursor=None):
     SELECT categories
     FROM venues
     WHERE venue_id = %s;"""
-    data = (venue_id, )
+    data = (venue_id,)
 
     cursor.execute(query_string, data)
     cat_ids = [dict(record) for record in cursor]
@@ -1092,11 +1295,8 @@ def get_icon_for_venue(venue_id, categories=None, connection=None, cursor=None):
     if not categories:
         categories = get_category_ids_for_venue(venue_id, connection=connection, cursor=cursor)
 
-    print(categories)
-
     if categories['categories']:
         categories_res = get_icons_from_category_ids(categories['categories'], connection=connection, cursor=cursor)
-        print(categories_res)
         cat_ids = [c for c in categories_res if categories_res[c]['leaf']]
         cat_id = list(categories_res.keys())[0] if not cat_ids else cat_ids[-1]
         emoji = categories_res[cat_id]['emoji']
@@ -1136,22 +1336,37 @@ def get_icon_from_category_ids(category_ids):
     return None
 
 
-def autocomplete_location(location, query, distance=250, limit=10, connection=None, cursor=None):
+def autocomplete_location(location, query, distance=250, limit=10, type="es", connection=None, cursor=None):
     print("foursquare location: %s, query: %s, distance: %s, limit: %s" % (location, query, distance, limit))
     if connection is None and cursor is None:
         connection, cursor = utils.connect_to_db("foursquare", cursor_type=psycopg2.extras.DictCursor)
 
     start_time = time.time()
-    in_db = is_location_in_db(location, cursor=cursor)
+    if type == "es":
+        in_db = is_location_in_es(location)
+    else:
+        in_db = is_location_in_db(location, cursor=cursor)
     end_time = time.time()
-    print("elapsed (1): %.5f" % (end_time - start_time))
+    print("elapsed (is_location_in_db): %.5f" % (end_time - start_time))
 
     if not in_db:
         print("autocomplete from API")
-        return get_autocomplete(location, query, distance, limit)
+        start_time = time.time()
+        res = get_autocomplete(location, query, distance, limit)
+        print("elapsed (get_autocomplete): %.5f" % (time.time() - start_time))
+        return res
     else:
         print("autocomplete from DB")
-        return get_autocomplete_from_db(location, query, distance, limit, cursor=cursor)
+        if type == "es":
+            start_time = time.time()
+            res = get_autocomplete_from_es(location, query, distance, limit)
+            print("elapsed (get_autocomplete_from_es): %.5f" % (time.time() - start_time))
+            return res
+        else:
+            start_time = time.time()
+            res = get_autocomplete_from_db(location, query, distance, limit, cursor=cursor)
+            print("elapsed (get_autocomplete_from_db): %.5f" % (time.time() - start_time))
+            return res
 
 
 def load_personal_information(connection=None, cursor=None):
@@ -1447,8 +1662,11 @@ if __name__ == '__main__':
     argument = sys.argv[1]
     if argument == 'test-keys':
         # Test API keys
-        venue_id = "4ac518cef964a52021a620e3"
-        test_api_keys(BASE_URL + "venues/%s" % venue_id)
+        if len(sys.argv) == 3:
+            venue_id = sys.argv[2]
+        else:
+            venue_id = "4b0a52daf964a5203e2323e3"
+        test_api_keys(BASE_URL + "venues/%s/tips" % venue_id)
     elif argument == 'all':
         if len(sys.argv) == 3:
             location = sys.argv[2]
@@ -1469,9 +1687,18 @@ if __name__ == '__main__':
         if len(sys.argv) == 3:
             venue_id = sys.argv[2]
             venue_tips = get_all_tips_per_venue(venue_id)
-            print(venue_tips)
         else:
-            print('Error - Please give lon lat arguments')
+            print('Error - Please give a venue identifier')
+            sys.exit(0)
+    elif argument == 'get-tips-rpc':
+        if len(sys.argv) == 3:
+            venue_id = sys.argv[2]
+            worker = FSQTipsWorkerRpcClient()
+            tips = worker.call(venue_id)
+            print('Got %s tips' % len(tips))
+        else:
+            print('Error - Please give a venue identifier')
+            sys.exit(0)
     elif argument == 'find':
         if len(sys.argv) == 4:
             lon = sys.argv[2]

@@ -204,6 +204,7 @@ def get_personal_information(venue_id):
     # 2 - match with Foursquare places
     personal_information.append(get_personal_information_foursquare(venue['id']))
     if venue['parent_id']:
+        print("parent_id", venue['parent_id'])
         personal_information.append(get_personal_information_foursquare(venue['parent_id']))
         parent_venue = foursquare.get_place_with_id(venue['parent_id'])
         parent_place = dbpedia.get_place_with_name(parent_venue['location'], parent_venue['name'])

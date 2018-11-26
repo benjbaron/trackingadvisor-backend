@@ -148,7 +148,7 @@ body {
   font-size: 0.8rem!important;
 }
 
-.form-control:focus {
+.form-control:focus:not(#input-place-id) {
   border-color: rgba(0, 0, 0, 0);
   box-shadow: none;
 }

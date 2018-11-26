@@ -271,7 +271,7 @@
         var placeLayer = false;
         var markers = [];
         var popups = [];
-        var placeholderTypes = ["place", "restaurant", "hotel", "work", "bar", "pub", "supermarket", "tourist attraction", "museum"];
+        var placeholderTypes = ["place", "restaurant", "hotel", "work", "bank", "pharmacy", "bar", "pub", "supermarket", "tourist attraction", "museum"];
         var placeholderIndex = 0;
         var selectedPlaces = {};
         var currentCoordinates = [-0.134548, 51.524526];
@@ -637,6 +637,11 @@
         }
 
         function searchPlaces(query) {
+            if (map.getZoom() < 8) {
+                alert("The search space is too large, please zoom to the place you wish to search in.");
+                return;
+            }
+
             mprogress.start();
             var bounds = map.getBounds();
             var center = map.getCenter();

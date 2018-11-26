@@ -10,23 +10,181 @@
         <h1 class="h2">Personal information</h1>
       </div>
 
-      <div class="ct-chart ct-perfect-fourth"></div>
+      <div class="input-group mb-3">
+        <div class="input-group-prepend">
+          <button class="btn btn-outline-primary" onclick="searchPlace($('#input-place-id').val());" type="button">Search</button>
+        </div>
+        <input id="input-place-id" type="text" class="form-control" placeholder="Enter a place identifier" aria-label="Place identifier" aria-describedby="input-place-id-text">
+      </div>
+
+      <div id="personal-information-loader" class="col-6 mx-auto">
+          <p class="text-center">The personal information is loading.</p>
+          <img height="25" width="50" class="image-center" src="../static/img/loading-dots.svg">
+        </div>
+
+      <div id="place-info" class="row p-3 d-flex flex-column">
+        <div class="d-flex flex-wrap flex-row flex-md-nowrap align-items-left pt-3 pb-2 mb-3 border-bottom">
+            <img id="place-img" width="50px" height="50px" class="mr-3" src="" />
+            <div class="d-flex flex-column">
+                <h1 id="place-name" class="h2 mb-0"></h1>
+                <p id="place-address" class="mb-0"></p>
+                <p id="place-link" class="mb-0"></p>
+            </div>
+        </div>
+
+        <div id="place-categories"></div>
+        <div id="place-name-features"></div>
+        <div id="place-category-features"></div>
+        <div id="place-tips-features"></div>
+
+        <ul class="list-group mt-3" id="personal-information"></ul>
+      </div>
 
     </main>
   </div>
 </div>
 <script>
-var data = {
-  // A labels array that can contain any sort of values
-  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-  // Our series array that contains series objects or in this case series data arrays
-  series: [
-    [5, 2, 4, 2, 0]
-  ]
-};
 
-// Create a new line chart object where as first parameter we pass in a selector
-// that is resolving to our chart container element. The Second parameter
-// is the actual data object.
-new Chartist.Line('.ct-chart', data);
+// Helper functions.
+function tag(text) {
+    return '<span class="badge badge-secondary">'+text+'</span>';
+}
+
+function flattenTags(tags) {
+    return tags.map(function (e) {
+        if (Array.isArray(e[0])) {
+            if (Array.isArray(e[0][0])) {
+                return e[0][0].join(" ");
+            }
+            return e[0].join(" ");
+        }
+        return e[0];
+    })
+}
+
+function searchPlace(placeId) {
+    console.log("Search placeId", placeId);
+    currentPlaceId = placeId;
+    $('#personal-information-loader').show();
+    $('#place-info').attr('style','display: none !important'); // .hide()
+
+    // Get the place's basic information.
+    $.getJSON("getplacedetails", { id: placeId }, function(place){
+        console.log(place);
+        $('#place-info').show();
+        // set the name of the place
+        var icon = "../static/img/icons/" + place.icon + ".svg";
+        $('#place-img').attr("src", icon);
+        $('#place-name').text(place.name);
+        $('#place-address').text(place.location.address);
+        $('#place-link').html('<a target="_blank" href="https://foursquare.com/v/'+placeId+'"><b>Place link</b></a>');
+        $('#place-categories').html("<b>Categories:</b> "+place.category.join(', ')+"<br/>"+tag("Checkins | "+place['checkins'])+" "+tag("Likes | "+place['nb_likes'])+" "+tag("Tips | "+place['nb_tips']));
+
+        $('#personal-information-loader').hide();
+    }).done(function() {
+      $.getJSON("getplaceratings", { id: placeId, forAdmin: true }, function (d) {
+          console.log(d);
+          ratings = d;
+      }).done(function() {
+        // Get (or compute) the place personal information.
+        $.getJSON("computeplacepi", { id: placeId }, function (d) {
+            $('#personal-information').empty();
+
+            // sort array d by the sum of scores in "meta"
+            d.sort(function(a, b){
+                var sum_a = a['meta'].reduce((x, y) => x+y['score'], 0.0);
+                var sum_b = b['meta'].reduce((x, y) => x+y['score'], 0.0);
+                return sum_a / a['meta'].length - sum_b / b['meta'].length;
+            });
+            var nameFeatures = [];
+            var categoryFeatures = [];
+            var tipFeatures = [];
+            d.forEach(function (pi, index) {
+                addPersonalInformationRow(pi);
+                $.each(pi['meta'], function(i, item) {
+                    if (item['feature_type'] === 'name') {
+                        nameFeatures.push(flattenTags(item['tags']));
+                    } else if (item['feature_type'] === 'categories') {
+                        categoryFeatures.push(flattenTags(item['tags']));
+                    } else if (item['feature_type'] === 'tips') {
+                        tipFeatures.push(flattenTags(item['tags']));
+                    }
+                });
+            });
+
+            $('#place-name-features').html("<b>Name features:</b> "+(Array.from(new Set(nameFeatures.flat()))).join(' | '));
+            $('#place-category-features').html("<b>Category features:</b> "+(Array.from(new Set(categoryFeatures.flat()))).join(' | '));
+            $('#place-tips-features').html("<b>Tips features:</b> "+(Array.from(new Set(tipFeatures.flat()))).join(' | '));
+
+            $('#personal-information .btn-group .btn').on('click', function(e) {
+                var el = $(this).find('input');
+                var piId = el.data('id');
+                var rating = el.data('rating');
+                console.log("Clicked", piId, rating);
+                $.getJSON("saveresponse", {piid: piId, pid: currentPlaceId, r: rating}, function (d) { }).fail(function(){ alert("Error when saving the rating."); });
+            })
+        }).fail(function() {
+            alert("Error when retrieving the personal information data from the server.");
+        });
+
+      });
+    }).fail(function() {
+      alert("Error with the place identifier you gave. Please retry with another one.");
+    });
+}
+
+function addPersonalInformationRow(pi) {
+    var piId = pi['pi_id'];
+    var name = pi['pi_name'];
+    var category = pi['picid'];
+    var icon = "../static/img/icons/" + pi['category_icon'] + ".svg";
+
+    var el = $('<li class="list-group-item d-flex flex-row"><div><img class="mr-3" src="'+icon+'" width="25px" height="25px"/>'+name+'</div>'+
+        '<div class="ml-auto btn-group btn-group-toggle" data-toggle="buttons">' +
+        '<label class="btn btn-yes"><input type="radio" name="options" id="option1-'+piId+'" autocomplete="off" data-rating="5" data-id="'+piId+'">Yes</label>' +
+        '<label class="btn btn-meh"><input type="radio" name="options" id="option2-'+piId+'" autocomplete="off" data-rating="3" data-id="'+piId+'">Meh</label>' +
+        '<label class="btn btn-no"><input type="radio" name="options" id="option3-'+piId+'" autocomplete="off" data-rating="1" data-id="'+piId+'">No</label></div>')
+        .prependTo($('#personal-information'));
+
+    if (piId in ratings) {
+        el.find('input[data-rating='+ratings[piId]['avg_rating']+']').parent().addClass('active');
+    }
+}
+
+var delayTimer;
+var isSearchingPlace = false;
+var currentPlaceId = null;
+var ratings = null;
+$('#personal-information-loader').hide();
+$('#place-info').attr('style','display: none !important'); // .hide()
+
+function searchWithThrottle(placeId) {
+    if (!isSearchingPlace) {
+        clearTimeout(delayTimer);
+        delayTimer = setTimeout(function() {
+          searchPlace(placeId);
+        }, 1000);
+    }
+}
+
+$("#input-place-id").on("keypress", function (e) {
+    if (e.keyCode === 13) {
+        // Cancel the default action on keypress event
+        e.preventDefault();
+        searchWithThrottle($(this).val());
+    }
+}).on("input", function (e) {
+    var el = $(this);
+	var btn = el.prev().find('button');
+	if (el.val()=== '') {
+		btn.removeClass('btn-primary');
+		btn.addClass('btn-outline-primary');
+		btn.attr('disabled', true);
+    } else {
+		btn.removeClass('btn-outline-primary');
+		btn.addClass('btn-primary');
+		btn.attr('disabled', false);
+    }
+});
+
 </script>

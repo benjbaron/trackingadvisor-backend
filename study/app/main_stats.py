@@ -113,7 +113,6 @@ def get_ip_address(request):
     return ip_address
 
 
-
 @app.route('/')
 @basic_auth.required
 def show_study_stats():
@@ -226,10 +225,28 @@ def compute_place_personal_information():
 @basic_auth.required
 def get_place_ratings():
     place_id = request.args.get('id')
+    for_admin = request.args.get('forAdmin', False)
     print(place_id, request.args)
-    ratings = study.get_relevance_ratings(place_id)
+    if for_admin:
+        print("[.] getting ratings for admin only")
+        ratings = study.get_relevance_ratings_admin(place_id)
+    else:
+        ratings = study.get_relevance_ratings(place_id)
     print(ratings)
     return json.dumps(ratings)
+
+
+# Logic to save the responses in the database.
+@app.route('/saveresponse')
+def save_response():
+    print("Save Response in database - Session id: %s / %s" % (session.get('sid', 'no session sid'), session.get('uid', 'no session uid')))
+    print("Request: %s" % request.args)
+    pi_id = request.args.get('piid')
+    place_id = request.args.get('pid')
+    rating = request.args.get('r')
+    study.save_personal_information_relevance('admin', place_id, pi_id, rating)
+
+    return json.dumps({'success': 'ok'})
 
 
 def compute_place_interests(room, places):
@@ -254,4 +271,4 @@ def compute_place_interests(room, places):
 
 
 if __name__ == "__main__":
-    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True)

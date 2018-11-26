@@ -16,6 +16,8 @@ import psycopg2
 import psycopg2.extras
 from pymongo import MongoClient
 
+from keys import MAPBOX_TOKEN
+
 
 NB_MAX_CONN = 25
 DB_HOSTNAME = "colossus07"
@@ -303,20 +305,35 @@ def monitor_map_progress(map_result, d, total, title="Progress: "):
             time.sleep(0.5)
 
 
+def create_random_point(x0, y0, distance):
+    """ Utility method for the generation of random points within a distance. """
+    r = distance / 111300
+    u = numpy.random.uniform(0, 1)
+    v = numpy.random.uniform(0, 1)
+    w = r * numpy.sqrt(u)
+    t = 2 * numpy.pi * v
+    x = w * numpy.cos(t)
+    x1 = x / numpy.cos(y0)
+    y = w * numpy.sin(t)
+    return [x0+x1, y0+y]
+
+
 def get_address(location):
     g = None
     count = 0
     while (not g or not g.city) and count < 10:
-        g = geocoder.google([location['lat'], location['lon']], method='reverse')
+        g = geocoder.mapbox([location['lat'], location['lon']], method='reverse', key=MAPBOX_TOKEN)
         time.sleep(0.01)
         count += 1
 
-    street = None
-    if g.housenumber and g.street:
-        street = "{} {}".format(g.housenumber, g.street)
-    elif g.street:
-        street = "{}".format(g.street)
-    return street, g.city
+    housenumber = g.housenumber
+    street = g.raw.get('text', '')
+    address = ""
+    if housenumber and street:
+        address = "{} {}".format(housenumber, street)
+    elif street:
+        address = "{}".format(street)
+    return address, g.city
 
 
 def get_boundaries_from_location(location):
