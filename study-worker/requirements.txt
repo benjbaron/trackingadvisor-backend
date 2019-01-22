@@ -12,3 +12,4 @@ nltk
 pika
 gensim
 spacy
+elasticsearch

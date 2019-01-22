@@ -455,6 +455,8 @@ def upload_file():
             path = os.path.join(app.config['TMP_UPLOAD_FOLDER'], filename)
             f.save(path)
 
+            print("sending message...")
+
             db.send_incoming_message_to_queue(filename)
             print("saved file %s in %s" % (filename, path))
 

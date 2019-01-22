@@ -58,7 +58,7 @@ def connect_to_db(database_name, cursor_type=None):
     nb_req = 0
     while nb_req < NB_MAX_CONN:
         try:
-            connection = psycopg2.connect(host=DB_HOSTNAME, database=database_name, user="postgres", password="postgres")
+            connection = psycopg2.connect(host=DB_HOSTNAME, database=database_name, user="postgres", password="G2j!3IqdD%EX")
             if cursor_type:
                 cursor = connection.cursor(cursor_factory=cursor_type)
             else:

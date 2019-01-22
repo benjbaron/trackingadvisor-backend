@@ -11,3 +11,4 @@ numpy
 sklearn
 scipy
 nltk
+elasticsearch

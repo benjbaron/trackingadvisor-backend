@@ -22,6 +22,34 @@ if [[ $folder == "es" ]]; then
     exit 1
 fi
 
+if [[ $folder == "strapi" ]]; then
+    echo "Running the Strapi CMS"
+    docker run -e APP_NAME=strapi-app -e HOST=iss-lab.geog.ucl.ac.uk/semantica/ -e DATABASE_CLIENT=mongo -e DATABASE_HOST=colossus07 -e DATABASE_PORT=27017 -e DATABASE_NAME=strapi -v `pwd`/strapi-app:/usr/src/api/strapi-app -p 8004:1337 --name strapi -d strapi/strapi
+    echo "Done running the Strapi CMS"
+    exit 1
+fi
+
+if [[ $folder == "mysql" ]]; then
+    echo "Running the MySQL database"
+    docker run -d --restart=always --name mysqldb -v /home/ucfabb0/mount/mysql_data:/var/lib/mysql -e MYSQL_USER=mysql -e MYSQL_PASSWORD=mysql -e MYSQL_DATABASE=sample -e MYSQL_ROOT_PASSWORD=supersecret -p 3306:3306 mysql
+    echo "Done running the MySQL database"
+    exit 1
+fi
+
+if [[ $folder == "wordpress" ]]; then
+    echo "Running the Wordpress container"
+    docker run --name wordpress-semantica -p 8002:80 -e WORDPRESS_DB_HOST=localhost:3306 -e WORDPRESS_DB_USER=root -e WORDPRESS_DB_PASSWORD=supersecret -e WORDPRESS_DB_NAME=wordpress -e WORDPRESS_CONFIG_EXTRA="define( 'WP_SITEURL', 'https://iss-lab.geog.ucl.ac.uk/semantica/survey/' );  define( 'WP_HOME', 'https://iss-lab.geog.ucl.ac.uk/semantica/survey/' );define('FORCE_SSL_ADMIN', true);\$_SERVER['HTTPS'] = 'on';" -e WORDPRESS_DEBUG=1 -d wordpress-semantica
+    echo "Done running the Wordpress container"
+    exit 1
+fi
+
+if [[ $folder == "mongo" ]]; then
+    echo "Running the MongoDB container"
+    docker run -d --restart=always -v /home/ucfabb0/mount/db:/data/db --name trackingadvisor-mongo -p 27017:27017 mongo:latest
+    echo "Done running the MongoDB container"
+    exit 1
+fi
+
 echo "Stopping $folder container(s)..."
 if [[ $folder = *"worker"* ]]; then
 
